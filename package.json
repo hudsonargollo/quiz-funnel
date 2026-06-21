@@ -1,0 +1,13 @@
+{
+  "name": "quiz-funnel",
+  "version": "1.0.0",
+  "description": "High-converting quiz funnel with CRM — Cloudflare Pages",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail quiz-funnel-app"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

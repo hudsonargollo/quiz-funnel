@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Funnel CRM</title>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+  :root{
+    --bg:#0b0f14;--bg2:#0e141b;--panel:#141b24;--panel2:#1b232e;--line:#262f3a;
+    --text:#e6edf3;--muted:#8b97a6;--faint:#5b6573;
+    --brand:#00AEEF;--brand2:#7ad9ff;--green:#22C55E;--amber:#FBBF24;--orange:#fb923c;--red:#EF4444;
+    --radius:14px;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;background:
+    radial-gradient(1200px 600px at 80% -10%,rgba(0,174,239,.06),transparent),var(--bg);
+    color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--brand);text-decoration:none}
+  button{font-family:inherit}
+  .wrap{max-width:1220px;margin:0 auto;padding:0 20px 80px}
+  .hidden{display:none!important}
+  input,select,textarea{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px;outline:none;transition:border-color .15s;width:100%}
+  input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+  textarea{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5;resize:vertical}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+  .btn{background:var(--brand);color:#001018;border:none;padding:9px 14px;border-radius:9px;font-weight:600;cursor:pointer;font-size:13px;transition:filter .15s,transform .05s;display:inline-flex;align-items:center;gap:6px;width:auto}
+  .btn:hover{filter:brightness(1.08)}.btn:active{transform:scale(.98)}
+  .btn.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+  .btn.danger{background:transparent;color:var(--red);border:1px solid var(--line)}
+  .btn.icon{padding:8px 10px}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg button{background:transparent;color:var(--muted);border:none;padding:7px 11px;cursor:pointer;font-size:12px;font-weight:600;width:auto}
+  .seg button.active{background:var(--brand);color:#001018}
+
+  /* top bar */
+  .topbar{position:sticky;top:0;z-index:30;background:rgba(11,15,20,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .topbar .inner{max-width:1220px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+  .brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:flex;align-items:center;justify-content:center;color:#001018;font-weight:900}
+  .live{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}70%{box-shadow:0 0 0 7px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+  .spacer{flex:1}
+  .navtabs{display:flex;gap:4px}
+  .navtabs button{background:transparent;border:none;color:var(--muted);font-weight:600;font-size:13px;padding:7px 12px;border-radius:8px;cursor:pointer;width:auto}
+  .navtabs button.active{background:var(--panel2);color:var(--text)}
+
+  section{margin-top:18px}
+  .grid{display:grid;gap:14px}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+  .cols{grid-template-columns:1.5fr 1fr}
+  @media(max-width:880px){.cols{grid-template-columns:1fr}}
+  .card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+  .card h2{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px}
+  .kpi .v{font-size:28px;font-weight:800;letter-spacing:-.5px}
+  .kpi .l{color:var(--muted);font-size:12px;margin-top:3px}
+  .kpi .d{font-size:12px;margin-top:7px;color:var(--faint)}.kpi .d b{color:var(--green)}
+  .frow{margin-bottom:12px}.frow:last-child{margin-bottom:0}
+  .frow .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}.frow .top .n{color:var(--muted)}
+  .bar{height:11px;background:var(--panel2);border-radius:7px;overflow:hidden}
+  .bar>i{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,var(--brand),var(--brand2));transition:width .6s}
+  .bar>i.alt{background:linear-gradient(90deg,#34d399,#a3e635)}
+  .barmini{height:6px;background:var(--panel2);border-radius:4px;overflow:hidden;margin-top:5px}.barmini>i{display:block;height:100%;background:var(--brand)}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  .chip{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;flex:1;min-width:110px}
+  .chip .cv{font-size:18px;font-weight:700}.chip .cl{font-size:11px;color:var(--muted)}
+  .spark{display:flex;align-items:flex-end;gap:4px;height:64px;margin-top:4px}
+  .spark .b{flex:1;background:linear-gradient(180deg,var(--brand),rgba(0,174,239,.25));border-radius:4px 4px 0 0;min-height:3px}
+  .liner{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}.liner:last-child{border-bottom:none}.liner .muted{color:var(--muted)}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}.toolbar .spacer{flex:1}
+  .tablewrap{overflow-x:auto;border-radius:10px;border:1px solid var(--line)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;background:var(--panel2)}
+  tbody tr{cursor:pointer}tbody tr:hover{background:var(--panel2)}tbody tr:last-child td{border-bottom:none}
+  .who b{font-weight:600}.who .sub{color:var(--faint);font-size:12px}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600}.pill::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+  .s-quiz_started,.s-draft{background:#1b222c;color:#8b97a6}
+  .s-lead_captured{background:#0d2d3a;color:#5fd0f5}
+  .s-offer_viewed{background:#1d2a13;color:#a3e635}
+  .s-checkout_initiated{background:#3a2e0d;color:var(--amber)}
+  .s-checkout_abandoned{background:#3a1d0d;color:var(--orange)}
+  .s-purchase_completed,.s-published{background:#0f2e1a;color:var(--green)}
+  .s-payment_failed{background:#3a0d0d;color:#f87171}
+  .pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:14px;color:var(--muted);font-size:13px}
+  .pager button:disabled{opacity:.4}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .25s;z-index:50}
+  .overlay.show{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(520px,100%);background:var(--bg2);border-left:1px solid var(--line);transform:translateX(100%);transition:transform .28s;z-index:51;overflow-y:auto;padding:22px}
+  .drawer.show{transform:translateX(0)}
+  .drawer h3{font-size:17px;margin-bottom:2px}
+  .kv{display:grid;grid-template-columns:135px 1fr;gap:8px 12px;font-size:13px;margin:16px 0}.kv .k{color:var(--muted)}.kv .v{word-break:break-word}
+  .tl{border-left:2px solid var(--line);margin-left:6px;padding-left:16px}
+  .tl .ev{position:relative;padding:7px 0;font-size:12px}.tl .ev::before{content:'';position:absolute;left:-23px;top:11px;width:9px;height:9px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 3px var(--bg2)}.tl .ev .t{color:var(--faint)}
+  .fcard{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);margin-bottom:10px}
+  .fcard .ftype{width:38px;height:38px;border-radius:9px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--brand);text-transform:uppercase}
+  .fcard .fmeta{flex:1;min-width:0}
+  .fcard .fmeta .fn{font-weight:600}
+  .fcard .fmeta .fu{color:var(--faint);font-size:12px;overflow:hidden;text-overflow:ellipsis}
+  .auth{max-width:380px;margin:13vh auto;padding:0 20px}
+  .auth .logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:flex;align-items:center;justify-content:center;color:#001018;font-weight:900;font-size:24px;margin:0 auto 16px}
+  .auth h1{font-size:22px;text-align:center}
+  .auth .sub{color:var(--muted);text-align:center;margin-top:6px;font-size:13px}
+  .auth .btn{width:100%;justify-content:center;padding:12px;margin-top:16px}
+  .auth .switch{text-align:center;margin-top:14px;font-size:13px;color:var(--muted)}
+  .auth .switch a{cursor:pointer}
+  .err{color:var(--red);font-size:13px;margin-top:10px;min-height:18px;text-align:center}
+  .empty{padding:28px;text-align:center;color:var(--muted)}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;word-break:break-all}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .lang-mini{position:fixed;top:16px;right:18px}
+  /* icons */
+  svg.lucide{width:1em;height:1em;vertical-align:-0.14em;stroke-width:2}
+  .navtabs button svg.lucide,.btn svg.lucide{width:15px;height:15px;vertical-align:-0.18em}
+  .kpi .ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;color:var(--brand);background:rgba(0,174,239,.12)}
+  .kpi .ico svg.lucide{width:18px;height:18px}
+  .kpi{position:relative}
+  /* toasts */
+  #toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center}
+  .toast{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--brand);border-radius:10px;padding:11px 16px;font-size:13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:9px;animation:tin .2s ease;max-width:90vw}
+  .toast.ok{border-left-color:var(--green)}.toast.bad{border-left-color:var(--red)}
+  .toast svg.lucide{width:16px;height:16px;flex-shrink:0}
+  @keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  /* template picker */
+  .tpick{display:grid;gap:10px;margin:6px 0 4px}
+  .tpick .opt{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .15s,background .15s}
+  .tpick .opt:hover{border-color:var(--brand)}
+  .tpick .opt.sel{border-color:var(--brand);background:rgba(0,174,239,.07)}
+  .tpick .opt .ic{width:36px;height:36px;border-radius:9px;background:var(--panel2);display:flex;align-items:center;justify-content:center;color:var(--brand);flex-shrink:0}
+  .tpick .opt .ic svg.lucide{width:18px;height:18px}
+  .tpick .opt .tt{font-weight:600}
+  .tpick .opt .td{font-size:12px;color:var(--muted);margin-top:2px}
+  /* funnel cards */
+  .fcard .ftype svg.lucide{width:17px;height:17px}
+  .fstats{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:3px}
+  .fstats b{color:var(--text);font-weight:600}
+  .factions{display:flex;gap:6px;flex-shrink:0}
+  @media(max-width:680px){.fcard{flex-wrap:wrap}.factions{width:100%;margin-top:6px}}
+  /* copy field */
+  .copyrow{display:flex;gap:6px;align-items:stretch}
+  .copyrow .mono{flex:1}
+  .copyrow .btn{flex-shrink:0}
+  .btn.busy{opacity:.6;pointer-events:none}
+  .onb{text-align:center;padding:48px 20px}
+  .onb .big{width:60px;height:60px;border-radius:16px;background:var(--panel2);display:flex;align-items:center;justify-content:center;color:var(--brand);margin:0 auto 14px}
+  .onb .big svg.lucide{width:28px;height:28px}
+  .onb h3{font-size:18px}.onb p{color:var(--muted);margin:6px 0 16px}
+  /* ── Visual builder ── */
+  #builder{position:fixed;inset:0;z-index:70;background:var(--bg);display:flex;flex-direction:column}
+  .bld-top{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .bld-top .ttl{font-weight:700}
+  .bld-top input.nm{width:auto;min-width:180px}
+  .bld-body{flex:1;display:grid;grid-template-columns:248px 1fr 330px;min-height:0}
+  .bld-pane{overflow-y:auto;padding:14px}
+  .bld-left{border-right:1px solid var(--line)}
+  .bld-right{border-left:1px solid var(--line)}
+  .bld-mid{background:#070b10;display:flex;align-items:center;justify-content:center;padding:18px}
+  .bld-h{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:2px 0 10px;display:flex;align-items:center;justify-content:space-between}
+  .scr{display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;cursor:pointer;background:var(--panel);transition:border-color .12s}
+  .scr:hover{border-color:var(--brand)}
+  .scr.sel{border-color:var(--brand);background:rgba(0,174,239,.08)}
+  .scr.drag{opacity:.4}
+  .scr .gr{color:var(--faint);cursor:grab;display:flex}.scr .gr svg.lucide{width:14px;height:14px}
+  .scr .si{width:24px;height:24px;border-radius:6px;background:var(--panel2);display:flex;align-items:center;justify-content:center;color:var(--brand);flex-shrink:0}
+  .scr .si svg.lucide{width:13px;height:13px}
+  .scr .sl{flex:1;min-width:0;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .scr .sl small{color:var(--faint);text-transform:uppercase;font-size:10px;letter-spacing:.3px}
+  .scr .sx{color:var(--faint);cursor:pointer;display:flex}.scr .sx:hover{color:var(--red)}.scr .sx svg.lucide{width:14px;height:14px}
+  .palette{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+  .palette button{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:12px;color:var(--text);cursor:pointer;width:auto}
+  .palette button:hover{border-color:var(--brand)}
+  .palette button svg.lucide{width:14px;height:14px;color:var(--brand)}
+  .device{width:390px;max-width:100%;height:100%;max-height:780px;background:#fff;border-radius:26px;border:10px solid #1b232e;box-shadow:0 30px 80px -20px rgba(0,0,0,.7);overflow:hidden}
+  .device iframe{width:100%;height:100%;border:0;display:block}
+  .opt-ed{border:1px solid var(--line);border-radius:9px;padding:8px;margin-bottom:7px;background:var(--panel)}
+  .opt-ed .oh{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+  .opt-ed .oh .gr{color:var(--faint);cursor:grab;display:flex}.opt-ed .oh .gr svg.lucide{width:13px;height:13px}
+  .opt-ed .oh .ol{flex:1;font-size:11px;color:var(--muted)}
+  .opt-ed .oh .sx{color:var(--faint);cursor:pointer;display:flex}.opt-ed .oh .sx:hover{color:var(--red)}
+  .opt-ed input{margin-bottom:5px}.opt-ed input:last-child{margin-bottom:0}
+  .addbtn{width:100%;justify-content:center;margin-top:4px}
+  @media(max-width:900px){.bld-body{grid-template-columns:1fr}.bld-left,.bld-right{border:0;border-bottom:1px solid var(--line)}.bld-mid{display:none}}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth" class="auth hidden">
+  <div class="lang-mini"><div class="seg" id="seg-auth"><button data-lang="en">EN</button><button data-lang="pt">PT</button></div></div>
+  <div class="logo">Q</div>
+  <h1 id="auth-title">Sign in</h1>
+  <p class="sub" id="auth-sub">Welcome back to your funnel CRM</p>
+  <div id="signup-name-wrap" class="hidden"><label data-i18n="f_name">Name</label><input id="au-name" type="text"></div>
+  <label data-i18n="email">Email</label><input id="au-email" type="email" autocomplete="username">
+  <label data-i18n="password">Password</label><input id="au-pass" type="password" autocomplete="current-password">
+  <button class="btn" id="auth-btn" onclick="App.submitAuth()">Sign in</button>
+  <div class="err" id="auth-err"></div>
+  <div class="switch"><span id="switch-text">No account?</span> <a id="switch-link" onclick="App.toggleAuthMode()">Create one</a></div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <div class="topbar"><div class="inner">
+    <div class="brand"><span class="logo">Q</span><span>Funnel CRM</span></div>
+    <div class="live"><span class="dot"></span><span id="updated"></span></div>
+    <div class="spacer"></div>
+    <div class="navtabs">
+      <button id="tab-analytics" class="active" onclick="App.showView('analytics')" data-i18n="nav_analytics">Analytics</button>
+      <button id="tab-funnels" onclick="App.showView('funnels')" data-i18n="nav_funnels">Funnels</button>
+    </div>
+    <div class="seg" id="seg-app"><button data-lang="en">EN</button><button data-lang="pt">PT</button></div>
+    <button class="btn ghost" onclick="App.logout()" data-i18n="logout">Sign out</button>
+  </div></div>
+
+  <!-- ANALYTICS VIEW -->
+  <div id="view-analytics" class="wrap">
+    <div class="toolbar" style="margin-top:18px">
+      <select id="funnel-switcher" style="width:auto;min-width:200px" onchange="App.onFunnelChange()"></select>
+      <select id="range" style="width:auto" onchange="App.loadStats()">
+        <option value="0" data-i18n="range_all">All time</option>
+        <option value="7" data-i18n="range_7">Last 7 days</option>
+        <option value="30" data-i18n="range_30">Last 30 days</option>
+        <option value="90" data-i18n="range_90">Last 90 days</option>
+      </select>
+      <div class="spacer"></div>
+      <button class="btn ghost icon" onclick="App.refresh()" title="Refresh">↻</button>
+    </div>
+    <section class="grid kpis" id="kpis"></section>
+    <section class="grid cols">
+      <div class="card"><h2 data-i18n="funnel_title">Conversion funnel</h2><div id="funnel"></div><div class="chips" id="chips"></div></div>
+      <div class="card"><h2 data-i18n="daily_title">New leads · 14 days</h2><div class="spark" id="spark"></div>
+        <h2 style="margin-top:18px" data-i18n="utm_title">Source (UTM)</h2><div id="utm"></div></div>
+    </section>
+    <section class="card" id="dropoff-card"><h2 data-i18n="dropoff_title">Reach per question (drop-off)</h2><div id="dropoff"></div></section>
+    <section class="card">
+      <div class="toolbar">
+        <select id="f-state" style="width:auto" onchange="App.loadLeads(0)">
+          <option value="" data-i18n="all_states">All states</option>
+          <option value="quiz_started">quiz_started</option><option value="lead_captured">lead_captured</option>
+          <option value="offer_viewed">offer_viewed</option><option value="checkout_initiated">checkout_initiated</option>
+          <option value="checkout_abandoned">checkout_abandoned</option><option value="purchase_completed">purchase_completed</option>
+          <option value="payment_failed">payment_failed</option>
+        </select>
+        <input id="f-q" style="width:auto;min-width:200px" onkeydown="if(event.key==='Enter')App.loadLeads(0)">
+        <button class="btn ghost" onclick="App.loadLeads(0)" data-i18n="search_btn">Search</button>
+        <div class="spacer"></div>
+        <button class="btn" onclick="App.exportCsv()" data-i18n="export_csv">Export CSV</button>
+      </div>
+      <div class="tablewrap"><table><thead><tr>
+        <th data-i18n="col_lead">Email / Name</th><th data-i18n="col_state">State</th><th data-i18n="col_imc">BMI</th>
+        <th data-i18n="col_goal">Goal</th><th data-i18n="col_source">Source</th><th data-i18n="col_created">Created</th><th data-i18n="col_updated">Updated</th>
+      </tr></thead><tbody id="rows"></tbody></table></div>
+      <div class="pager"><span id="page-info"></span>
+        <button class="btn ghost icon" id="prev" onclick="App.page(-1)">←</button>
+        <button class="btn ghost icon" id="next" onclick="App.page(1)">→</button></div>
+    </section>
+  </div>
+
+  <!-- FUNNELS VIEW -->
+  <div id="view-funnels" class="wrap hidden">
+    <div class="toolbar" style="margin-top:18px">
+      <h2 style="font-size:16px;color:var(--text)" data-i18n="your_funnels">Your funnels</h2>
+      <div class="spacer"></div>
+      <button class="btn" onclick="App.openFunnelEditor()" data-i18n="new_funnel">+ New funnel</button>
+    </div>
+    <div id="funnel-list"></div>
+  </div>
+</div>
+
+<!-- LEAD DRAWER -->
+<div class="overlay" id="overlay" onclick="App.closeDrawer()"></div>
+<div class="drawer" id="drawer"></div>
+
+<!-- VISUAL BUILDER -->
+<div id="builder" class="hidden">
+  <div class="bld-top">
+    <button class="btn ghost icon" onclick="App.closeBuilder()" title="Back">←</button>
+    <span class="ttl" id="bld-title">Builder</span>
+    <input class="nm" id="bld-name" placeholder="Funnel name">
+    <div style="flex:1"></div>
+    <a class="btn ghost" id="bld-open" target="_blank">↗ <span data-i18n="open">Open</span></a>
+    <button class="btn" id="bld-save" onclick="App.saveBuilder()" data-i18n="save">Save</button>
+  </div>
+  <div class="bld-body">
+    <div class="bld-pane bld-left">
+      <div class="bld-h"><span data-i18n="b_screens">Screens</span></div>
+      <div id="bld-screens"></div>
+      <div class="bld-h" style="margin-top:14px"><span data-i18n="b_add">Add screen</span></div>
+      <div class="palette" id="bld-palette"></div>
+    </div>
+    <div class="bld-mid"><div class="device"><iframe id="bld-frame" title="preview"></iframe></div></div>
+    <div class="bld-pane bld-right">
+      <div class="bld-h"><span id="bld-props-title" data-i18n="b_props">Properties</span></div>
+      <div id="bld-props"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+const I18N={
+ en:{login:'Sign in',signup:'Create account',welcome_back:'Welcome back to your funnel CRM',create_sub:'Start building funnels in minutes',
+   no_account:'No account?',have_account:'Have an account?',create_one:'Create one',sign_in_link:'Sign in',
+   email:'Email',password:'Password',f_name:'Name',logout:'Sign out',updated:'Updated',auto:'Auto-refresh',
+   nav_analytics:'Analytics',nav_funnels:'Funnels',range_all:'All time',range_7:'Last 7 days',range_30:'Last 30 days',range_90:'Last 90 days',
+   all_funnels:'All funnels',kpi_total:'Total leads',kpi_captured:'Captured',kpi_purchases:'Purchases',kpi_checkouts:'Checkouts',of_total:'of total',
+   funnel_title:'Conversion funnel',utm_title:'Source (UTM)',daily_title:'New leads · 14 days',dropoff_title:'Reach per question (drop-off)',
+   all_states:'All states',search_btn:'Search',search_ph:'Search email or name…',export_csv:'Export CSV',
+   col_lead:'Email / Name',col_state:'State',col_imc:'BMI',col_goal:'Goal',col_source:'Source',col_created:'Created',col_updated:'Updated',
+   no_results:'No results',anon:'anonymous',direct:'(direct)',of:'of',timeline:'Timeline',no_events:'No events',no_data:'No data',no_answers:'No answers yet',
+   leads:'leads',sales:'sales',your_funnels:'Your funnels',new_funnel:'+ New funnel',no_funnels:'No funnels yet — create your first one.',
+   edit:'Edit',del:'Delete',open:'Open',copy:'Copy',save:'Save',cancel:'Cancel',create:'Create',
+   copied:'Copied',saved:'Saved',created:'Funnel created',deleted:'Funnel deleted',saving:'Saving…',
+   pick_template:'Choose a template',onb_title:'Create your first funnel',onb_text:'Pick a template and go live in minutes.',
+   tpl_quiz_t:'Quiz',tpl_quiz_d:'Multi-step quiz that captures leads and sells.',
+   tpl_optin_t:'Lead magnet',tpl_optin_d:'Simple opt-in to capture emails.',
+   tpl_vsl_t:'VSL → checkout',tpl_vsl_d:'Video sales letter into a checkout.',
+   b_screens:'Screens',b_add:'Add screen',b_props:'Properties',b_builder:'Visual builder',b_select:'Select a screen to edit it.',
+   b_option:'Option',b_addopt:'+ Add option',b_field:'Field',b_step:'Step',b_addstep:'+ Add step',b_built:'Funnel saved',
+   f_type:'Type',f_slug:'Slug (subdomain)',f_status:'Status',f_url:'Public URL',f_config:'Config (JSON)',
+   f_post:'Post-purchase URL',stripe:'Stripe (this funnel)',f_pk:'Publishable key',f_price:'Price ID',f_sk:'Secret key',f_whsec:'Webhook secret',
+   f_whurl:'Webhook URL (paste into Stripe)',secret_set:'•••• set',secret_unset:'not set',leave_blank:'leave blank to keep',
+   st_started:'Started',st_lead:'Lead captured',st_offer:'Viewed offer',st_checkout:'Checkout',st_purchased:'Purchased',
+   cv_lead:'Lead rate',cv_offer:'Offer rate',cv_checkout:'Checkout rate',cv_purchase:'Purchase rate',
+   d_email:'Email',d_name:'Name',d_state:'State',d_uid:'User ID',d_imc:'BMI',d_goal:'Goal',d_cur:'Current weight',d_target:'Target weight',d_height:'Height',
+   d_src:'UTM source',d_med:'UTM medium',d_camp:'UTM campaign',d_country:'Country',d_ref:'Referrer',d_created:'Created',d_lead_at:'Lead at',d_checkout_at:'Checkout at',d_purchase_at:'Purchase at'},
+ pt:{login:'Entrar',signup:'Criar conta',welcome_back:'Bem-vindo de volta ao seu CRM de funis',create_sub:'Crie funis em minutos',
+   no_account:'Sem conta?',have_account:'Já tem conta?',create_one:'Criar uma',sign_in_link:'Entrar',
+   email:'Email',password:'Palavra-passe',f_name:'Nome',logout:'Sair',updated:'Atualizado',auto:'Atualização automática',
+   nav_analytics:'Análises',nav_funnels:'Funis',range_all:'Todo o período',range_7:'Últimos 7 dias',range_30:'Últimos 30 dias',range_90:'Últimos 90 dias',
+   all_funnels:'Todos os funis',kpi_total:'Leads totais',kpi_captured:'Capturados',kpi_purchases:'Compras',kpi_checkouts:'Checkouts',of_total:'do total',
+   funnel_title:'Funil de conversão',utm_title:'Origem (UTM)',daily_title:'Novos leads · 14 dias',dropoff_title:'Alcance por pergunta (drop-off)',
+   all_states:'Todos os estados',search_btn:'Procurar',search_ph:'Procurar email ou nome…',export_csv:'Exportar CSV',
+   col_lead:'Email / Nome',col_state:'Estado',col_imc:'IMC',col_goal:'Objetivo',col_source:'Origem',col_created:'Criado',col_updated:'Atualizado',
+   no_results:'Sem resultados',anon:'anónimo',direct:'(direto)',of:'de',timeline:'Linha do tempo',no_events:'Sem eventos',no_data:'Sem dados',no_answers:'Sem respostas ainda',
+   leads:'leads',sales:'vendas',your_funnels:'Os seus funis',new_funnel:'+ Novo funil',no_funnels:'Ainda sem funis — crie o primeiro.',
+   edit:'Editar',del:'Eliminar',open:'Abrir',copy:'Copiar',save:'Guardar',cancel:'Cancelar',create:'Criar',
+   copied:'Copiado',saved:'Guardado',created:'Funil criado',deleted:'Funil eliminado',saving:'A guardar…',
+   pick_template:'Escolha um modelo',onb_title:'Crie o seu primeiro funil',onb_text:'Escolha um modelo e publique em minutos.',
+   tpl_quiz_t:'Quiz',tpl_quiz_d:'Quiz de vários passos que capta leads e vende.',
+   tpl_optin_t:'Lead magnet',tpl_optin_d:'Opt-in simples para captar emails.',
+   tpl_vsl_t:'VSL → checkout',tpl_vsl_d:'Vídeo de vendas até ao checkout.',
+   b_screens:'Ecrãs',b_add:'Adicionar ecrã',b_props:'Propriedades',b_builder:'Editor visual',b_select:'Selecione um ecrã para editar.',
+   b_option:'Opção',b_addopt:'+ Adicionar opção',b_field:'Campo',b_step:'Passo',b_addstep:'+ Adicionar passo',b_built:'Funil guardado',
+   f_type:'Tipo',f_slug:'Slug (subdomínio)',f_status:'Estado',f_url:'URL pública',f_config:'Configuração (JSON)',
+   f_post:'URL pós-compra',stripe:'Stripe (este funil)',f_pk:'Chave publicável',f_price:'Price ID',f_sk:'Chave secreta',f_whsec:'Webhook secret',
+   f_whurl:'URL do webhook (colar no Stripe)',secret_set:'•••• definida',secret_unset:'não definida',leave_blank:'deixe vazio para manter',
+   st_started:'Iniciou',st_lead:'Lead',st_offer:'Viu oferta',st_checkout:'Checkout',st_purchased:'Comprou',
+   cv_lead:'Taxa de leads',cv_offer:'Taxa de oferta',cv_checkout:'Taxa de checkout',cv_purchase:'Taxa de compra',
+   d_email:'Email',d_name:'Nome',d_state:'Estado',d_uid:'User ID',d_imc:'IMC',d_goal:'Objetivo',d_cur:'Peso atual',d_target:'Peso objetivo',d_height:'Altura',
+   d_src:'UTM source',d_med:'UTM medium',d_camp:'UTM campaign',d_country:'País',d_ref:'Referrer',d_created:'Criado',d_lead_at:'Lead em',d_checkout_at:'Checkout em',d_purchase_at:'Compra em'},
+};
+const QLABELS={en:{objetivo:'Goal',sensacao_corpo:'Body feeling',zonas_problematicas:'Problem areas',impacto_vida:'Life impact',espelho:'Mirror',bloqueio:'Blocker',objetivos_vida:'Life goals',altura:'Height',peso_atual:'Current weight',peso_objetivo:'Target weight',nome:'Name',rotina:'Routine',sono:'Sleep',agua:'Water',tipo_resultado:'Desired result',email:'Email',goal:'Goal',interests:'Interests'},
+ pt:{objetivo:'Objetivo',sensacao_corpo:'Sensação corporal',zonas_problematicas:'Zonas',impacto_vida:'Impacto',espelho:'Espelho',bloqueio:'Bloqueio',objetivos_vida:'Objetivos',altura:'Altura',peso_atual:'Peso atual',peso_objetivo:'Peso objetivo',nome:'Nome',rotina:'Rotina',sono:'Sono',agua:'Água',tipo_resultado:'Resultado',email:'Email',goal:'Objetivo',interests:'Interesses'}};
+const STATE_LABEL={en:{quiz_started:'Started',lead_captured:'Lead',offer_viewed:'Offer',checkout_initiated:'Checkout',checkout_abandoned:'Abandoned',purchase_completed:'Purchased',payment_failed:'Failed',draft:'Draft',published:'Published'},
+ pt:{quiz_started:'Iniciou',lead_captured:'Lead',offer_viewed:'Oferta',checkout_initiated:'Checkout',checkout_abandoned:'Abandonou',purchase_completed:'Comprou',payment_failed:'Falhou',draft:'Rascunho',published:'Publicado'}};
+
+const App=(()=>{
+ const LANG_KEY='qf_admin_lang';const AUTO_MS=30000;
+ let lang='en',view='analytics',authMode='login';
+ let funnelId='',offset=0,limit=50,total=0,_stats=null,_leads=null,_funnels=[],_timer=null;
+ const t=k=>(I18N[lang][k]??I18N.en[k]??k);const $=id=>document.getElementById(id);
+
+ async function api(path,opts={}){
+   const r=await fetch('/api/'+path,{credentials:'include',headers:{'Content-Type':'application/json'},...opts});
+   if(r.status===401){showAuth();throw new Error('unauth');}
+   const ct=r.headers.get('Content-Type')||'';
+   const data=ct.includes('json')?await r.json():await r.text();
+   if(!r.ok)throw new Error((data&&data.error)||r.status);
+   return data;
+ }
+
+ function applyI18n(){
+   document.documentElement.lang=lang;
+   document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
+   $('f-q').placeholder=t('search_ph');
+   document.querySelectorAll('.seg').forEach(s=>s.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang)));
+   renderAuthMode();
+ }
+ function setLang(l){lang=l;localStorage.setItem(LANG_KEY,l);applyI18n();
+   if(_stats)renderStats(_stats);if(_leads)renderRows(_leads);if(_funnels)renderFunnels();renderSwitcher();}
+
+ // ── Auth ──
+ function showAuth(){stopAuto();$('app').classList.add('hidden');$('auth').classList.remove('hidden');}
+ function renderAuthMode(){
+   const isLogin=authMode==='login';
+   $('auth-title').textContent=isLogin?t('login'):t('signup');
+   $('auth-sub').textContent=isLogin?t('welcome_back'):t('create_sub');
+   $('auth-btn').textContent=isLogin?t('login'):t('signup');
+   $('switch-text').textContent=isLogin?t('no_account'):t('have_account');
+   $('switch-link').textContent=isLogin?t('create_one'):t('sign_in_link');
+   $('signup-name-wrap').classList.toggle('hidden',isLogin);
+ }
+ function toggleAuthMode(){authMode=authMode==='login'?'signup':'login';$('auth-err').textContent='';renderAuthMode();}
+ async function submitAuth(){
+   $('auth-err').textContent='';
+   const email=$('au-email').value.trim(),password=$('au-pass').value,name=$('au-name').value.trim();
+   const path=authMode==='login'?'auth/login':'auth/signup';
+   try{
+     await api(path,{method:'POST',body:JSON.stringify({email,password,name})});
+     $('auth').classList.add('hidden');$('app').classList.remove('hidden');boot();
+   }catch(e){$('auth-err').textContent=e.message==='unauth'?'':String(e.message);}
+ }
+ async function logout(){try{await api('auth/logout',{method:'POST'});}catch(e){}location.reload();}
+
+ // ── Boot ──
+ function boot(){loadFunnels().then(()=>{refresh();});startAuto();}
+ function refresh(){loadStats();loadLeads(offset);}
+ function startAuto(){stopAuto();_timer=setInterval(()=>{if(document.hidden)return;if(document.activeElement===$('f-q'))return;if(view==='analytics'){loadStats();loadLeads(offset);}},AUTO_MS);}
+ function stopAuto(){if(_timer){clearInterval(_timer);_timer=null;}}
+
+ function showView(v){view=v;
+   $('view-analytics').classList.toggle('hidden',v!=='analytics');
+   $('view-funnels').classList.toggle('hidden',v!=='funnels');
+   $('tab-analytics').classList.toggle('active',v==='analytics');
+   $('tab-funnels').classList.toggle('active',v==='funnels');
+   if(v==='funnels')loadFunnels();
+ }
+
+ // ── Funnels ──
+ async function loadFunnels(){
+   const d=await api('funnels');_funnels=d.results||[];renderSwitcher();renderFunnels();
+ }
+ function renderSwitcher(){
+   const sel=$('funnel-switcher');
+   sel.innerHTML=`<option value="">${t('all_funnels')}</option>`+_funnels.map(f=>`<option value="${f.id}"${f.id===funnelId?' selected':''}>${esc(f.name||f.slug)}</option>`).join('');
+ }
+ function onFunnelChange(){funnelId=$('funnel-switcher').value;offset=0;refresh();}
+ function renderFunnels(){
+   const el=$('funnel-list');
+   if(!_funnels.length){
+     el.innerHTML=`<div class="onb"><div class="big">${icon('layout-template')}</div><h3>${t('onb_title')}</h3><p>${t('onb_text')}</p><button class="btn" onclick="App.openFunnelEditor()">${t('new_funnel')}</button></div>`;
+     refreshIcons();return;
+   }
+   const origin=location.origin;
+   const tIcon={quiz:'list-checks',optin:'mail',vsl:'play'};
+   el.innerHTML=_funnels.map(f=>{
+     const url=`${origin}/?f=${f.slug}`;
+     return `<div class="fcard">
+       <div class="ftype">${icon(tIcon[f.type]||'layout-template')}</div>
+       <div class="fmeta"><div class="fn">${esc(f.name||f.slug)} <span class="pill s-${f.status}" style="margin-left:6px">${STATE_LABEL[lang][f.status]||f.status}</span></div>
+         <div class="fstats"><span><b>${fmtN(f.lead_count||0)}</b> ${t('leads')}</span><span><b>${fmtN(f.purchase_count||0)}</b> ${t('sales')}</span><span>/${esc(f.slug)}</span></div></div>
+       <div class="factions">
+         <a class="btn ghost" href="${url}" target="_blank" title="${t('open')}">${icon('external-link')}</a>
+         <button class="btn ghost" onclick="App.copyText('${esc(url)}')" title="${t('copy')}">${icon('copy')}</button>
+         <button class="btn" onclick="App.openFunnelEditor('${f.id}')">${icon('settings')} ${t('edit')}</button>
+       </div>
+     </div>`;
+   }).join('');
+   refreshIcons();
+ }
+
+ async function openFunnelEditor(id){
+   let f=null;
+   if(id){f=await api('funnels/'+id);}
+   const origin=location.origin;
+   const isNew=!id;
+   _newType='quiz';
+   const cfg=f?JSON.stringify(f.config,null,2):'';
+   const url=f?`${origin}/?f=${esc(f.slug)}`:'';
+   const whUrl=f?`${origin}/api/public/webhook/${f.id}`:'';
+   const tpl=[['quiz','list-checks'],['optin','mail'],['vsl','play']];
+   $('drawer').innerHTML=`
+     <div style="display:flex;justify-content:space-between;align-items:start">
+       <h3>${isNew?t('new_funnel'):esc(f.name||f.slug)}</h3>
+       <button class="btn ghost icon" onclick="App.closeDrawer()">✕</button>
+     </div>
+     ${isNew?`<label>${t('pick_template')}</label><div class="tpick">${tpl.map((x,i)=>`
+       <div class="opt${i===0?' sel':''}" onclick="App.pickTemplate('${x[0]}',this)">
+         <div class="ic">${icon(x[1])}</div>
+         <div><div class="tt">${t('tpl_'+x[0]+'_t')}</div><div class="td">${t('tpl_'+x[0]+'_d')}</div></div>
+       </div>`).join('')}</div>`:''}
+     <label>${t('f_name')}</label><input id="ed-name" value="${f?esc(f.name||''):''}">
+     <label>${t('f_slug')}</label><input id="ed-slug" value="${f?esc(f.slug):''}" placeholder="my-funnel">
+     ${!isNew?`<label>${t('f_status')}</label><select id="ed-status"><option value="draft"${f.status==='draft'?' selected':''}>draft</option><option value="published"${f.status==='published'?' selected':''}>published</option></select>
+       <label>${t('f_url')}</label><div class="copyrow"><div class="mono" id="ed-urlv">${url}</div><button class="btn ghost" onclick="App.copyEl('ed-urlv')">${icon('copy')}</button></div>
+       <label>${t('f_post')}</label><input id="ed-post" value="${esc(f.post_purchase_url||'')}">
+       <button class="btn" style="width:100%;justify-content:center;margin-top:6px" onclick="App.openBuilder('${id}')">${icon('layout-template')} ${t('b_builder')}</button>
+       <details style="margin-top:10px"><summary style="cursor:pointer;color:var(--muted);font-size:12px">${t('f_config')} (JSON)</summary>
+       <textarea id="ed-config" rows="10" style="margin-top:6px">${esc(cfg)}</textarea></details>
+       <h2 style="margin:20px 0 0;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">${t('stripe')}</h2>
+       <label>${t('f_pk')}</label><input id="ed-pk" value="${esc(f.stripe_publishable_key||'')}">
+       <label>${t('f_price')}</label><input id="ed-price" value="${esc(f.stripe_price_id||'')}">
+       <label>${t('f_sk')} <span style="color:var(--faint)">(${f.has_stripe_secret?t('secret_set'):t('secret_unset')} · ${t('leave_blank')})</span></label><input id="ed-sk" type="password" placeholder="sk_live_…">
+       <label>${t('f_whsec')} <span style="color:var(--faint)">(${f.has_stripe_webhook?t('secret_set'):t('secret_unset')} · ${t('leave_blank')})</span></label><input id="ed-whsec" type="password" placeholder="whsec_…">
+       <label>${t('f_whurl')}</label><div class="copyrow"><div class="mono" id="ed-whurlv">${esc(whUrl)}</div><button class="btn ghost" onclick="App.copyEl('ed-whurlv')">${icon('copy')}</button></div>`:''}
+     <div style="display:flex;gap:8px;margin-top:18px">
+       <button class="btn" id="ed-save" onclick="App.saveFunnel('${id||''}')">${isNew?t('create'):t('save')}</button>
+       <button class="btn ghost" onclick="App.closeDrawer()">${t('cancel')}</button>
+       ${!isNew?`<div style="flex:1"></div><button class="btn danger" onclick="App.deleteFunnel('${id}')">${t('del')}</button>`:''}
+     </div>
+     <div class="err" id="ed-err"></div>`;
+   $('overlay').classList.add('show');$('drawer').classList.add('show');refreshIcons();
+ }
+ async function saveFunnel(id){
+   const errEl=$('ed-err');errEl.textContent='';
+   const btn=$('ed-save');const orig=btn?btn.textContent:'';
+   if(btn){btn.classList.add('busy');btn.textContent=t('saving');}
+   try{
+     if(!id){
+       const body={name:$('ed-name').value.trim(),type:_newType,slug:$('ed-slug').value.trim()};
+       await api('funnels',{method:'POST',body:JSON.stringify(body)});
+       toast(t('created'),'ok');
+     }else{
+       const body={name:$('ed-name').value.trim(),slug:$('ed-slug').value.trim(),status:$('ed-status').value,
+         post_purchase_url:$('ed-post').value.trim(),config:$('ed-config').value,
+         stripe_publishable_key:$('ed-pk').value.trim(),stripe_price_id:$('ed-price').value.trim()};
+       if($('ed-sk').value)body.stripe_secret_key=$('ed-sk').value;
+       if($('ed-whsec').value)body.stripe_webhook_secret=$('ed-whsec').value;
+       await api('funnels/'+id,{method:'PATCH',body:JSON.stringify(body)});
+       toast(t('saved'),'ok');
+     }
+     closeDrawer();loadFunnels();
+   }catch(e){
+     if(btn){btn.classList.remove('busy');btn.textContent=orig;}
+     errEl.textContent=String(e.message);toast(String(e.message),'bad');
+   }
+ }
+ async function deleteFunnel(id){
+   if(!confirm('Delete this funnel? Leads are kept but it will stop serving.'))return;
+   try{await api('funnels/'+id,{method:'DELETE'});toast(t('deleted'),'ok');}catch(e){toast(String(e.message),'bad');return;}
+   closeDrawer();if(funnelId===id)funnelId='';loadFunnels();refresh();
+ }
+
+ // ── Visual builder ──
+ let _b={id:null,slug:'',type:'quiz',screens:[],config:{},sel:0,ready:false,dirty:false};
+ const SCR_ICON={landing:'flag',single:'circle-dot',multi:'list-checks',grid:'layout-grid',slider:'sliders-horizontal',text:'type',bridge:'image',video:'play',loading:'loader',profile:'user',imc:'activity',offer:'tag',success:'party-popper'};
+ const SCHEMA={
+   landing:[['headline','Headline'],['headlineAccent','Accent'],['sub','Subtitle','ta'],['image','Image URL'],['alertTitle','Alert title'],['alertBody','Alert body','ta'],['cta','Button']],
+   single:[['question','Question'],['sub','Subtitle'],['__options']],
+   multi:[['question','Question'],['sub','Subtitle'],['__options']],
+   grid:[['question','Question'],['__options']],
+   slider:[['question','Question'],['sub','Subtitle'],['unit','Unit'],['min','Min','n'],['max','Max','n'],['default','Default','n'],['step','Step','n'],['infoTitle','Info title'],['infoBody','Info body','ta']],
+   text:[['question','Question'],['sub','Subtitle'],['__fields'],['privacyNote','Privacy note','ta'],['cta','Button']],
+   bridge:[['headline','Headline'],['body','Body','ta'],['bodyExtra','Extra body','ta'],['image','Image URL'],['cta','Button']],
+   video:[['headline','Headline'],['sub','Subtitle'],['videoUrl','Video URL'],['body','Body','ta'],['cta','Button']],
+   loading:[['headline','Headline'],['__steps']],
+   profile:[['headline','Heading'],['cta','Button']],
+   imc:[['cta','Button']],
+   offer:[['__config']],
+   success:[],
+ };
+ const PALETTE=['single','multi','grid','slider','text','bridge','video','landing','loading','offer','imc','profile'];
+ function newScreen(type){
+   const k='q'+Math.random().toString(36).slice(2,7);
+   const o=(l)=>({value:l.toLowerCase().replace(/\s+/g,'_'),label:l,icon:'circle'});
+   const m={
+     landing:{type,headline:'Headline',headlineAccent:'Accent',sub:'Subtitle',cta:'Start'},
+     single:{type,key:k,question:'Your {question}?',options:[o('Option A'),o('Option B')]},
+     multi:{type,key:k,question:'Pick {options}',options:[o('Option A'),o('Option B')]},
+     grid:{type,key:k,question:'Choose',options:[{value:'a',label:'Option A',img:''},{value:'b',label:'Option B',img:''}]},
+     slider:{type,key:k,question:'Pick a value',unit:'kg',min:40,max:150,default:70,step:1},
+     text:{type,key:'email',question:'Your {email}?',fields:[{key:'email',label:'Email',placeholder:'you@email.com',type:'email',required:true}],cta:'Continue',isLeadCapture:true},
+     bridge:{type,headline:'Headline',body:'Body text',cta:'Continue'},
+     video:{type,key:'vsl',headline:'Watch this',videoUrl:'',cta:'Continue'},
+     loading:{type,headline:'Loading...',steps:['Analyzing','Preparing'],duration:2500},
+     profile:{type,headline:'Your profile',cta:'Continue'},
+     imc:{type,cta:'Continue'},offer:{type},success:{type},
+   };
+   return m[type]||{type};
+ }
+
+ async function openBuilder(id){
+   closeDrawer();
+   const f=await api('funnels/'+id);
+   _b={id,slug:f.slug,type:f.type,screens:(f.config&&f.config.screens)||[],config:(f.config&&f.config.config)||{},sel:0,ready:false,dirty:false};
+   $('bld-name').value=f.name||'';
+   $('bld-open').href=location.origin+'/?f='+f.slug;
+   $('bld-palette').innerHTML=PALETTE.map(ty=>`<button onclick="App.builderAdd('${ty}')">${icon(SCR_ICON[ty]||'square')} ${ty}</button>`).join('');
+   renderScreens();renderProps();
+   $('bld-frame').src=location.origin+'/?f='+f.slug+'&preview=1&t='+Date.now();
+   $('builder').classList.remove('hidden');applyI18n();refreshIcons();
+ }
+ function closeBuilder(){
+   if(_b.dirty&&!confirm('Discard unsaved changes?'))return;
+   $('builder').classList.add('hidden');$('bld-frame').src='about:blank';_b.ready=false;loadFunnels();
+ }
+ function pushPreview(){const fr=$('bld-frame');if(fr&&fr.contentWindow&&_b.ready)fr.contentWindow.postMessage({type:'qf-preview',screens:_b.screens,config:_b.config,index:_b.sel},'*');}
+ window.addEventListener('message',e=>{if((e.data||{}).type==='qf-preview-ready'){_b.ready=true;pushPreview();}});
+
+ function scrLabel(s){return s.question||s.headline||s.cta||s.type;}
+ function renderScreens(){
+   $('bld-screens').innerHTML=_b.screens.map((s,i)=>`<div class="scr${i===_b.sel?' sel':''}" draggable="true" data-i="${i}" onclick="App.builderSelect(${i})">
+     <span class="gr">${icon('grip-vertical')}</span><span class="si">${icon(SCR_ICON[s.type]||'square')}</span>
+     <span class="sl">${esc(scrLabel(s))}<br><small>${esc(s.type)}</small></span>
+     <span class="sx" onclick="event.stopPropagation();App.builderDelete(${i})">${icon('trash-2')}</span></div>`).join('')||'<div class="empty">—</div>';
+   bindDnd('bld-screens','scr','i',(from,to)=>{const a=_b.screens;const[m]=a.splice(from,1);a.splice(to,0,m);_b.sel=to;});
+   refreshIcons();
+ }
+ function bindDnd(containerId,rowClass,attr,move){
+   let from=null;const c=$(containerId);if(!c)return;
+   c.querySelectorAll('.'+rowClass).forEach(row=>{
+     row.addEventListener('dragstart',()=>{from=+row.dataset[attr];row.classList.add('drag');});
+     row.addEventListener('dragend',()=>row.classList.remove('drag'));
+     row.addEventListener('dragover',e=>e.preventDefault());
+     row.addEventListener('drop',e=>{e.preventDefault();const to=+row.dataset[attr];if(from==null||from===to)return;move(from,to);_b.dirty=true;renderScreens();renderProps();pushPreview();from=null;});
+   });
+ }
+ function builderSelect(i){_b.sel=i;renderScreens();renderProps();pushPreview();}
+ function builderAdd(type){_b.screens.splice(_b.sel+1,0,newScreen(type));_b.sel=Math.min(_b.sel+1,_b.screens.length-1);_b.dirty=true;renderScreens();renderProps();pushPreview();}
+ function builderDelete(i){if(_b.screens.length<=1){toast('Keep at least one screen','bad');return;}_b.screens.splice(i,1);if(_b.sel>=_b.screens.length)_b.sel=_b.screens.length-1;_b.dirty=true;renderScreens();renderProps();pushPreview();}
+
+ function renderProps(){
+   const s=_b.screens[_b.sel],el=$('bld-props');
+   if(!s){el.innerHTML=`<div class="empty">${t('b_select')}</div>`;return;}
+   let h=`<div style="font-size:12px;color:var(--faint);margin-bottom:8px">${esc(s.type)}${s.key?' · '+esc(s.key):''}</div>`;
+   (SCHEMA[s.type]||[]).forEach(([key,label,kind])=>{
+     if(key==='__options'){h+=optionsEditor(s);return;}
+     if(key==='__fields'){h+=fieldsEditor(s);return;}
+     if(key==='__steps'){h+=stepsEditor(s);return;}
+     if(key==='__config'){h+=configEditor();return;}
+     const val=s[key]==null?'':s[key];
+     h+=kind==='ta'
+       ? `<label>${label}</label><textarea rows="2" oninput="App.bset('${key}',this.value)">${esc(val)}</textarea>`
+       : `<label>${label}</label><input type="${kind==='n'?'number':'text'}" value="${esc(val)}" oninput="App.bset('${key}',this.value${kind==='n'?',1':''})">`;
+   });
+   el.innerHTML=h;bindOptDnd();refreshIcons();
+ }
+ function bset(key,val,num){const s=_b.screens[_b.sel];if(!s)return;s[key]=num?(val===''?undefined:Number(val)):val;_b.dirty=true;
+   const lbl=$('bld-screens').querySelector('.scr.sel .sl');if(lbl){lbl.innerHTML=esc(scrLabel(s))+'<br><small>'+esc(s.type)+'</small>';}pushPreview();}
+
+ function optionsEditor(s){
+   const opts=s.options||(s.options=[]);const img=s.type==='grid';
+   let h=`<label>${t('b_option')}s</label><div id="b-opts">`;
+   opts.forEach((o,i)=>{h+=`<div class="opt-ed" draggable="true" data-oi="${i}">
+     <div class="oh"><span class="gr">${icon('grip-vertical')}</span><span class="ol">#${i+1}</span><span class="sx" onclick="App.boptDel(${i})">${icon('x')}</span></div>
+     <input placeholder="Label" value="${esc(o.label||'')}" oninput="App.boptSet(${i},'label',this.value)">
+     <input placeholder="Value" value="${esc(o.value||'')}" oninput="App.boptSet(${i},'value',this.value)">
+     ${img?`<input placeholder="Image URL" value="${esc(o.img||'')}" oninput="App.boptSet(${i},'img',this.value)">`:`<input placeholder="Icon (lucide name)" value="${esc(o.icon||'')}" oninput="App.boptSet(${i},'icon',this.value)">`}</div>`;});
+   return h+`</div><button class="btn ghost addbtn" onclick="App.boptAdd()">${t('b_addopt')}</button>`;
+ }
+ function bindOptDnd(){bindGeneric('b-opts','opt-ed','oi',(from,to)=>{const a=_b.screens[_b.sel].options;const[m]=a.splice(from,1);a.splice(to,0,m);});}
+ function bindGeneric(containerId,rowClass,attr,move){let from=null;const c=$(containerId);if(!c)return;
+   c.querySelectorAll('.'+rowClass).forEach(row=>{row.addEventListener('dragstart',()=>{from=+row.dataset[attr];row.classList.add('drag');});
+     row.addEventListener('dragend',()=>row.classList.remove('drag'));row.addEventListener('dragover',e=>e.preventDefault());
+     row.addEventListener('drop',e=>{e.preventDefault();const to=+row.dataset[attr];if(from==null||from===to)return;move(from,to);_b.dirty=true;renderProps();pushPreview();from=null;});});}
+ function boptSet(i,k,v){_b.screens[_b.sel].options[i][k]=v;_b.dirty=true;pushPreview();}
+ function boptAdd(){const s=_b.screens[_b.sel];(s.options=s.options||[]).push(s.type==='grid'?{value:'opt',label:'Option',img:''}:{value:'opt',label:'Option',icon:'circle'});_b.dirty=true;renderProps();pushPreview();}
+ function boptDel(i){_b.screens[_b.sel].options.splice(i,1);_b.dirty=true;renderProps();pushPreview();}
+
+ function fieldsEditor(s){
+   const fs=s.fields||(s.fields=[]);let h=`<label>${t('b_field')}s</label>`;
+   fs.forEach((f,i)=>{h+=`<div class="opt-ed"><div class="oh"><span class="ol">#${i+1}</span><span class="sx" onclick="App.bfDel(${i})">${icon('x')}</span></div>
+     <input placeholder="Label" value="${esc(f.label||'')}" oninput="App.bfSet(${i},'label',this.value)">
+     <input placeholder="Key" value="${esc(f.key||'')}" oninput="App.bfSet(${i},'key',this.value)">
+     <input placeholder="Placeholder" value="${esc(f.placeholder||'')}" oninput="App.bfSet(${i},'placeholder',this.value)"></div>`;});
+   return h+`<button class="btn ghost addbtn" onclick="App.bfAdd()">+ ${t('b_field')}</button>`;
+ }
+ function bfSet(i,k,v){_b.screens[_b.sel].fields[i][k]=v;_b.dirty=true;pushPreview();}
+ function bfAdd(){const s=_b.screens[_b.sel];(s.fields=s.fields||[]).push({key:'field',label:'Field',placeholder:'',type:'text',required:true});_b.dirty=true;renderProps();pushPreview();}
+ function bfDel(i){_b.screens[_b.sel].fields.splice(i,1);_b.dirty=true;renderProps();pushPreview();}
+
+ function stepsEditor(s){
+   const st=s.steps||(s.steps=[]);let h=`<label>${t('b_step')}s</label>`;
+   st.forEach((x,i)=>{h+=`<div style="display:flex;gap:6px;margin-bottom:5px"><input value="${esc(x)}" oninput="App.bstepSet(${i},this.value)"><button class="btn ghost icon" onclick="App.bstepDel(${i})">${icon('x')}</button></div>`;});
+   return h+`<button class="btn ghost addbtn" onclick="App.bstepAdd()">${t('b_addstep')}</button>`;
+ }
+ function bstepSet(i,v){_b.screens[_b.sel].steps[i]=v;_b.dirty=true;pushPreview();}
+ function bstepAdd(){const s=_b.screens[_b.sel];(s.steps=s.steps||[]).push('Step');_b.dirty=true;renderProps();pushPreview();}
+ function bstepDel(i){_b.screens[_b.sel].steps.splice(i,1);_b.dirty=true;renderProps();pushPreview();}
+
+ function configEditor(){const c=_b.config;
+   return `<label>Product name</label><input value="${esc(c.productName||'')}" oninput="App.bcfg('productName',this.value)">
+     <label>Price</label><input type="number" value="${esc(c.productPrice||'')}" oninput="App.bcfg('productPrice',this.value,1)">
+     <label>Currency</label><input value="${esc(c.currency||'')}" oninput="App.bcfg('currency',this.value)">`;}
+ function bcfg(k,v,num){_b.config[k]=num?Number(v):v;_b.dirty=true;pushPreview();}
+
+ async function saveBuilder(){
+   const btn=$('bld-save'),o=btn.textContent;btn.classList.add('busy');btn.textContent=t('saving');
+   try{await api('funnels/'+_b.id,{method:'PATCH',body:JSON.stringify({name:$('bld-name').value.trim(),config:{config:_b.config,screens:_b.screens}})});
+     _b.dirty=false;toast(t('b_built'),'ok');}catch(e){toast(String(e.message),'bad');}
+   btn.classList.remove('busy');btn.textContent=o;
+ }
+
+ // ── Stats ──
+ function loadStats(){
+   let p='crm/stats?days='+$('range').value;if(funnelId)p+='&funnelId='+funnelId;
+   api(p).then(s=>{_stats=s;renderStats(s);$('updated').textContent=`${t('auto')} · ${t('updated')} ${new Date().toLocaleTimeString(lang==='pt'?'pt-PT':'en-GB')}`;}).catch(()=>{});
+ }
+ function renderStats(s){renderKpis(s);renderFunnel(s);renderUtm(s);renderDropoff(s);renderSpark(s);
+   $('dropoff-card').classList.toggle('hidden',!s.scopedToFunnel&&!s.questions.length);}
+ function renderKpis(s){
+   const captured=(s.funnel.find(f=>f.key==='lead')||{}).count||0,purchased=s.byState.purchase_completed||0;
+   const checkouts=(s.byState.checkout_initiated||0)+(s.byState.checkout_abandoned||0);
+   const cards=[{v:s.total,l:t('kpi_total'),ic:'users'},{v:captured,l:t('kpi_captured'),ic:'mail',d:`<b>${s.conversion.lead_rate}%</b> ${t('of_total')}`},
+     {v:purchased,l:t('kpi_purchases'),ic:'credit-card',d:`<b>${s.conversion.purchase_rate}%</b> ${t('of_total')}`},{v:checkouts,l:t('kpi_checkouts'),ic:'shopping-cart'}];
+   $('kpis').innerHTML=cards.map(k=>`<div class="card kpi"><div class="ico">${icon(k.ic)}</div><div class="v">${fmtN(k.v)}</div><div class="l">${k.l}</div>${k.d?`<div class="d">${k.d}</div>`:''}</div>`).join('');
+   refreshIcons();
+ }
+ function renderFunnel(s){
+   const max=s.funnel[0].count||1;
+   $('funnel').innerHTML=s.funnel.map((f,i)=>`<div class="frow"><div class="top"><span>${t('st_'+f.key)}</span><span class="n">${fmtN(f.count)} · ${f.pct}%</span></div><div class="bar"><i class="${i===s.funnel.length-1?'alt':''}" style="width:${Math.max(2,(f.count/max)*100)}%"></i></div></div>`).join('');
+   const c=s.conversion;$('chips').innerHTML=[['cv_lead',c.lead_rate],['cv_offer',c.offer_rate],['cv_checkout',c.checkout_rate],['cv_purchase',c.purchase_rate]].map(([k,v])=>`<div class="chip"><div class="cv">${v}%</div><div class="cl">${t(k)}</div></div>`).join('');
+ }
+ function renderUtm(s){$('utm').innerHTML=s.utm.length?s.utm.map(u=>`<div class="liner"><span>${esc(u.source)}</span><span class="muted">${fmtN(u.leads)} ${t('leads')} · ${fmtN(u.purchases)} ${t('sales')}</span></div>`).join(''):`<div class="empty">${t('no_data')}</div>`;}
+ function renderDropoff(s){if(!s.questions.length){$('dropoff').innerHTML=`<div class="empty">${t('no_answers')}</div>`;return;}const max=s.questions[0]?.users||1;$('dropoff').innerHTML=s.questions.map(q=>`<div class="frow"><div class="top"><span>${esc((QLABELS[lang]&&QLABELS[lang][q.key])||q.key)}</span><span class="n">${fmtN(q.users)}</span></div><div class="barmini"><i style="width:${Math.max(2,(q.users/max)*100)}%"></i></div></div>`).join('');}
+ function renderSpark(s){const days=s.daily||[];if(!days.length){$('spark').innerHTML=`<div class="empty" style="width:100%">${t('no_data')}</div>`;return;}const max=Math.max(...days.map(d=>d.n),1);$('spark').innerHTML=days.map(d=>`<div class="b" title="${d.day}: ${d.n}" style="height:${Math.max(4,(d.n/max)*100)}%"></div>`).join('');}
+
+ // ── Leads ──
+ function loadLeads(off){if(off!=null)offset=off;
+   let p='crm/leads?limit='+limit+'&offset='+offset;if(funnelId)p+='&funnelId='+funnelId;
+   const st=$('f-state').value,q=$('f-q').value.trim();if(st)p+='&state='+st;if(q)p+='&q='+encodeURIComponent(q);
+   api(p).then(d=>{total=d.total;_leads=d;renderRows(d);}).catch(()=>{});
+ }
+ function renderRows(d){
+   $('rows').innerHTML=(d.results||[]).map(r=>`<tr onclick="App.openLead('${esc(r.user_id)}')">
+     <td class="who"><b>${r.email?esc(r.email):'<span class="muted">'+t('anon')+'</span>'}</b><div class="sub">${esc(r.nome||'')}</div></td>
+     <td><span class="pill s-${r.funnel_state}">${STATE_LABEL[lang][r.funnel_state]||r.funnel_state}</span></td>
+     <td>${r.imc??'—'}</td><td>${esc(r.objetivo||'—')}</td><td>${esc(r.utm_source||t('direct'))}</td>
+     <td class="muted">${fmtDate(r.created_at)}</td><td class="muted">${fmtDate(r.updated_at)}</td></tr>`).join('')
+     ||`<tr><td colspan="7" class="empty">${t('no_results')}</td></tr>`;
+   const from=total?offset+1:0;$('page-info').textContent=`${from}–${Math.min(offset+limit,total)} ${t('of')} ${fmtN(total)}`;
+   $('prev').disabled=offset===0;$('next').disabled=offset+limit>=total;
+ }
+ function page(dir){const n=offset+dir*limit;if(n<0||n>=total)return;loadLeads(n);}
+ function openLead(userId){
+   api('crm/leads?userId='+encodeURIComponent(userId)+(funnelId?'&funnelId='+funnelId:'')).then(l=>{
+     const q=l.quizData||{};
+     const rows=[['d_email',l.email],['d_name',l.nome],['d_state',`<span class="pill s-${l.funnel_state}">${STATE_LABEL[lang][l.funnel_state]||l.funnel_state}</span>`],
+       ['d_uid',l.user_id],['d_imc',l.imc],['d_goal',l.objetivo],['d_cur',q.peso_atual?q.peso_atual+' kg':null],['d_target',q.peso_objetivo?q.peso_objetivo+' kg':null],
+       ['d_height',q.altura?q.altura+' cm':null],['d_src',l.utm_source],['d_med',l.utm_medium],['d_camp',l.utm_campaign],['d_country',l.ip_country],['d_ref',l.referrer],
+       ['d_created',fmtDate(l.created_at)],['d_lead_at',fmtDate(l.lead_captured_at)],['d_checkout_at',fmtDate(l.checkout_initiated_at)],['d_purchase_at',fmtDate(l.purchased_at)]
+     ].filter(r=>r[1]!=null&&r[1]!==''&&r[1]!=='—');
+     const tl=(l.events||[]).map(e=>`<div class="ev"><div>${esc(e.event)}${e.props?' <span class="muted">'+esc(JSON.stringify(e.props))+'</span>':''}</div><div class="t">${fmtDate(e.ts)}</div></div>`).join('');
+     $('drawer').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:start"><div><h3>${esc(l.email||t('anon'))}</h3><div class="muted">${esc(l.nome||'')}</div></div><button class="btn ghost icon" onclick="App.closeDrawer()">✕</button></div><div class="kv">${rows.map(r=>`<div class="k">${t(r[0])}</div><div class="v">${r[1]}</div>`).join('')}</div><h2 style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 10px">${t('timeline')}</h2><div class="tl">${tl||`<div class="muted">${t('no_events')}</div>`}</div>`;
+     $('overlay').classList.add('show');$('drawer').classList.add('show');
+   }).catch(()=>{});
+ }
+ function closeDrawer(){$('overlay').classList.remove('show');$('drawer').classList.remove('show');}
+ function exportCsv(){
+   let url='/api/crm/leads?format=csv';if(funnelId)url+='&funnelId='+funnelId;
+   const st=$('f-state').value,q=$('f-q').value.trim();if(st)url+='&state='+st;if(q)url+='&q='+encodeURIComponent(q);
+   window.open(url,'_blank');
+ }
+
+ // helpers
+ let _newType='quiz';
+ function icon(n){return '<i data-lucide="'+n+'"></i>';}
+ function refreshIcons(){if(window.lucide&&lucide.createIcons)lucide.createIcons();}
+ function toast(msg,kind){const c=$('toasts');if(!c)return;const el=document.createElement('div');el.className='toast '+(kind||'');
+   el.innerHTML=(kind==='ok'?icon('check'):kind==='bad'?icon('alert-triangle'):icon('info'))+'<span>'+esc(msg)+'</span>';
+   c.appendChild(el);refreshIcons();setTimeout(()=>{el.style.transition='opacity .3s';el.style.opacity='0';setTimeout(()=>el.remove(),300);},2600);}
+ function copyText(text){navigator.clipboard.writeText(text).then(()=>toast(t('copied'),'ok')).catch(()=>toast(text));}
+ function copyEl(id){const e=$(id);if(e)copyText(e.textContent.trim());}
+ function pickTemplate(type,el){_newType=type;document.querySelectorAll('.tpick .opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');}
+ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+ function fmtN(n){return (n==null?0:n).toLocaleString(lang==='pt'?'pt-PT':'en-US');}
+ function fmtDate(s){if(!s)return '—';const d=new Date(s);return isNaN(d)?'—':d.toLocaleString(lang==='pt'?'pt-PT':'en-GB',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});}
+
+ // boot
+ (function(){
+   const stored=localStorage.getItem(LANG_KEY);lang=stored||((navigator.language||'en').toLowerCase().startsWith('pt')?'pt':'en');
+   applyI18n();
+   document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));
+   $('au-pass').addEventListener('keydown',e=>{if(e.key==='Enter')submitAuth();});
+   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('app').classList.contains('hidden')&&view==='analytics')refresh();});
+   api('auth/me').then(()=>{$('auth').classList.add('hidden');$('app').classList.remove('hidden');boot();}).catch(()=>showAuth());
+ })();
+
+ return {submitAuth,toggleAuthMode,logout,showView,refresh,loadStats,loadLeads,page,openLead,closeDrawer,exportCsv,
+   onFunnelChange,openFunnelEditor,saveFunnel,deleteFunnel,setLang,copyText,copyEl,pickTemplate,
+   openBuilder,closeBuilder,builderSelect,builderAdd,builderDelete,bset,boptSet,boptAdd,boptDel,
+   bfSet,bfAdd,bfDel,bstepSet,bstepAdd,bstepDel,bcfg,saveBuilder};
+})();
+</script>
+</body>
+</html>

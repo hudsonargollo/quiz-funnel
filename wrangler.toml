@@ -1,0 +1,38 @@
+name = "quiz-funnel-app"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# Static funnel + dashboard assets served by the Worker.
+[assets]
+directory = "public"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+# Worker code runs first for the API and the root (host-based routing + config injection).
+run_worker_first = ["/api/*", "/"]
+
+[[kv_namespaces]]
+binding = "QUIZ_CRM"
+id = "d96ceb3619b94fdfa7b0685b407a7ea7"
+preview_id = "35b62c4618d2452a9f4364b2596bfadd"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "quiz-funnel-crm"
+database_id = "e59571a7-af41-4e9c-9106-51ffebbd1035"
+
+[vars]
+ENVIRONMENT = "production"
+# Set to your platform domain (e.g. "myfunnels.app") once it's on Cloudflare.
+# Until then the Worker falls back to ?f=<slug> for funnel preview on *.workers.dev.
+PLATFORM_DOMAIN = ""
+
+# Routes (enable after PLATFORM_DOMAIN is a Cloudflare zone):
+# [[routes]]
+# pattern = "app.myfunnels.app/*"
+# zone_name = "myfunnels.app"
+# [[routes]]
+# pattern = "*.myfunnels.app/*"
+# zone_name = "myfunnels.app"
+
+# Secrets (set via: wrangler secret put NAME):
+#   SECRETS_KEY  — base64 32-byte AES key for encrypting tenant Stripe keys
