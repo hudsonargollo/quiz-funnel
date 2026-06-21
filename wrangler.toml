@@ -25,6 +25,10 @@ ENVIRONMENT = "production"
 # Set to your platform domain (e.g. "myfunnels.app") once it's on Cloudflare.
 # Until then the Worker falls back to ?f=<slug> for funnel preview on *.workers.dev.
 PLATFORM_DOMAIN = ""
+# Cloudflare for SaaS (custom domains). Set once a platform domain/zone exists:
+SAAS_ZONE_ID = ""          # the SaaS zone id that holds custom hostnames
+SAAS_CNAME_TARGET = ""     # CNAME target customers point their domain at
+# CF_API_TOKEN is a secret: wrangler secret put CF_API_TOKEN  (Custom Hostnames edit scope)
 
 # Routes (enable after PLATFORM_DOMAIN is a Cloudflare zone):
 # [[routes]]

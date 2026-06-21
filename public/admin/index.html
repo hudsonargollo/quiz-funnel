@@ -320,6 +320,8 @@ const I18N={
    tpl_vsl_t:'VSL → checkout',tpl_vsl_d:'Video sales letter into a checkout.',
    b_screens:'Screens',b_add:'Add screen',b_props:'Properties',b_builder:'Visual builder',b_select:'Select a screen to edit it.',
    b_option:'Option',b_addopt:'+ Add option',b_field:'Field',b_step:'Step',b_addstep:'+ Add step',b_built:'Funnel saved',
+   dom_title:'Custom domain',dom_add:'Connect',dom_ph:'funnel.yourdomain.com',dom_cname:'Point a CNAME record to:',
+   dom_none:'No custom domain yet.',dom_notcfg:'Custom domains activate once your platform domain is configured on Cloudflare.',dom_connected:'Domain connected',dom_removed:'Domain removed',
    f_type:'Type',f_slug:'Slug (subdomain)',f_status:'Status',f_url:'Public URL',f_config:'Config (JSON)',
    f_post:'Post-purchase URL',stripe:'Stripe (this funnel)',f_pk:'Publishable key',f_price:'Price ID',f_sk:'Secret key',f_whsec:'Webhook secret',
    f_whurl:'Webhook URL (paste into Stripe)',secret_set:'•••• set',secret_unset:'not set',leave_blank:'leave blank to keep',
@@ -345,6 +347,8 @@ const I18N={
    tpl_vsl_t:'VSL → checkout',tpl_vsl_d:'Vídeo de vendas até ao checkout.',
    b_screens:'Ecrãs',b_add:'Adicionar ecrã',b_props:'Propriedades',b_builder:'Editor visual',b_select:'Selecione um ecrã para editar.',
    b_option:'Opção',b_addopt:'+ Adicionar opção',b_field:'Campo',b_step:'Passo',b_addstep:'+ Adicionar passo',b_built:'Funil guardado',
+   dom_title:'Domínio personalizado',dom_add:'Ligar',dom_ph:'funil.seudominio.com',dom_cname:'Aponte um registo CNAME para:',
+   dom_none:'Sem domínio personalizado.',dom_notcfg:'Os domínios personalizados ativam quando o domínio da plataforma estiver configurado no Cloudflare.',dom_connected:'Domínio ligado',dom_removed:'Domínio removido',
    f_type:'Tipo',f_slug:'Slug (subdomínio)',f_status:'Estado',f_url:'URL pública',f_config:'Configuração (JSON)',
    f_post:'URL pós-compra',stripe:'Stripe (este funil)',f_pk:'Chave publicável',f_price:'Price ID',f_sk:'Chave secreta',f_whsec:'Webhook secret',
    f_whurl:'URL do webhook (colar no Stripe)',secret_set:'•••• definida',secret_unset:'não definida',leave_blank:'deixe vazio para manter',
@@ -486,7 +490,10 @@ const App=(()=>{
        <label>${t('f_price')}</label><input id="ed-price" value="${esc(f.stripe_price_id||'')}">
        <label>${t('f_sk')} <span style="color:var(--faint)">(${f.has_stripe_secret?t('secret_set'):t('secret_unset')} · ${t('leave_blank')})</span></label><input id="ed-sk" type="password" placeholder="sk_live_…">
        <label>${t('f_whsec')} <span style="color:var(--faint)">(${f.has_stripe_webhook?t('secret_set'):t('secret_unset')} · ${t('leave_blank')})</span></label><input id="ed-whsec" type="password" placeholder="whsec_…">
-       <label>${t('f_whurl')}</label><div class="copyrow"><div class="mono" id="ed-whurlv">${esc(whUrl)}</div><button class="btn ghost" onclick="App.copyEl('ed-whurlv')">${icon('copy')}</button></div>`:''}
+       <label>${t('f_whurl')}</label><div class="copyrow"><div class="mono" id="ed-whurlv">${esc(whUrl)}</div><button class="btn ghost" onclick="App.copyEl('ed-whurlv')">${icon('copy')}</button></div>
+       <h2 style="margin:20px 0 0;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">${t('dom_title')}</h2>
+       <div id="ed-domains" style="margin-top:8px"></div>
+       <div class="copyrow" style="margin-top:8px"><input id="ed-domain" placeholder="${t('dom_ph')}"><button class="btn" onclick="App.addDomain('${id}')">${t('dom_add')}</button></div>`:''}
      <div style="display:flex;gap:8px;margin-top:18px">
        <button class="btn" id="ed-save" onclick="App.saveFunnel('${id||''}')">${isNew?t('create'):t('save')}</button>
        <button class="btn ghost" onclick="App.closeDrawer()">${t('cancel')}</button>
@@ -494,6 +501,29 @@ const App=(()=>{
      </div>
      <div class="err" id="ed-err"></div>`;
    $('overlay').classList.add('show');$('drawer').classList.add('show');refreshIcons();
+   if(!isNew)loadDomains(id);
+ }
+ async function loadDomains(id){
+   const el=$('ed-domains');if(!el)return;
+   try{
+     const d=await api('domains?funnelId='+id);
+     const cname=d.cnameTarget?`<div class="mono" style="margin-bottom:8px">${t('dom_cname')} <b>${esc(d.cnameTarget)}</b></div>`:'';
+     const note=d.configured?'':`<div style="font-size:12px;color:var(--amber);margin-bottom:8px">${t('dom_notcfg')}</div>`;
+     const list=(d.results||[]).map(x=>`<div class="fcard" style="padding:10px 12px;margin-bottom:8px">
+       <div class="fmeta"><div class="fn">${esc(x.hostname)}</div><div class="fstats"><span class="pill s-${x.status==='active'?'published':'draft'}">${esc(x.status)}</span>${x.ssl_status?'<span>SSL: '+esc(x.ssl_status)+'</span>':''}</div></div>
+       <button class="btn danger" onclick="App.delDomain('${x.id}','${id}')">${icon('trash-2')}</button></div>`).join('')||`<div class="empty" style="padding:10px">${t('dom_none')}</div>`;
+     el.innerHTML=note+cname+list;refreshIcons();
+   }catch(e){el.innerHTML='';}
+ }
+ async function addDomain(id){
+   const host=$('ed-domain').value.trim();if(!host)return;
+   try{await api('domains',{method:'POST',body:JSON.stringify({funnelId:id,hostname:host})});
+     $('ed-domain').value='';toast(t('dom_connected'),'ok');loadDomains(id);}
+   catch(e){toast(String(e.message),'bad');}
+ }
+ async function delDomain(domId,funnelId){
+   try{await api('domains/'+domId,{method:'DELETE'});toast(t('dom_removed'),'ok');loadDomains(funnelId);}
+   catch(e){toast(String(e.message),'bad');}
  }
  async function saveFunnel(id){
    const errEl=$('ed-err');errEl.textContent='';
@@ -763,7 +793,7 @@ const App=(()=>{
  return {submitAuth,toggleAuthMode,logout,showView,refresh,loadStats,loadLeads,page,openLead,closeDrawer,exportCsv,
    onFunnelChange,openFunnelEditor,saveFunnel,deleteFunnel,setLang,copyText,copyEl,pickTemplate,
    openBuilder,closeBuilder,builderSelect,builderAdd,builderDelete,bset,boptSet,boptAdd,boptDel,
-   bfSet,bfAdd,bfDel,bstepSet,bstepAdd,bstepDel,bcfg,saveBuilder};
+   bfSet,bfAdd,bfDel,bstepSet,bstepAdd,bstepDel,bcfg,saveBuilder,loadDomains,addDomain,delDomain};
 })();
 </script>
 </body>

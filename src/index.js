@@ -7,7 +7,7 @@
 import { handleAuth } from './api/authapi.js';
 import { handlePublic } from './api/public.js';
 import { handleAdmin } from './api/admin.js';
-import { resolveSurface, getFunnelBySlug, publicFunnel } from './_lib/funnels.js';
+import { resolveSurface, getFunnelBySlug, getSlugByHostname, publicFunnel } from './_lib/funnels.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -25,9 +25,14 @@ export default {
 
       // ── Root: dashboard vs funnel page ──
       if (path === '/' || path === '') {
+        // 1) custom domain → funnel (host override via ?host= for testing)
+        const host = url.searchParams.get('host') || url.hostname;
+        const domSlug = await getSlugByHostname(env.DB, host);
+        if (domSlug) return serveFunnel(env, url, domSlug, request);
+        // 2) platform subdomain / ?f= fallback, else dashboard
         const { surface, slug } = resolveSurface(url, env.PLATFORM_DOMAIN);
         if (surface === 'funnel') return serveFunnel(env, url, slug, request);
-        return serveAsset(env, '/admin/index.html', request); // dashboard
+        return serveAsset(env, '/admin/index.html', request);
       }
 
       // ── Everything else: static assets ──

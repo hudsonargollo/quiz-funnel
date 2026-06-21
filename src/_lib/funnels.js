@@ -31,6 +31,16 @@ export async function getFunnelBySlug(db, slug) {
   return db.prepare('SELECT * FROM funnels WHERE slug = ?').bind(slug).first();
 }
 
+/** Resolve a custom domain (hostname) to its funnel's slug, or null. */
+export async function getSlugByHostname(db, hostname) {
+  if (!hostname) return null;
+  const row = await db
+    .prepare('SELECT f.slug FROM domains d JOIN funnels f ON f.id = d.funnel_id WHERE d.hostname = ? LIMIT 1')
+    .bind(hostname.toLowerCase())
+    .first();
+  return row?.slug || null;
+}
+
 export async function getFunnelById(db, accountId, id) {
   return db.prepare('SELECT * FROM funnels WHERE account_id = ? AND id = ?').bind(accountId, id).first();
 }

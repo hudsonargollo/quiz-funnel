@@ -3,6 +3,8 @@ import { json, err } from '../_lib/http.js';
 import { getSession } from '../_lib/auth.js';
 import { rowToLead } from '../_lib/crm.js';
 import { listFunnels, createFunnel, updateFunnel, deleteFunnel, getFunnelById } from '../_lib/funnels.js';
+import { randomId } from '../_lib/crypto.js';
+import { isConfigured, cnameTarget, createCustomHostname, getCustomHostname, deleteCustomHostname } from '../_lib/cfsaas.js';
 
 export async function handleAdmin(request, env, path, url) {
   const db = env.DB;
@@ -41,6 +43,63 @@ export async function handleAdmin(request, env, path, url) {
       return r.error ? err(r.error, r.status) : json(r);
     }
     if (request.method === 'DELETE') return json(await deleteFunnel(db, acc, id));
+  }
+
+  // ── Custom domains ──
+  if (path === '/api/domains') {
+    if (request.method === 'GET') {
+      const fid = url.searchParams.get('funnelId');
+      const sql = fid
+        ? 'SELECT id, funnel_id, hostname, status, ssl_status, created_at FROM domains WHERE account_id = ? AND funnel_id = ? ORDER BY created_at DESC'
+        : 'SELECT id, funnel_id, hostname, status, ssl_status, created_at FROM domains WHERE account_id = ? ORDER BY created_at DESC';
+      const binds = fid ? [acc, fid] : [acc];
+      const r = await db.prepare(sql).bind(...binds).all();
+      return json({ results: r.results || [], cnameTarget: cnameTarget(env), configured: isConfigured(env) });
+    }
+    if (request.method === 'POST') {
+      const b = await request.json().catch(() => ({}));
+      const hostname = String(b.hostname || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+      if (!/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(hostname)) return err('Enter a valid domain', 400);
+      const f = await getFunnelById(db, acc, b.funnelId);
+      if (!f) return err('Funnel not found', 404);
+      const taken = await db.prepare('SELECT id FROM domains WHERE hostname = ?').bind(hostname).first();
+      if (taken) return err('That domain is already connected', 409);
+
+      const id = randomId('dom');
+      const ts = new Date().toISOString();
+      let cfId = null, status = 'pending', sslStatus = null;
+      if (isConfigured(env)) {
+        const r = await createCustomHostname(env, hostname);
+        if (!r.ok) return err(r.error || 'Could not provision domain', 502);
+        cfId = r.id; status = r.status || 'pending'; sslStatus = r.sslStatus || null;
+      }
+      await db.prepare(
+        'INSERT INTO domains (id, account_id, funnel_id, hostname, cf_hostname_id, status, ssl_status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)'
+      ).bind(id, acc, f.id, hostname, cfId, status, sslStatus, ts, ts).run();
+      return json({ id, hostname, status, cnameTarget: cnameTarget(env), configured: isConfigured(env) }, 201);
+    }
+  }
+  const dm = path.match(/^\/api\/domains\/([^/]+)$/);
+  if (dm) {
+    const id = dm[1];
+    const row = await db.prepare('SELECT * FROM domains WHERE account_id = ? AND id = ?').bind(acc, id).first();
+    if (!row) return err('Not found', 404);
+    if (request.method === 'GET') { // refresh status from Cloudflare
+      if (row.cf_hostname_id && isConfigured(env)) {
+        const r = await getCustomHostname(env, row.cf_hostname_id);
+        if (r.ok) {
+          await db.prepare('UPDATE domains SET status = ?, ssl_status = ?, updated_at = ? WHERE id = ?')
+            .bind(r.status === 'active' ? 'active' : 'pending', r.sslStatus || null, new Date().toISOString(), id).run();
+          return json({ status: r.status, ssl_status: r.sslStatus });
+        }
+      }
+      return json({ status: row.status, ssl_status: row.ssl_status });
+    }
+    if (request.method === 'DELETE') {
+      if (row.cf_hostname_id && isConfigured(env)) await deleteCustomHostname(env, row.cf_hostname_id);
+      await db.prepare('DELETE FROM domains WHERE account_id = ? AND id = ?').bind(acc, id).run();
+      return json({ ok: true });
+    }
   }
 
   // ── CRM: leads (list / detail / CSV) ──
