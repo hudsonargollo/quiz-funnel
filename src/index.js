@@ -1,13 +1,25 @@
 /**
  * Platform Worker — single entry point.
- * Routes by path (/api/*) and by Host (dashboard vs funnel subdomain).
- * Serves static assets from the [assets] binding; injects funnel config into
- * the funnel shell HTML at request time.
+ *
+ * Routing model (path-based on the platform host):
+ *   offers.clubemkt.digital/            → dashboard (public/admin/index.html)
+ *   offers.clubemkt.digital/<slug>      → funnel by slug (config injected server-side)
+ *   offers.clubemkt.digital/api/*       → API
+ *   offers.clubemkt.digital/css|js|…    → static assets
+ * Customers' own hostnames (Phase 2 custom domains) still map a whole host → one
+ * funnel via the `domains` table. Serves static assets from the [assets] binding;
+ * injects funnel config into the funnel shell HTML at request time.
  */
 import { handleAuth } from './api/authapi.js';
 import { handlePublic } from './api/public.js';
 import { handleAdmin } from './api/admin.js';
-import { resolveSurface, getFunnelBySlug, getSlugByHostname, publicFunnel } from './_lib/funnels.js';
+import { getFunnelBySlug, getSlugByHostname, publicFunnel } from './_lib/funnels.js';
+
+// First path segments that are real assets/endpoints, never funnel slugs.
+const RESERVED = new Set([
+  'api', 'admin', 'css', 'js', 'assets', 'privacidade',
+  'favicon.ico', 'robots.txt', 'sitemap.xml', 'index.html', '.well-known',
+]);
 
 export default {
   async fetch(request, env, ctx) {
@@ -23,20 +35,28 @@ export default {
         return handleAdmin(request, env, path, url); // /api/funnels, /api/crm/*
       }
 
-      // ── Root: dashboard vs funnel page ──
-      if (path === '/' || path === '') {
-        // 1) custom domain → funnel (host override via ?host= for testing)
-        const host = url.searchParams.get('host') || url.hostname;
+      const host = (url.searchParams.get('host') || url.hostname).toLowerCase();
+      const platform = (env.PLATFORM_DOMAIN || '').toLowerCase();
+      const isPlatform = platform && host === platform;
+
+      // ── Custom domains (Phase 2): a whole hostname maps to one funnel ──
+      if (!isPlatform) {
         const domSlug = await getSlugByHostname(env.DB, host);
         if (domSlug) return serveFunnel(env, url, domSlug, request);
-        // 2) platform subdomain / ?f= fallback, else dashboard
-        const { surface, slug } = resolveSurface(url, env.PLATFORM_DOMAIN);
-        if (surface === 'funnel') return serveFunnel(env, url, slug, request);
-        return serveAsset(env, '/admin/index.html', request);
+        // dev/preview convenience on workers.dev & unknown hosts: ?f=<slug>
+        const qf = url.searchParams.get('f');
+        if (qf) return serveFunnel(env, url, qf, request);
+        if (path === '/' || path === '') return serveAsset(env, '/admin/index.html', request);
+        return env.ASSETS.fetch(request);
       }
 
-      // ── Everything else: static assets ──
-      return env.ASSETS.fetch(request);
+      // ── Platform host: path-based routing ──
+      if (path === '/' || path === '') return serveAsset(env, '/admin/index.html', request);
+      const seg = path.split('/')[1];
+      // Reserved names and any path with a file extension → static asset.
+      if (RESERVED.has(seg) || seg.includes('.')) return env.ASSETS.fetch(request);
+      // Otherwise the first segment is a funnel slug (?f= still honored for preview).
+      return serveFunnel(env, url, url.searchParams.get('f') || seg, request);
     } catch (e) {
       console.error('Worker error:', e);
       return new Response('Internal error', { status: 500 });
@@ -55,9 +75,11 @@ async function serveAsset(env, assetPath, request) {
 async function serveFunnel(env, url, slug, request) {
   const preview = url.searchParams.has('preview');
   const f = await getFunnelBySlug(env.DB, slug);
-  if (!f || (!preview && f.status !== 'published')) {
-    // Unknown/unpublished funnel → shell without config (preview pushes config via postMessage)
-    return serveAsset(env, '/index.html', request);
+  if (!f || f.status !== 'published') {
+    // In preview the builder pushes config via postMessage, so serve the bare shell.
+    if (preview) return serveAsset(env, '/index.html', request);
+    // Otherwise an unknown/unpublished slug is a genuine 404.
+    return new Response('Funnel not found', { status: 404 });
   }
   const res = await serveAsset(env, '/index.html', request);
   let html = await res.text();

@@ -1,16 +1,52 @@
 /** Public funnel endpoints (no auth; scoped to the funnel resolved from Host). */
 import { json, err } from '../_lib/http.js';
 import { upsertLead, setLeadState, computeIMC } from '../_lib/crm.js';
-import { getFunnelBySlug, getFunnelById, publicFunnel, resolveSurface } from '../_lib/funnels.js';
+import { getFunnelBySlug, getFunnelById, getSlugByHostname, publicFunnel } from '../_lib/funnels.js';
 import { decryptSecret } from '../_lib/crypto.js';
 import { createCheckoutSession, verifyStripeSignature } from '../_lib/stripe.js';
 
-// Resolve the funnel for a public funnel-page request (Host first, body fallback for dev).
-async function funnelForRequest(db, url, env, body) {
-  const { slug } = resolveSurface(url, env.PLATFORM_DOMAIN);
-  let f = slug ? await getFunnelBySlug(db, slug) : null;
-  if (!f && body && body.funnelSlug) f = await getFunnelBySlug(db, body.funnelSlug);
-  return f;
+// First path segment of a funnel-page URL (e.g. "/drapatricia/..." → "drapatricia").
+function slugFromPath(pathname) {
+  const seg = (pathname || '').split('/')[1] || '';
+  return seg.includes('.') ? '' : seg;
+}
+
+/**
+ * Resolve the funnel a public API call belongs to. With path-based routing the
+ * slug isn't in the API path, so we use, in order: explicit body identifiers
+ * (the funnel shell injects window.FUNNEL.slug), a custom-domain host mapping,
+ * then the Referer page path / ?f= fallback.
+ */
+async function funnelForRequest(db, url, env, body, request) {
+  if (body?.funnelId) {
+    const f = await db.prepare('SELECT * FROM funnels WHERE id = ?').bind(body.funnelId).first();
+    if (f) return f;
+  }
+  if (body?.funnelSlug) {
+    const f = await getFunnelBySlug(db, body.funnelSlug);
+    if (f) return f;
+  }
+  const host = (url.searchParams.get('host') || url.hostname).toLowerCase();
+  const platform = (env.PLATFORM_DOMAIN || '').toLowerCase();
+  if (!(platform && host === platform)) {
+    const domSlug = await getSlugByHostname(db, host);
+    if (domSlug) return getFunnelBySlug(db, domSlug);
+  }
+  let slug = url.searchParams.get('f') || '';
+  if (!slug && request) {
+    try { slug = slugFromPath(new URL(request.headers.get('Referer')).pathname); } catch (e) { /* no/invalid referer */ }
+  }
+  return slug ? getFunnelBySlug(db, slug) : null;
+}
+
+// Where Stripe should send the buyer back to — the funnel page they came from.
+function funnelReturnBase(url, f, request) {
+  try {
+    const r = new URL(request.headers.get('Referer'));
+    return r.origin + r.pathname.replace(/\/$/, '');
+  } catch (e) {
+    return `${url.origin}/${f.slug}`;
+  }
 }
 
 export async function handlePublic(request, env, path, url) {
@@ -18,7 +54,7 @@ export async function handlePublic(request, env, path, url) {
 
   // ── Funnel config for rendering ──
   if (path === '/api/public/funnel' && request.method === 'GET') {
-    const f = await funnelForRequest(db, url, env, null);
+    const f = await funnelForRequest(db, url, env, null, request);
     if (!f) return err('Funnel not found', 404);
     return json(publicFunnel(f));
   }
@@ -30,7 +66,7 @@ export async function handlePublic(request, env, path, url) {
     const body = await request.json().catch(() => null);
     if (!body || (!body.userId && !body.email)) return err('No identifier', 400);
     if (JSON.stringify(body.quizData || {}).length > 8000) return err('Payload too large', 413);
-    const f = await funnelForRequest(db, url, env, body);
+    const f = await funnelForRequest(db, url, env, body, request);
     if (!f) return err('Funnel not found', 404);
     const meta = {
       ipCountry: request.headers.get('CF-IPCountry') || null,
@@ -44,18 +80,18 @@ export async function handlePublic(request, env, path, url) {
   // ── Create Stripe checkout (per-funnel keys) ──
   if (path === '/api/public/checkout' && request.method === 'POST') {
     const body = await request.json().catch(() => ({}));
-    const f = await funnelForRequest(db, url, env, body);
+    const f = await funnelForRequest(db, url, env, body, request);
     if (!f) return err('Funnel not found', 404);
     const secretKey = await decryptSecret(f.stripe_secret_enc, env.SECRETS_KEY);
     if (!secretKey || !f.stripe_price_id) return err('Payments not configured for this funnel', 400);
 
-    const origin = url.origin;
+    const returnBase = funnelReturnBase(url, f, request);
     const params = {
       mode: 'payment',
       'line_items[0][price]': f.stripe_price_id,
       'line_items[0][quantity]': '1',
-      success_url: `${origin}/?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/?cancelled=true`,
+      success_url: `${returnBase}?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${returnBase}?cancelled=true`,
       'payment_method_types[0]': 'card',
       'billing_address_collection': 'auto',
       'allow_promotion_codes': 'true',

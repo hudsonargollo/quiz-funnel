@@ -6,25 +6,11 @@ import { templateFor } from '../templates.js';
 
 function nowISO() { return new Date().toISOString(); }
 
-/**
- * Work out which surface a request targets from its hostname.
- * Returns { surface: 'dashboard'|'funnel'|'other', slug? }.
- * PLATFORM_DOMAIN env (e.g. "myfunnels.app") defines the apex; `app.<domain>`
- * is the dashboard, `<slug>.<domain>` is a funnel. On *.workers.dev or unknown
- * hosts we fall back to a ?f=<slug> query (dev convenience).
- */
-export function resolveSurface(url, platformDomain) {
-  const host = url.hostname;
-  const qSlug = url.searchParams.get('f');
-  if (platformDomain && (host === platformDomain || host.endsWith('.' + platformDomain))) {
-    const label = host === platformDomain ? '' : host.slice(0, -(platformDomain.length + 1));
-    if (label === 'app' || label === '') return { surface: 'dashboard' };
-    return { surface: 'funnel', slug: label };
-  }
-  // Fallback for workers.dev / localhost: ?f=slug → funnel, else dashboard
-  if (qSlug) return { surface: 'funnel', slug: qSlug };
-  return { surface: 'dashboard' };
-}
+// Slugs that would collide with platform paths (see RESERVED in src/index.js).
+const RESERVED_SLUGS = new Set([
+  'api', 'admin', 'css', 'js', 'assets', 'privacidade', 'app',
+  'favicon.ico', 'robots.txt', 'sitemap.xml', 'index.html',
+]);
 
 export async function getFunnelBySlug(db, slug) {
   if (!slug) return null;
@@ -60,6 +46,7 @@ export async function createFunnel(db, accountId, { name, type, slug }) {
   type = ['quiz', 'optin', 'vsl'].includes(type) ? type : 'quiz';
   slug = normalizeSlug(slug);
   if (!slug) return { error: 'A valid slug is required', status: 400 };
+  if (RESERVED_SLUGS.has(slug)) return { error: 'That slug is reserved', status: 409 };
   const taken = await db.prepare('SELECT id FROM funnels WHERE slug = ?').bind(slug).first();
   if (taken) return { error: 'That slug is already taken', status: 409 };
 
@@ -92,6 +79,7 @@ export async function updateFunnel(db, accountId, id, patch, secretsKey) {
   if (patch.slug != null) {
     const slug = normalizeSlug(patch.slug);
     if (!slug) return { error: 'Invalid slug', status: 400 };
+    if (RESERVED_SLUGS.has(slug)) return { error: 'That slug is reserved', status: 409 };
     const taken = await db.prepare('SELECT id FROM funnels WHERE slug = ? AND id != ?').bind(slug, id).first();
     if (taken) return { error: 'Slug already taken', status: 409 };
     set('slug', slug);
