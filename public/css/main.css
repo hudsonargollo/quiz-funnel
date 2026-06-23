@@ -1597,8 +1597,9 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
 @media (min-width: 621px) {
   body { background: var(--bg-surface); }
   #app {
-    margin-top: 20px;
-    margin-bottom: 20px;
+    flex: 0 1 auto;                  /* size to content instead of filling the viewport */
+    max-height: calc(100dvh - 40px); /* only scroll inside if a screen is taller than this */
+    margin: auto;                    /* center vertically; keeps ≥20px breathing space */
     border-radius: var(--radius-lg);
     box-shadow: 0 4px 40px rgba(0,0,0,0.08);
     background: var(--bg-page);
