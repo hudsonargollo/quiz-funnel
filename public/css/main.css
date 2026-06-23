@@ -1269,7 +1269,7 @@ body {
   position: sticky;
   bottom: 0;
   z-index: 5;
-  padding: 12px 0 calc(6px + env(safe-area-inset-bottom));
+  padding: 12px 0 calc(20px + env(safe-area-inset-bottom));
   background: linear-gradient(to top, var(--bg-page) 70%, transparent);
 }
 
