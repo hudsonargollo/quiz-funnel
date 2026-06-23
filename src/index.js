@@ -36,8 +36,15 @@ export default {
       }
 
       const host = (url.searchParams.get('host') || url.hostname).toLowerCase();
-      const platform = (env.PLATFORM_DOMAIN || '').toLowerCase();
-      const isPlatform = platform && host === platform;
+      // Platform hosts use path-based routing (landing at /, dashboard at /admin,
+      // funnels at /<slug>). PLATFORM_DOMAIN is primary; PLATFORM_DOMAINS adds
+      // extra equivalent hosts (comma-separated), e.g. funnels.tektone.com.br.
+      const platformHosts = new Set(
+        [env.PLATFORM_DOMAIN, ...((env.PLATFORM_DOMAINS || '').split(','))]
+          .map((s) => (s || '').trim().toLowerCase())
+          .filter(Boolean)
+      );
+      const isPlatform = platformHosts.has(host);
 
       // ── Custom domains (Phase 2): a whole hostname maps to one funnel ──
       if (!isPlatform) {

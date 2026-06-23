@@ -23,8 +23,10 @@ database_id = "e59571a7-af41-4e9c-9106-51ffebbd1035"
 
 [vars]
 ENVIRONMENT = "production"
-# Platform host: dashboard at "/", funnels at "/<slug>" (path-based routing).
+# Platform host: landing at "/", dashboard at "/admin", funnels at "/<slug>".
 PLATFORM_DOMAIN = "offers.clubemkt.digital"
+# Additional hosts that behave identically (path-based), comma-separated.
+PLATFORM_DOMAINS = "funnels.tektone.com.br"
 # Cloudflare for SaaS (Phase 2 — customers' own domains). Customers CNAME to the
 # platform host; activation also needs the CF_API_TOKEN secret + SAAS_ZONE_ID.
 SAAS_ZONE_ID = ""                              # clubemkt.digital zone id (set when activating Phase 2)
@@ -36,6 +38,12 @@ SAAS_CNAME_TARGET = "offers.clubemkt.digital"  # CNAME target customers point th
 [[routes]]
 pattern = "offers.clubemkt.digital"
 custom_domain = true
+
+# funnels.tektone.com.br is added via Cloudflare for SaaS (Custom Hostname on the
+# clubemkt.digital zone with fallback origin = offers.clubemkt.digital), NOT a
+# Workers route — the tektone.com.br zone is in a different account (TEKTONE) than
+# this Worker (ClubeMKT). The Worker treats the host as a platform host via
+# PLATFORM_DOMAINS above, so /<slug> routing works once SaaS forwards the request.
 
 # Secrets (set via: wrangler secret put NAME):
 #   SECRETS_KEY  — base64 32-byte AES key for encrypting tenant Stripe keys
