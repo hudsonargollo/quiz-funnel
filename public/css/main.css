@@ -205,6 +205,7 @@ body {
   width: 100%;
   max-width: 340px;
   aspect-ratio: 4/5;
+  flex-shrink: 0; /* keep aspect ratio; let the screen scroll instead of squashing the image */
   border-radius: var(--radius-lg);
   overflow: hidden;
   margin: 0 auto 20px;
@@ -653,6 +654,7 @@ body {
 .bridge-image {
   width: 100%;
   max-width: 360px;
+  flex-shrink: 0; /* don't let the flex column squash the image */
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--bg-surface);
