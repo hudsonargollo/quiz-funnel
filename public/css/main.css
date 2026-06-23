@@ -625,14 +625,14 @@ body {
 
 /* --- BRIDGE / CONTENT SCREENS --- */
 .bridge-screen {
-  padding-top: 80px;
-  gap: 20px;
+  padding-top: 64px;
+  gap: 12px;
   justify-content: flex-start;
 }
 
 .bridge-headline {
   font-family: var(--font-display);
-  font-size: clamp(28px, 7vw, 40px);
+  font-size: clamp(23px, 5.5vw, 33px);
   line-height: 1.05;
   letter-spacing: 0.02em;
   text-align: center;
@@ -669,7 +669,7 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 12px 14px;
   box-shadow: var(--shadow-card);
 }
 
@@ -677,7 +677,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .testimonial-avatar {
@@ -707,7 +707,7 @@ body {
 .testimonial-body {
   font-size: 13px;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.45;
 }
 
 /* Audio player mock */
@@ -715,7 +715,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 10px 14px;
   background: var(--bg-card);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
@@ -813,9 +813,9 @@ body {
 
 /* IMC Result screen */
 .imc-screen {
-  gap: 16px;
-  padding-top: 80px;
-  padding-bottom: 32px;
+  gap: 10px;
+  padding-top: 64px;
+  padding-bottom: 24px;
   justify-content: flex-start;
   /* Results page is long — allow internal scroll */
   overflow-y: auto;
@@ -829,7 +829,7 @@ body {
   background: #FFFBEB;
   border: 1px solid #FCD34D;
   border-radius: var(--radius-md);
-  padding: 14px 16px;
+  padding: 10px 14px;
   text-align: center;
 }
 
@@ -842,7 +842,7 @@ body {
 
 .imc-value {
   font-family: var(--font-display);
-  font-size: 48px;
+  font-size: 38px;
   color: var(--brand-accent);
   letter-spacing: 0.02em;
 }
@@ -928,7 +928,7 @@ body {
   background: #FFF5F5;
   border: 1px solid #FECACA;
   border-radius: var(--radius-md);
-  padding: 14px 16px;
+  padding: 10px 14px;
 }
 
 .imc-impact-title {
@@ -954,7 +954,7 @@ body {
   background: #F0FDF4;
   border: 1px solid #86EFAC;
   border-radius: var(--radius-md);
-  padding: 14px 16px;
+  padding: 10px 14px;
 }
 
 .imc-solution-title {
@@ -1532,19 +1532,21 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
 .options-grid { align-content: safe center; }
 
 /* Bridge media can't grow tall enough to push the CTA off-screen */
-.bridge-image { max-height: 36vh; display: flex; }
-.bridge-image img { max-height: 36vh; object-fit: contain; }
+.bridge-image { max-height: 30vh; display: flex; }
+.bridge-image img { max-height: 30vh; object-fit: contain; }
 
 /* --- FIT-TO-VIEWPORT: compress content on shorter screens so every step
    fits without scrolling and the CTA stays in view. --- */
-@media (max-height: 760px) {
+@media (max-height: 820px) {
   .question-screen { gap: 16px; padding-bottom: 24px; }
   .options-list { gap: 8px; }
   .option-item { padding: 11px 14px; }
   .option-icon-wrap { width: 42px; height: 42px; }
   .landing-image-wrap { max-width: 260px; margin-bottom: 14px; }
-  .bridge-screen { gap: 14px; }
-  .bridge-image, .bridge-image img { max-height: 30vh; }
+  .bridge-screen { gap: 10px; }
+  .bridge-image, .bridge-image img { max-height: 24vh; }
+  .imc-value { font-size: 34px; }
+  .imc-screen { gap: 8px; }
 }
 
 @media (max-height: 660px) {
