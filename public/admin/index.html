@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -364,7 +364,7 @@ const STATE_LABEL={en:{quiz_started:'Started',lead_captured:'Lead',offer_viewed:
 
 const App=(()=>{
  const LANG_KEY='qf_admin_lang';const AUTO_MS=30000;
- let lang='en',view='analytics',authMode='login';
+ let lang='pt',view='analytics',authMode='login';
  let funnelId='',offset=0,limit=50,total=0,_stats=null,_leads=null,_funnels=[],_timer=null;
  const t=k=>(I18N[lang][k]??I18N.en[k]??k);const $=id=>document.getElementById(id);
 
@@ -782,7 +782,7 @@ const App=(()=>{
 
  // boot
  (function(){
-   const stored=localStorage.getItem(LANG_KEY);lang=stored||((navigator.language||'en').toLowerCase().startsWith('pt')?'pt':'en');
+   const stored=localStorage.getItem(LANG_KEY);lang=stored||'pt';  // default to Portuguese; EN toggle persists once chosen
    applyI18n();
    document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));
    $('au-pass').addEventListener('keydown',e=>{if(e.key==='Enter')submitAuth();});
