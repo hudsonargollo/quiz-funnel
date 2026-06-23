@@ -24,9 +24,14 @@ database_id = "e59571a7-af41-4e9c-9106-51ffebbd1035"
 [vars]
 ENVIRONMENT = "production"
 # Platform host: landing at "/", dashboard at "/admin", funnels at "/<slug>".
+# This stays the single canonical host — public funnel links are
+# offers.clubemkt.digital/<slug>. Vanity hosts like funnels.tektone.com.br are
+# handled as edge 301 redirects in their own zone, NOT as platform hosts here
+# (so they never generate funnel links under their own domain).
 PLATFORM_DOMAIN = "offers.clubemkt.digital"
-# Additional hosts that behave identically (path-based), comma-separated.
-PLATFORM_DOMAINS = "funnels.tektone.com.br"
+# Additional hosts that behave identically (path-based), comma-separated. Empty:
+# the Worker is reachable only via offers.clubemkt.digital.
+PLATFORM_DOMAINS = ""
 # Cloudflare for SaaS (Phase 2 — customers' own domains). Customers CNAME to the
 # platform host; activation also needs the CF_API_TOKEN secret + SAAS_ZONE_ID.
 SAAS_ZONE_ID = ""                              # clubemkt.digital zone id (set when activating Phase 2)
