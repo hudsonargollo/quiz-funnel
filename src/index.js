@@ -78,6 +78,12 @@ export default {
   },
 };
 
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
 async function serveAsset(env, assetPath, request) {
   const u = new URL(request.url);
   u.pathname = assetPath;
@@ -104,5 +110,8 @@ window.QUIZ_CONFIG=${JSON.stringify(pf.config)};
 window.FUNNEL=${JSON.stringify({ id: pf.funnelId, accountId: pf.accountId, type: pf.type, slug: pf.slug, stripePublishableKey: pf.stripePublishableKey, postPurchaseUrl: pf.postPurchaseUrl, preview })};
 </script>`;
   html = html.replace('<!--FUNNEL_BOOT-->', boot);
+  // Per-funnel browser tab title (the shell ships a generic placeholder).
+  const title = escapeHtml(f.name || pf.slug || 'Funnel');
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`);
   return new Response(html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 }
