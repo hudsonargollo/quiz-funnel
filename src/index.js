@@ -17,7 +17,7 @@ import { getFunnelBySlug, getSlugByHostname, publicFunnel } from './_lib/funnels
 
 // First path segments that are real assets/endpoints, never funnel slugs.
 const RESERVED = new Set([
-  'api', 'admin', 'app', 'home', 'css', 'js', 'assets', 'privacidade',
+  'api', 'admin', 'app', 'home', 'css', 'js', 'images', 'assets', 'privacidade',
   'favicon.ico', 'robots.txt', 'sitemap.xml', 'index.html', '.well-known',
 ]);
 
