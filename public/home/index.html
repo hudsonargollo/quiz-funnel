@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tektone Funnels — Funis que convertem visitantes em clientes</title>
+<meta name="description" content="Crie funis de quiz, capture leads e acompanhe vendas em um CRM multi-tenant feito para escalar. Da página ao pagamento em minutos.">
+<meta name="theme-color" content="#070a0f">
+<meta property="og:title" content="Tektone Funnels">
+<meta property="og:description" content="Funis que convertem visitantes em clientes. Da página ao pagamento em minutos.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================================
+   TEKTONE FUNNELS — DESIGN TOKENS
+   A single source of truth: color scales, type scale, space, radii, motion.
+   ========================================================================== */
+:root{
+  /* — Brand color scales — */
+  --cyan-300:#7ad9ff; --cyan-400:#36c4ff; --cyan-500:#00aeef; --cyan-600:#0090d4; --cyan-700:#0a6ea3;
+  --violet-300:#c4b5ff; --violet-400:#9d83ff; --violet-500:#7c5cff; --violet-600:#6243e6;
+
+  /* — Neutral / surface scale (cool, near-black) — */
+  --ink-950:#070a0f; --ink-900:#0b0f15; --ink-850:#0e131b; --ink-800:#121925; --ink-750:#172131;
+  --ink-700:#1d2840; --line:#1e2a3d; --line-soft:#172234;
+
+  /* — Text — */
+  --text:#eaf1f8; --text-2:#aab6c6; --text-3:#6f7d90; --on-brand:#04121b;
+
+  /* — Semantic — */
+  --bg:var(--ink-950); --surface:var(--ink-900); --surface-2:var(--ink-850);
+  --brand:var(--cyan-500); --brand-2:var(--cyan-300); --accent:var(--violet-500);
+
+  /* — Gradients — */
+  --grad-brand:linear-gradient(135deg,var(--cyan-400),var(--violet-500));
+  --grad-text:linear-gradient(120deg,#ffffff 10%,var(--cyan-300) 55%,var(--violet-300) 100%);
+  --grad-surface:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0));
+  --grad-line:linear-gradient(135deg,rgba(54,196,255,.5),rgba(124,92,255,.35),transparent);
+
+  /* — Radii — */
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px; --r-pill:999px;
+
+  /* — Spacing scale (8pt-ish) — */
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px; --s-8:64px; --s-9:96px; --s-10:128px;
+
+  /* — Elevation — */
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow-md:0 12px 30px -16px rgba(0,0,0,.7);
+  --shadow-lg:0 40px 80px -32px rgba(0,0,0,.8);
+  --glow:0 0 0 1px rgba(54,196,255,.15), 0 20px 60px -24px rgba(0,174,239,.45);
+
+  /* — Type — */
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --fs-hero:clamp(2.6rem,6vw,4.6rem);
+  --fs-h2:clamp(1.9rem,3.6vw,2.9rem);
+  --fs-h3:1.25rem;
+  --fs-lead:clamp(1.05rem,1.6vw,1.3rem);
+
+  /* — Motion — */
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --dur:.5s;
+}
+
+/* ============================================================================ RESET */
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-body);background:var(--bg);color:var(--text);
+  line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+::selection{background:rgba(124,92,255,.35)}
+
+/* Ambient background: layered radial glows + faint grid */
+body::before{
+  content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(900px 500px at 78% -8%,rgba(0,174,239,.16),transparent 60%),
+    radial-gradient(800px 600px at 8% 8%,rgba(124,92,255,.12),transparent 55%),
+    radial-gradient(700px 700px at 50% 120%,rgba(0,174,239,.08),transparent 60%);
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.4;
+  background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+  background-size:64px 64px;
+  -webkit-mask-image:radial-gradient(1000px 700px at 50% -5%,#000,transparent 70%);
+          mask-image:radial-gradient(1000px 700px at 50% -5%,#000,transparent 70%);
+}
+
+/* ============================================================================ LAYOUT */
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+section{position:relative}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display);
+  font-size:.78rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--brand-2);padding:6px 12px;border-radius:var(--r-pill);
+  background:rgba(54,196,255,.08);border:1px solid rgba(54,196,255,.18);
+}
+h1,h2,h3{font-family:var(--font-display);line-height:1.08;letter-spacing:-.02em;font-weight:700}
+.gradient-text{background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* ============================================================================ BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  font-family:var(--font-display);font-weight:600;font-size:.98rem;
+  padding:13px 22px;border-radius:var(--r-pill);border:1px solid transparent;
+  cursor:pointer;transition:transform .15s var(--ease),box-shadow .25s var(--ease),filter .2s;
+  white-space:nowrap;
+}
+.btn-primary{background:var(--grad-brand);color:#fff;box-shadow:var(--glow)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(54,196,255,.3),0 26px 70px -22px rgba(0,174,239,.6)}
+.btn-ghost{background:rgba(255,255,255,.04);color:var(--text);border-color:var(--line)}
+.btn-ghost:hover{background:rgba(255,255,255,.08);transform:translateY(-2px)}
+.btn-lg{padding:16px 28px;font-size:1.05rem}
+
+/* ============================================================================ NAV */
+header.nav{position:sticky;top:0;z-index:50}
+.nav-inner{
+  margin:14px auto;max-width:1160px;display:flex;align-items:center;gap:18px;
+  padding:10px 16px 10px 18px;border-radius:var(--r-pill);
+  background:rgba(11,15,21,.72);backdrop-filter:blur(16px);
+  border:1px solid var(--line);box-shadow:var(--shadow-md);
+}
+.brand{display:flex;align-items:center;gap:11px;font-family:var(--font-display);font-weight:700;font-size:1.05rem}
+.logo{
+  width:34px;height:34px;border-radius:10px;background:var(--grad-brand);
+  display:grid;place-items:center;color:#fff;font-weight:700;font-size:1.05rem;
+  box-shadow:0 6px 18px -6px rgba(0,174,239,.7);
+}
+.nav-links{display:flex;gap:6px;margin-left:auto}
+.nav-links a{padding:8px 14px;border-radius:var(--r-pill);color:var(--text-2);font-size:.93rem;font-weight:500;transition:.2s}
+.nav-links a:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.nav-cta{display:flex;align-items:center;gap:10px}
+.nav-cta .btn{padding:10px 18px;font-size:.92rem}
+@media(max-width:860px){.nav-links{display:none}}
+
+/* ============================================================================ HERO */
+.hero{padding:72px 0 56px;text-align:center}
+.hero h1{font-size:var(--fs-hero);max-width:18ch;margin:22px auto 0}
+.hero .lead{font-size:var(--fs-lead);color:var(--text-2);max-width:58ch;margin:24px auto 0}
+.hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:36px}
+.hero-meta{margin-top:22px;color:var(--text-3);font-size:.9rem;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.hero-meta b{color:var(--text-2);font-weight:600}
+
+/* Product mock */
+.mock{position:relative;margin:64px auto 0;max-width:980px}
+.mock-frame{
+  border-radius:var(--r-xl);border:1px solid var(--line);overflow:hidden;
+  background:var(--surface);box-shadow:var(--shadow-lg);position:relative;
+}
+.mock-frame::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:var(--grad-line);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.mock-bar{display:flex;align-items:center;gap:7px;padding:13px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.mock-bar i{width:11px;height:11px;border-radius:50%;background:#33425a;display:block}
+.mock-bar .url{margin-left:12px;font-size:.78rem;color:var(--text-3);font-family:var(--font-display)}
+.mock-body{padding:22px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.stat{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:16px;text-align:left}
+.stat .k{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3)}
+.stat .v{font-family:var(--font-display);font-size:1.8rem;font-weight:700;margin-top:6px}
+.stat .d{font-size:.8rem;color:var(--cyan-300);margin-top:4px}
+.mock-chart{grid-column:1/-1;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:18px;height:150px;display:flex;align-items:flex-end;gap:9px}
+.mock-chart .b{flex:1;border-radius:6px 6px 0 0;background:var(--grad-brand);opacity:.85;animation:grow 1.2s var(--ease) backwards}
+/* floating accent cards */
+.float{position:absolute;background:rgba(14,19,27,.85);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 15px;box-shadow:var(--shadow-md);font-size:.85rem;display:flex;align-items:center;gap:10px;animation:float 6s ease-in-out infinite}
+.float .pill{width:30px;height:30px;border-radius:9px;background:var(--grad-brand);display:grid;place-items:center;color:#fff;font-weight:700}
+.float.f1{top:-22px;left:-26px}
+.float.f2{bottom:34px;right:-30px;animation-delay:-3s}
+@media(max-width:720px){.float{display:none}.mock-body{grid-template-columns:1fr 1fr}}
+
+/* ============================================================================ MARQUEE / TRUST */
+.trust{padding:30px 0 8px;text-align:center}
+.trust p{color:var(--text-3);font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px}
+.trust-row{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;opacity:.8}
+.trust-row span{font-family:var(--font-display);font-weight:600;color:var(--text-2);font-size:1.1rem}
+
+/* ============================================================================ SECTION HEADERS */
+.sec{padding:var(--s-9) 0}
+.sec-head{text-align:center;max-width:62ch;margin:0 auto var(--s-7)}
+.sec-head h2{font-size:var(--fs-h2);margin-top:16px}
+.sec-head p{color:var(--text-2);font-size:1.1rem;margin-top:16px}
+
+/* ============================================================================ FEATURES */
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.feat{
+  position:relative;background:var(--grad-surface),var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-lg);padding:26px;transition:transform .3s var(--ease),border-color .3s;
+  overflow:hidden;
+}
+.feat:hover{transform:translateY(-4px);border-color:rgba(54,196,255,.4)}
+.feat::after{content:'';position:absolute;inset:0;background:radial-gradient(400px 200px at var(--mx,50%) -20%,rgba(54,196,255,.1),transparent 70%);opacity:0;transition:opacity .3s}
+.feat:hover::after{opacity:1}
+.feat .ico{width:46px;height:46px;border-radius:12px;background:rgba(54,196,255,.1);border:1px solid rgba(54,196,255,.22);display:grid;place-items:center;color:var(--brand-2);margin-bottom:18px}
+.feat h3{font-size:var(--fs-h3);margin-bottom:8px}
+.feat p{color:var(--text-2);font-size:.96rem}
+.feat.span2{grid-column:span 2}
+@media(max-width:860px){.features{grid-template-columns:1fr 1fr}.feat.span2{grid-column:span 2}}
+@media(max-width:600px){.features{grid-template-columns:1fr}.feat.span2{grid-column:auto}}
+
+/* ============================================================================ STEPS */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;counter-reset:step}
+.step{position:relative;padding:28px;border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--line)}
+.step::before{counter-increment:step;content:"0" counter(step);font-family:var(--font-display);font-size:2.4rem;font-weight:700;background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;display:block;margin-bottom:12px}
+.step h3{font-size:var(--fs-h3);margin-bottom:8px}
+.step p{color:var(--text-2);font-size:.96rem}
+@media(max-width:760px){.steps{grid-template-columns:1fr}}
+
+/* ============================================================================ STATS BAND */
+.band{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;padding:40px;border-radius:var(--r-xl);
+  background:linear-gradient(135deg,rgba(0,174,239,.08),rgba(124,92,255,.06)),var(--surface);
+  border:1px solid var(--line);text-align:center}
+.band .v{font-family:var(--font-display);font-size:clamp(2rem,4vw,2.8rem);font-weight:700}
+.band .l{color:var(--text-2);font-size:.92rem;margin-top:4px}
+@media(max-width:680px){.band{grid-template-columns:1fr 1fr;padding:28px}}
+
+/* ============================================================================ CTA */
+.cta-box{
+  text-align:center;padding:var(--s-9) 40px;border-radius:var(--r-xl);position:relative;overflow:hidden;
+  background:radial-gradient(700px 320px at 50% -30%,rgba(0,174,239,.22),transparent 70%),var(--surface);
+  border:1px solid var(--line);
+}
+.cta-box h2{font-size:var(--fs-h2)}
+.cta-box p{color:var(--text-2);font-size:1.1rem;margin:16px auto 30px;max-width:50ch}
+
+/* ============================================================================ FAQ */
+.faq{max-width:760px;margin:0 auto}
+details{border:1px solid var(--line);border-radius:var(--r-md);padding:0;margin-bottom:12px;background:var(--surface);overflow:hidden}
+summary{cursor:pointer;padding:18px 22px;font-family:var(--font-display);font-weight:600;font-size:1.02rem;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+';color:var(--brand-2);font-size:1.4rem;transition:transform .25s}
+details[open] summary::after{transform:rotate(45deg)}
+details p{padding:0 22px 20px;color:var(--text-2)}
+
+/* ============================================================================ FOOTER */
+footer{border-top:1px solid var(--line);margin-top:var(--s-9);padding:48px 0 40px}
+.foot{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:center}
+.foot .links{display:flex;gap:22px;flex-wrap:wrap}
+.foot .links a{color:var(--text-3);font-size:.92rem;transition:.2s}
+.foot .links a:hover{color:var(--text)}
+.foot .cr{color:var(--text-3);font-size:.86rem}
+
+/* ============================================================================ MOTION */
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes grow{from{height:0;opacity:0}}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.reveal.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<header class="nav">
+  <nav class="nav-inner">
+    <a class="brand" href="/"><span class="logo">T</span><span>Tektone&nbsp;Funnels</span></a>
+    <div class="nav-links">
+      <a href="#recursos">Recursos</a>
+      <a href="#como">Como funciona</a>
+      <a href="#numeros">Resultados</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-cta">
+      <a class="btn btn-ghost" href="/admin/">Entrar</a>
+      <a class="btn btn-primary" href="/admin/">Começar grátis</a>
+    </div>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero wrap">
+  <span class="eyebrow">● Plataforma de funis &amp; CRM</span>
+  <h1>Transforme visitantes em <span class="gradient-text">clientes</span> com funis que convertem.</h1>
+  <p class="lead">Crie funis de quiz, capture leads qualificados e acompanhe cada venda em um CRM feito para escalar. Da primeira pergunta ao pagamento — sem código, em minutos.</p>
+  <div class="hero-cta">
+    <a class="btn btn-primary btn-lg" href="/admin/">Criar meu primeiro funil →</a>
+    <a class="btn btn-ghost btn-lg" href="#como">Ver como funciona</a>
+  </div>
+  <div class="hero-meta">
+    <span><b>Sem cartão</b> para começar</span> · <span>Construtor visual</span> · <span>Pagamentos com <b>Stripe</b></span>
+  </div>
+
+  <!-- Product mock -->
+  <div class="mock">
+    <div class="float f1"><span class="pill">+</span><div><b>Novo lead</b><br><span style="color:var(--text-3);font-size:.78rem">há 2 segundos</span></div></div>
+    <div class="float f2"><span class="pill">$</span><div><b>Venda confirmada</b><br><span style="color:var(--text-3);font-size:.78rem">R$ 297,00</span></div></div>
+    <div class="mock-frame">
+      <div class="mock-bar"><i></i><i></i><i></i><span class="url">offers.clubemkt.digital/admin</span></div>
+      <div class="mock-body">
+        <div class="stat"><div class="k">Visitantes</div><div class="v">12.480</div><div class="d">▲ 18% esta semana</div></div>
+        <div class="stat"><div class="k">Leads</div><div class="v">3.214</div><div class="d">▲ 25,7% conversão</div></div>
+        <div class="stat"><div class="k">Receita</div><div class="v">R$ 48k</div><div class="d">▲ 31% no mês</div></div>
+        <div class="mock-chart">
+          <span class="b" style="height:38%;animation-delay:.05s"></span><span class="b" style="height:54%;animation-delay:.1s"></span>
+          <span class="b" style="height:46%;animation-delay:.15s"></span><span class="b" style="height:70%;animation-delay:.2s"></span>
+          <span class="b" style="height:62%;animation-delay:.25s"></span><span class="b" style="height:85%;animation-delay:.3s"></span>
+          <span class="b" style="height:78%;animation-delay:.35s"></span><span class="b" style="height:96%;animation-delay:.4s"></span>
+          <span class="b" style="height:88%;animation-delay:.45s"></span><span class="b" style="height:100%;animation-delay:.5s"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<section class="trust wrap">
+  <p>A engine por trás dos funis da</p>
+  <div class="trust-row">
+    <span>ClubeMKT</span><span>Dra. Patrícia</span><span>Protocolo Gelatina</span><span>+ a sua marca</span>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="sec wrap" id="recursos">
+  <div class="sec-head reveal">
+    <span class="eyebrow">Tudo em um só lugar</span>
+    <h2>Do tráfego ao pagamento, <span class="gradient-text">sem emendar ferramentas</span>.</h2>
+    <p>Construtor visual, CRM, analytics e checkout integrados. Cada funil com sua própria conta, domínio e Stripe.</p>
+  </div>
+  <div class="features">
+    <div class="feat span2 reveal">
+      <div class="ico">◧</div>
+      <h3>Construtor visual de funis</h3>
+      <p>Monte cada tela arrastando blocos: perguntas, vídeos, ofertas e checkout. Pré-visualização ao vivo com a engine real — o que você vê é exatamente o que publica. Vá ao ar em minutos, sem tocar em código.</p>
+    </div>
+    <div class="feat reveal">
+      <div class="ico">◎</div>
+      <h3>CRM de leads</h3>
+      <p>Cada resposta vira um lead rastreável, com origem (UTM), linha do tempo de eventos e exportação CSV.</p>
+    </div>
+    <div class="feat reveal">
+      <div class="ico">◆</div>
+      <h3>Multi-tenant</h3>
+      <p>Várias contas, várias marcas, isolamento total de dados. Uma plataforma para todos os seus clientes.</p>
+    </div>
+    <div class="feat reveal">
+      <div class="ico">⎔</div>
+      <h3>Stripe por funil</h3>
+      <p>Cada funil usa suas próprias chaves Stripe, criptografadas. Receba direto na sua conta, com webhooks dedicados.</p>
+    </div>
+    <div class="feat reveal">
+      <div class="ico">⬡</div>
+      <h3>Domínios personalizados</h3>
+      <p>Publique cada funil no seu próprio domínio com SSL automático. Sua marca, da URL ao checkout.</p>
+    </div>
+    <div class="feat span2 reveal">
+      <div class="ico">◔</div>
+      <h3>Analytics de conversão em tempo real</h3>
+      <p>Acompanhe alcance por pergunta, drop-off, novos leads por dia e receita — tudo atualizado ao vivo. Descubra exatamente onde o funil perde gente e onde ele converte.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="sec wrap" id="como">
+  <div class="sec-head reveal">
+    <span class="eyebrow">Três passos</span>
+    <h2>Do zero ao primeiro lead <span class="gradient-text">hoje</span>.</h2>
+  </div>
+  <div class="steps">
+    <div class="step reveal"><h3>Escolha um modelo</h3><p>Comece de um template de quiz e adapte as telas no construtor visual — perguntas, ofertas e checkout.</p></div>
+    <div class="step reveal"><h3>Publique e divulgue</h3><p>Vá ao ar em um slug ou no seu próprio domínio. Conecte o Stripe e comece a vender na mesma hora.</p></div>
+    <div class="step reveal"><h3>Acompanhe e otimize</h3><p>Veja leads, conversão e receita em tempo real. Ajuste as perguntas onde o funil perde gente.</p></div>
+  </div>
+</section>
+
+<!-- STATS BAND -->
+<section class="sec wrap" id="numeros">
+  <div class="band reveal">
+    <div><div class="v gradient-text">&lt;5min</div><div class="l">para publicar um funil</div></div>
+    <div><div class="v gradient-text">100%</div><div class="l">isolamento entre contas</div></div>
+    <div><div class="v gradient-text">∞</div><div class="l">funis e domínios</div></div>
+    <div><div class="v gradient-text">0%</div><div class="l">taxa sobre suas vendas</div></div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="sec wrap" id="faq">
+  <div class="sec-head reveal">
+    <span class="eyebrow">Perguntas frequentes</span>
+    <h2>Tudo que você precisa saber.</h2>
+  </div>
+  <div class="faq reveal">
+    <details open><summary>Preciso saber programar?</summary><p>Não. O construtor é visual e arrasta-e-solta. Você monta telas, perguntas e checkout sem escrever uma linha de código.</p></details>
+    <details><summary>Como recebo os pagamentos?</summary><p>Cada funil conecta a sua própria conta Stripe. O dinheiro cai direto para você — a Tektone não fica com nada das suas vendas.</p></details>
+    <details><summary>Posso usar meu próprio domínio?</summary><p>Sim. Aponte um CNAME e publique cada funil no seu domínio, com SSL emitido automaticamente.</p></details>
+    <details><summary>Funciona para várias marcas ou clientes?</summary><p>Sim. A plataforma é multi-tenant: cada conta tem seus próprios funis, leads, domínios e chaves Stripe, totalmente isolados.</p></details>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="sec wrap">
+  <div class="cta-box reveal">
+    <span class="eyebrow">Comece agora</span>
+    <h2 style="margin-top:16px">Seu próximo funil <span class="gradient-text">converte mais</span>.</h2>
+    <p>Crie sua conta, monte o primeiro funil e publique hoje. Sem cartão, sem complicação.</p>
+    <a class="btn btn-primary btn-lg" href="/admin/">Começar grátis →</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap foot">
+    <a class="brand" href="/"><span class="logo">T</span><span>Tektone&nbsp;Funnels</span></a>
+    <div class="links">
+      <a href="#recursos">Recursos</a>
+      <a href="#como">Como funciona</a>
+      <a href="#faq">FAQ</a>
+      <a href="/admin/">Entrar</a>
+      <a href="/privacidade/">Privacidade</a>
+    </div>
+    <div class="cr">© 2026 Tektone. Todos os direitos reservados.</div>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  // Pointer-aware glow on feature cards
+  document.querySelectorAll('.feat').forEach(c=>{
+    c.addEventListener('pointermove',e=>{const r=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-r.left)+'px')});
+  });
+</script>
+</body>
+</html>

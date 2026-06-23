@@ -17,7 +17,7 @@ import { getFunnelBySlug, getSlugByHostname, publicFunnel } from './_lib/funnels
 
 // First path segments that are real assets/endpoints, never funnel slugs.
 const RESERVED = new Set([
-  'api', 'admin', 'css', 'js', 'assets', 'privacidade',
+  'api', 'admin', 'app', 'home', 'css', 'js', 'assets', 'privacidade',
   'favicon.ico', 'robots.txt', 'sitemap.xml', 'index.html', '.well-known',
 ]);
 
@@ -51,8 +51,15 @@ export default {
       }
 
       // ── Platform host: path-based routing ──
-      if (path === '/' || path === '') return serveAsset(env, '/admin/index.html', request);
+      // Root → marketing landing; the app/dashboard lives at /admin (and /app).
+      // Legacy `/?f=<slug>` links still resolve to that funnel (back-compat).
+      if (path === '/' || path === '') {
+        const qf = url.searchParams.get('f');
+        if (qf) return serveFunnel(env, url, qf, request);
+        return serveAsset(env, '/home/index.html', request);
+      }
       const seg = path.split('/')[1];
+      if (seg === 'admin' || seg === 'app') return serveAsset(env, '/admin/index.html', request);
       // Reserved names and any path with a file extension → static asset.
       if (RESERVED.has(seg) || seg.includes('.')) return env.ASSETS.fetch(request);
       // Otherwise the first segment is a funnel slug (?f= still honored for preview).

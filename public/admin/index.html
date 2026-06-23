@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>Funnel CRM</title>
+<title>Tektone Funnels</title>
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 <style>
   :root{
@@ -189,9 +189,9 @@
 <!-- AUTH -->
 <div id="auth" class="auth hidden">
   <div class="lang-mini"><div class="seg" id="seg-auth"><button data-lang="en">EN</button><button data-lang="pt">PT</button></div></div>
-  <div class="logo">Q</div>
+  <div class="logo">T</div>
   <h1 id="auth-title">Sign in</h1>
-  <p class="sub" id="auth-sub">Welcome back to your funnel CRM</p>
+  <p class="sub" id="auth-sub">Welcome back to Tektone Funnels</p>
   <div id="signup-name-wrap" class="hidden"><label data-i18n="f_name">Name</label><input id="au-name" type="text"></div>
   <label data-i18n="email">Email</label><input id="au-email" type="email" autocomplete="username">
   <label data-i18n="password">Password</label><input id="au-pass" type="password" autocomplete="current-password">
@@ -203,7 +203,7 @@
 <!-- APP -->
 <div id="app" class="hidden">
   <div class="topbar"><div class="inner">
-    <div class="brand"><span class="logo">Q</span><span>Funnel CRM</span></div>
+    <div class="brand"><span class="logo">T</span><span>Tektone Funnels</span></div>
     <div class="live"><span class="dot"></span><span id="updated"></span></div>
     <div class="spacer"></div>
     <div class="navtabs">
@@ -302,7 +302,7 @@
 
 <script>
 const I18N={
- en:{login:'Sign in',signup:'Create account',welcome_back:'Welcome back to your funnel CRM',create_sub:'Start building funnels in minutes',
+ en:{login:'Sign in',signup:'Create account',welcome_back:'Welcome back to Tektone Funnels',create_sub:'Start building funnels in minutes',
    no_account:'No account?',have_account:'Have an account?',create_one:'Create one',sign_in_link:'Sign in',
    email:'Email',password:'Password',f_name:'Name',logout:'Sign out',updated:'Updated',auto:'Auto-refresh',
    nav_analytics:'Analytics',nav_funnels:'Funnels',range_all:'All time',range_7:'Last 7 days',range_30:'Last 30 days',range_90:'Last 90 days',
@@ -329,7 +329,7 @@ const I18N={
    cv_lead:'Lead rate',cv_offer:'Offer rate',cv_checkout:'Checkout rate',cv_purchase:'Purchase rate',
    d_email:'Email',d_name:'Name',d_state:'State',d_uid:'User ID',d_imc:'BMI',d_goal:'Goal',d_cur:'Current weight',d_target:'Target weight',d_height:'Height',
    d_src:'UTM source',d_med:'UTM medium',d_camp:'UTM campaign',d_country:'Country',d_ref:'Referrer',d_created:'Created',d_lead_at:'Lead at',d_checkout_at:'Checkout at',d_purchase_at:'Purchase at'},
- pt:{login:'Entrar',signup:'Criar conta',welcome_back:'Bem-vindo de volta ao seu CRM de funis',create_sub:'Crie funis em minutos',
+ pt:{login:'Entrar',signup:'Criar conta',welcome_back:'Bem-vindo de volta à Tektone Funnels',create_sub:'Crie funis em minutos',
    no_account:'Sem conta?',have_account:'Já tem conta?',create_one:'Criar uma',sign_in_link:'Entrar',
    email:'Email',password:'Palavra-passe',f_name:'Nome',logout:'Sair',updated:'Atualizado',auto:'Atualização automática',
    nav_analytics:'Análises',nav_funnels:'Funis',range_all:'Todo o período',range_7:'Últimos 7 dias',range_30:'Últimos 30 dias',range_90:'Últimos 90 dias',
@@ -442,7 +442,7 @@ const App=(()=>{
    const origin=location.origin;
    const tIcon={quiz:'list-checks',optin:'mail',vsl:'play'};
    el.innerHTML=_funnels.map(f=>{
-     const url=`${origin}/?f=${f.slug}`;
+     const url=`${origin}/${f.slug}`;
      return `<div class="fcard">
        <div class="ftype">${icon(tIcon[f.type]||'layout-template')}</div>
        <div class="fmeta"><div class="fn">${esc(f.name||f.slug)} <span class="pill s-${f.status}" style="margin-left:6px">${STATE_LABEL[lang][f.status]||f.status}</span></div>
@@ -464,7 +464,7 @@ const App=(()=>{
    const isNew=!id;
    _newType='quiz';
    const cfg=f?JSON.stringify(f.config,null,2):'';
-   const url=f?`${origin}/?f=${esc(f.slug)}`:'';
+   const url=f?`${origin}/${esc(f.slug)}`:'';
    const whUrl=f?`${origin}/api/public/webhook/${f.id}`:'';
    const tpl=[['quiz','list-checks'],['optin','mail'],['vsl','play']];
    $('drawer').innerHTML=`
@@ -598,10 +598,10 @@ const App=(()=>{
    const f=await api('funnels/'+id);
    _b={id,slug:f.slug,type:f.type,screens:(f.config&&f.config.screens)||[],config:(f.config&&f.config.config)||{},sel:0,ready:false,dirty:false};
    $('bld-name').value=f.name||'';
-   $('bld-open').href=location.origin+'/?f='+f.slug;
+   $('bld-open').href=location.origin+'/'+f.slug;
    $('bld-palette').innerHTML=PALETTE.map(ty=>`<button onclick="App.builderAdd('${ty}')">${icon(SCR_ICON[ty]||'square')} ${ty}</button>`).join('');
    renderScreens();renderProps();
-   $('bld-frame').src=location.origin+'/?f='+f.slug+'&preview=1&t='+Date.now();
+   $('bld-frame').src=location.origin+'/'+f.slug+'?preview=1&t='+Date.now();
    $('builder').classList.remove('hidden');applyI18n();refreshIcons();
  }
  function closeBuilder(){
