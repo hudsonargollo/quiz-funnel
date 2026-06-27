@@ -4,11 +4,20 @@ import { upsertLead, setLeadState, computeIMC } from '../_lib/crm.js';
 import { getFunnelBySlug, getFunnelById, getSlugByHostname, publicFunnel } from '../_lib/funnels.js';
 import { decryptSecret } from '../_lib/crypto.js';
 import { createCheckoutSession, verifyStripeSignature } from '../_lib/stripe.js';
+import { deliverLeadMagnet } from '../_lib/messaging/index.js';
 
 // First path segment of a funnel-page URL (e.g. "/drapatricia/..." → "drapatricia").
 function slugFromPath(pathname) {
   const seg = (pathname || '').split('/')[1] || '';
   return seg.includes('.') ? '' : seg;
+}
+
+// True when this funnel's config opts into automatic deliverable sending.
+function deliveryEnabled(f) {
+  try {
+    const c = JSON.parse(f.config || '{}');
+    return !!((c.config || c).delivery || {}).enabled;
+  } catch (e) { return false; }
 }
 
 /**
@@ -49,7 +58,7 @@ function funnelReturnBase(url, f, request) {
   }
 }
 
-export async function handlePublic(request, env, path, url) {
+export async function handlePublic(request, env, path, url, ctx) {
   const db = env.DB;
 
   // ── Funnel config for rendering ──
@@ -74,6 +83,16 @@ export async function handlePublic(request, env, path, url) {
       referrer: body.referrer || null,
     };
     const userId = await upsertLead(db, { accountId: f.account_id, funnelId: f.id }, body, meta);
+
+    // Deliver the lead magnet on opt-in (fire-and-forget; idempotent per lead).
+    // Runs only when the funnel has delivery.enabled and we captured an email.
+    const email = (body.email || '').trim();
+    if (email && deliveryEnabled(f)) {
+      const firstName = ((body.metadata?.nome || body.nome || '').trim().split(/\s+/)[0]) || '';
+      const job = deliverLeadMagnet(env, db, { funnel: f, userId, email, firstName })
+        .catch((e) => console.error('deliverLeadMagnet failed:', e));
+      if (ctx && ctx.waitUntil) ctx.waitUntil(job); else await job;
+    }
     return json({ ok: true, userId });
   }
 

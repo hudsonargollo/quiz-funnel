@@ -31,7 +31,7 @@ export default {
       if (path.startsWith('/api/')) {
         if (request.method === 'OPTIONS') return new Response(null, { status: 204 });
         if (path.startsWith('/api/auth/')) return handleAuth(request, env, path);
-        if (path.startsWith('/api/public/')) return handlePublic(request, env, path, url);
+        if (path.startsWith('/api/public/')) return handlePublic(request, env, path, url, ctx);
         return handleAdmin(request, env, path, url); // /api/funnels, /api/crm/*
       }
 

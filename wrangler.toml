@@ -47,6 +47,9 @@ SAAS_CNAME_TARGET = "offers.clubemkt.digital"  # CNAME target customers point th
 META_GRAPH_VERSION = "v21.0"                    # Meta Graph API version for the Ad Library
 AI_ALLOW_SELF_GRANT = "1"                       # lets the "Unlock AI Ads" button grant test credits (set "0" once Stripe checkout ships)
 
+# Messaging / deliverables (lead-magnet mailer)
+MAIL_FROM_DEFAULT = "Tektone Funnels <noreply@mail.clubemkt.digital>"  # verified Resend sender
+
 # Attach the Worker to the platform host as a Custom Domain (wrangler creates the
 # proxied DNS record + edge cert for this single hostname automatically).
 [[routes]]
@@ -64,3 +67,6 @@ custom_domain = true
 #   ANTHROPIC_API_KEY — AI Ads: strategy + copy generation (Claude)
 #   OPENAI_API_KEY    — AI Ads: image creatives (gpt-image-1)
 #   META_ADS_TOKEN    — AI Ads: Meta Ad Library access token (ads_archive)
+#   RESEND_API_KEY    — Mailer: deliverable emails (verify mail.clubemkt.digital in Resend)
+#   WHATSAPP_TOKEN / WHATSAPP_PHONE_ID       — (future) WhatsApp Cloud API channel
+#   INSTAGRAM_TOKEN / INSTAGRAM_IG_ID        — (future) Instagram Messaging channel
