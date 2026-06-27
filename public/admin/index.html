@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Tektone Funnels</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/tokens.css">
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 <!-- Motion layer (Motion One + Anime.js via CDN). Exposes window.Motion for the
@@ -27,10 +30,13 @@
     --radius:var(--r-md);--shadow:var(--e-2);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;background:
-    radial-gradient(1200px 600px at 80% -10%,rgba(0,174,239,.06),transparent),var(--bg);
+  body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+    background:var(--ambient),var(--bg);background-attachment:fixed;
     color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
   a{color:var(--brand);text-decoration:none}
+  /* Display typeface for headings + large figures (shared design system). */
+  .dashhead h2,.card h2,.kpi .v,.fmini .fnums .n,.fmini .ft .nm,.onb h3,.auth h1{font-family:var(--font-display)}
+  .gradient-text{background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   button{font-family:inherit}
   .wrap{max-width:1220px;margin:0 auto;padding:0 20px 80px}
   .hidden{display:none!important}
@@ -63,6 +69,8 @@
   .navtabs button{background:transparent;border:none;color:var(--muted);font-weight:600;font-size:13px;padding:7px 12px;border-radius:9px;cursor:pointer;width:auto;transition:color var(--dur-2),background var(--dur-2)}
   .navtabs button:hover{color:var(--text);background:rgba(255,255,255,.03)}
   .navtabs button.active{background:var(--brand-grad-veil);color:var(--brand2);box-shadow:inset 0 0 0 1px rgba(0,174,239,.22)}
+  /* AI Ads carries the violet secondary accent (system signal: violet = AI). */
+  #tab-ai.active{background:linear-gradient(135deg,rgba(124,92,255,.18),rgba(157,131,255,.06));color:var(--accent-soft);box-shadow:inset 0 0 0 1px rgba(124,92,255,.28)}
 
   section{margin-top:18px}
   .grid{display:grid;gap:14px}
@@ -167,7 +175,7 @@
   .onb h3{font-size:18px}.onb p{color:var(--muted);margin:6px 0 16px}
   /* dashboard funnel overview */
   .dashhead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:20px 0 12px}
-  .dashhead h2{font-size:16px;color:var(--text);text-transform:none;letter-spacing:0;margin:0}
+  .dashhead h2{font-size:22px;color:var(--text);text-transform:none;letter-spacing:-.02em;margin:0;font-weight:700}
   .dashhead .sub{color:var(--muted);font-size:12px;margin-top:3px}
   .fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(216px,1fr));gap:12px}
   .fmini{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--hairline);border-radius:16px;padding:14px;cursor:pointer;position:relative;box-shadow:var(--e-1);transition:border-color var(--dur-2) var(--ease-standard),transform var(--dur-2) var(--ease-spring),box-shadow var(--dur-2) var(--ease-standard)}
@@ -264,7 +272,7 @@
   <!-- ANALYTICS VIEW -->
   <div id="view-analytics" class="wrap">
     <div class="dashhead">
-      <div><h2 data-i18n="your_funnels">Your funnels</h2><div class="sub" id="dash-sub" data-i18n="dash_hint">Tap a funnel to filter the dashboard</div></div>
+      <div><h2 class="gradient-text" data-i18n="your_funnels">Your funnels</h2><div class="sub" id="dash-sub" data-i18n="dash_hint">Tap a funnel to filter the dashboard</div></div>
       <button class="btn" onclick="App.openFunnelEditor()" data-i18n="new_funnel">+ New funnel</button>
     </div>
     <section class="fgrid" id="dash-funnels"></section>

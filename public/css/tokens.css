@@ -28,9 +28,23 @@
   --brand:     var(--brand-500);
   --brand-soft: #7ad9ff;  /* lighter twin used in the gradient */
 
-  /* Brand gradient — CTAs + active keylines ONLY (fluid premium) */
-  --brand-grad:      linear-gradient(135deg, var(--brand-500) 0%, var(--brand-soft) 100%);
+  /* ── Secondary accent: violet (pairs with cyan for the brand duotone) ── */
+  --violet-300: #c4b5ff;
+  --violet-400: #9d83ff;
+  --violet-500: #7c5cff;
+  --violet-600: #6243e6;
+  --accent:      var(--violet-500);
+  --accent-soft: var(--violet-300);
+
+  /* Brand gradients */
+  --brand-grad:      linear-gradient(135deg, var(--brand-500) 0%, var(--brand-soft) 100%);   /* cyan CTA */
   --brand-grad-veil: linear-gradient(135deg, rgba(0,174,239,.18) 0%, rgba(122,217,255,.06) 100%);
+  --accent-grad:     linear-gradient(135deg, #36c4ff 0%, var(--violet-500) 100%);            /* cyan→violet duotone */
+  --grad-text:       linear-gradient(120deg, #ffffff 10%, var(--brand-soft) 55%, var(--accent-soft) 100%);
+  --grad-hairline:   linear-gradient(135deg, rgba(54,196,255,.5), rgba(124,92,255,.35), transparent);
+
+  /* ── Display typeface (headings + large numbers) ── */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
 
   /* ── Radius scale ──────────────────────────────────────── */
   --r-xs:  8px;
@@ -110,6 +124,12 @@
   --e-3: 0 2px 4px rgba(0,0,0,.32), 0 16px 40px -16px rgba(0,0,0,.60);
   --e-4: 0 4px 8px rgba(0,0,0,.35), 0 32px 64px -24px rgba(0,0,0,.70);
   --glow-brand: 0 0 0 1px rgba(0,174,239,.25), 0 8px 30px -8px rgba(0,174,239,.35);
+
+  /* Ambient backdrop — layered radial glows (cyan + violet) for premium depth. */
+  --ambient:
+    radial-gradient(900px 500px at 78% -8%, rgba(0,174,239,.14), transparent 60%),
+    radial-gradient(800px 600px at 6% 4%, rgba(124,92,255,.10), transparent 55%),
+    radial-gradient(700px 700px at 50% 120%, rgba(0,174,239,.06), transparent 60%);
 }
 
 /* ── LIGHT theme (funnels) ────────────────────────────────── */

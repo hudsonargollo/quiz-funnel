@@ -290,9 +290,9 @@ footer{border-top:1px solid var(--line);margin-top:var(--s-9);padding:48px 0 40p
     <div class="mock-frame">
       <div class="mock-bar"><i></i><i></i><i></i><span class="url">offers.clubemkt.digital/admin</span></div>
       <div class="mock-body">
-        <div class="stat"><div class="k">Visitantes</div><div class="v">12.480</div><div class="d">▲ 18% esta semana</div></div>
-        <div class="stat"><div class="k">Leads</div><div class="v">3.214</div><div class="d">▲ 25,7% conversão</div></div>
-        <div class="stat"><div class="k">Receita</div><div class="v">R$ 48k</div><div class="d">▲ 31% no mês</div></div>
+        <div class="stat"><div class="k">Visitantes</div><div class="v" data-count="12480">12.480</div><div class="d">▲ 18% esta semana</div></div>
+        <div class="stat"><div class="k">Leads</div><div class="v" data-count="3214">3.214</div><div class="d">▲ 25,7% conversão</div></div>
+        <div class="stat"><div class="k">Receita</div><div class="v" data-count="48" data-prefix="R$ " data-suffix="k">R$ 48k</div><div class="d">▲ 31% no mês</div></div>
         <div class="mock-chart">
           <span class="b" style="height:38%;animation-delay:.05s"></span><span class="b" style="height:54%;animation-delay:.1s"></span>
           <span class="b" style="height:46%;animation-delay:.15s"></span><span class="b" style="height:70%;animation-delay:.2s"></span>
@@ -423,6 +423,15 @@ footer{border-top:1px solid var(--line);margin-top:var(--s-9);padding:48px 0 40p
   // Pointer-aware glow on feature cards
   document.querySelectorAll('.feat').forEach(c=>{
     c.addEventListener('pointermove',e=>{const r=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-r.left)+'px')});
+  });
+</script>
+<!-- Shared motion layer: count-up the hero mock stats (Anime.js via /js/motion.js). -->
+<script type="module">
+  import { Motion } from '/js/motion.js';
+  if (!Motion.REDUCED) document.querySelectorAll('.stat .v[data-count]').forEach(el=>{
+    const fmt=n=>(el.dataset.prefix||'')+Math.round(n).toLocaleString('pt-PT')+(el.dataset.suffix||'');
+    el.textContent=fmt(0);
+    Motion.countUp(el,0,Number(el.dataset.count)||0,{format:fmt,duration:1.3});
   });
 </script>
 </body>
