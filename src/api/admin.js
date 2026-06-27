@@ -5,12 +5,16 @@ import { rowToLead } from '../_lib/crm.js';
 import { listFunnels, createFunnel, updateFunnel, deleteFunnel, getFunnelById } from '../_lib/funnels.js';
 import { randomId } from '../_lib/crypto.js';
 import { isConfigured, cnameTarget, createCustomHostname, getCustomHostname, deleteCustomHostname } from '../_lib/cfsaas.js';
+import { handleAi } from './ai.js';
 
 export async function handleAdmin(request, env, path, url) {
   const db = env.DB;
   const s = await getSession(db, request);
   if (!s) return err('Unauthorized', 401);
   const acc = s.accountId;
+
+  // ── AI Ads add-on (/api/ai/*) — reuses this session + account scope ──
+  if (path.startsWith('/api/ai/')) return handleAi(db, env, request, path, url, acc);
 
   // ── Funnels CRUD ──
   if (path === '/api/funnels') {

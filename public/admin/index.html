@@ -147,6 +147,34 @@
   .onb .big{width:60px;height:60px;border-radius:16px;background:var(--panel2);display:flex;align-items:center;justify-content:center;color:var(--brand);margin:0 auto 14px}
   .onb .big svg.lucide{width:28px;height:28px}
   .onb h3{font-size:18px}.onb p{color:var(--muted);margin:6px 0 16px}
+  /* dashboard funnel overview */
+  .dashhead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:20px 0 12px}
+  .dashhead h2{font-size:16px;color:var(--text);text-transform:none;letter-spacing:0;margin:0}
+  .dashhead .sub{color:var(--muted);font-size:12px;margin-top:3px}
+  .fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(216px,1fr));gap:12px}
+  .fmini{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:border-color .15s,transform .05s,box-shadow .15s;position:relative}
+  .fmini:hover{border-color:var(--brand)}
+  .fmini:active{transform:scale(.99)}
+  .fmini.active{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand)}
+  .fmini .fh{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+  .fmini .fi{width:34px;height:34px;border-radius:9px;background:var(--panel2);display:flex;align-items:center;justify-content:center;color:var(--brand);flex-shrink:0}
+  .fmini .fi svg.lucide{width:16px;height:16px}
+  .fmini .ft{flex:1;min-width:0}
+  .fmini .ft .nm{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fmini .ft .sl{color:var(--faint);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px;margin-top:1px}
+  .fmini .ft .sl .pill{padding:1px 7px;font-size:9px}
+  .fmini .fma{display:flex;gap:3px;flex-shrink:0}
+  .fmini .fma .btn{padding:6px}
+  .fmini .fnums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}
+  .fmini .fnums .n{font-size:18px;font-weight:700;letter-spacing:-.3px}
+  .fmini .fnums .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:1px}
+  .fmini .fbar{height:4px;background:var(--panel2);border-radius:3px;overflow:hidden;margin-top:12px}
+  .fmini .fbar>i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--brand),var(--brand2))}
+  .fmini.allcard .fi{color:var(--brand2);background:rgba(0,174,239,.12)}
+  .fmini.addcard{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);border-style:dashed;font-weight:600;font-size:13px;min-height:128px}
+  .fmini.addcard:hover{color:var(--brand)}
+  .fmini.addcard svg.lucide{width:16px;height:16px}
+  .sechead{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:24px 0 0}
   /* ── Visual builder ── */
   #builder{position:fixed;inset:0;z-index:70;background:var(--bg);display:flex;flex-direction:column}
   .bld-top{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
@@ -209,6 +237,7 @@
     <div class="navtabs">
       <button id="tab-analytics" class="active" onclick="App.showView('analytics')" data-i18n="nav_analytics">Analytics</button>
       <button id="tab-funnels" onclick="App.showView('funnels')" data-i18n="nav_funnels">Funnels</button>
+      <button id="tab-ai" onclick="App.showView('ai')" data-i18n="nav_ai">AI Ads</button>
     </div>
     <div class="seg" id="seg-app"><button data-lang="en">EN</button><button data-lang="pt">PT</button></div>
     <button class="btn ghost" onclick="App.logout()" data-i18n="logout">Sign out</button>
@@ -216,7 +245,14 @@
 
   <!-- ANALYTICS VIEW -->
   <div id="view-analytics" class="wrap">
-    <div class="toolbar" style="margin-top:18px">
+    <div class="dashhead">
+      <div><h2 data-i18n="your_funnels">Your funnels</h2><div class="sub" id="dash-sub" data-i18n="dash_hint">Tap a funnel to filter the dashboard</div></div>
+      <button class="btn" onclick="App.openFunnelEditor()" data-i18n="new_funnel">+ New funnel</button>
+    </div>
+    <section class="fgrid" id="dash-funnels"></section>
+
+    <div class="sechead" data-i18n="perf_title">Performance</div>
+    <div class="toolbar" style="margin-top:12px">
       <select id="funnel-switcher" style="width:auto;min-width:200px" onchange="App.onFunnelChange()"></select>
       <select id="range" style="width:auto" onchange="App.loadStats()">
         <option value="0" data-i18n="range_all">All time</option>
@@ -267,6 +303,11 @@
     </div>
     <div id="funnel-list"></div>
   </div>
+
+  <!-- AI ADS VIEW -->
+  <div id="view-ai" class="wrap hidden">
+    <div id="ai-body"></div>
+  </div>
 </div>
 
 <!-- LEAD DRAWER -->
@@ -305,7 +346,8 @@ const I18N={
  en:{login:'Sign in',signup:'Create account',welcome_back:'Welcome back to Tektone Funnels',create_sub:'Start building funnels in minutes',
    no_account:'No account?',have_account:'Have an account?',create_one:'Create one',sign_in_link:'Sign in',
    email:'Email',password:'Password',f_name:'Name',logout:'Sign out',updated:'Updated',auto:'Auto-refresh',
-   nav_analytics:'Analytics',nav_funnels:'Funnels',range_all:'All time',range_7:'Last 7 days',range_30:'Last 30 days',range_90:'Last 90 days',
+   nav_analytics:'Dashboard',nav_funnels:'Funnels',range_all:'All time',range_7:'Last 7 days',range_30:'Last 30 days',range_90:'Last 90 days',
+   perf_title:'Performance',dash_hint:'Tap a funnel to filter the dashboard',conv_short:'Conv.',manage:'Manage',
    all_funnels:'All funnels',kpi_total:'Total leads',kpi_captured:'Captured',kpi_purchases:'Purchases',kpi_checkouts:'Checkouts',of_total:'of total',
    funnel_title:'Conversion funnel',utm_title:'Source (UTM)',daily_title:'New leads · 14 days',dropoff_title:'Reach per question (drop-off)',
    all_states:'All states',search_btn:'Search',search_ph:'Search email or name…',export_csv:'Export CSV',
@@ -328,11 +370,21 @@ const I18N={
    st_started:'Started',st_lead:'Lead captured',st_offer:'Viewed offer',st_checkout:'Checkout',st_purchased:'Purchased',
    cv_lead:'Lead rate',cv_offer:'Offer rate',cv_checkout:'Checkout rate',cv_purchase:'Purchase rate',
    d_email:'Email',d_name:'Name',d_state:'State',d_uid:'User ID',d_imc:'BMI',d_goal:'Goal',d_cur:'Current weight',d_target:'Target weight',d_height:'Height',
-   d_src:'UTM source',d_med:'UTM medium',d_camp:'UTM campaign',d_country:'Country',d_ref:'Referrer',d_created:'Created',d_lead_at:'Lead at',d_checkout_at:'Checkout at',d_purchase_at:'Purchase at'},
+   d_src:'UTM source',d_med:'UTM medium',d_camp:'UTM campaign',d_country:'Country',d_ref:'Referrer',d_created:'Created',d_lead_at:'Lead at',d_checkout_at:'Checkout at',d_purchase_at:'Purchase at',
+   nav_ai:'AI Ads',ai_credits:'credits',ai_gate_title:'Unlock AI Ads',ai_gate_text:'Find competitor ads, get an AI ad strategy, and generate ad copy + images — all tied to your funnels.',
+   ai_feat_find:'Find live competitor ads (Meta Ad Library + AI analysis)',ai_feat_strategy:'AI ad strategy, personas, funnel & budget',ai_feat_creatives:'Generate ad copy + AI image creatives',
+   ai_unlock:'Unlock AI Ads',ai_gate_note:'Billed as an add-on. Credits are consumed per generation.',ai_unlocked:'AI Ads unlocked',ai_unlock_soon:'Checkout coming soon — contact support to enable.',
+   ai_campaigns:'Ad campaigns',ai_new:'New campaign',ai_ready:'Ready',ai_empty_t:'No campaigns yet',ai_empty_d:'Create your first AI ad campaign from a funnel or a URL.',
+   ai_new_help:'Attach to a funnel to reuse its product context, or paste a URL / brief.',ai_from_funnel:'From funnel',ai_no_funnel:'no funnel',ai_name:'Campaign name',ai_name_ph:'My campaign',ai_url:'Reference URL',ai_notes:'Notes / brief',ai_notes_ph:'Anything the AI should know',ai_create:'Create campaign',ai_need_input:'Pick a funnel or enter a name/URL',ai_del_confirm:'Delete this campaign and all its creatives?',
+   ai_back:'Campaigns',ai_strategy:'Ad strategy',ai_strategy_help:'Generate a full strategy: readiness score, personas, TOFU/MOFU/BOFU funnel, budget split and platform copy.',ai_generate:'Generate',ai_regen:'Regenerate',ai_personas:'Personas',ai_funnel:'Funnel',ai_budget:'Budget split',
+   ai_find:'Find competitor ads',ai_find_ph:'Brand or keyword',ai_country:'Country (ISO-2)',ai_search:'Search',ai_meta_note:'Meta’s API returns all ad types for EU countries; outside the EU only political/issue ads.',ai_view_ad:'View ad',ai_no_ads:'No ads found yet — run a search.',ai_enter_term:'Enter a search term',
+   ai_creatives:'Creatives',ai_persona_ph:'Target persona (optional)',ai_no_creatives:'No creatives yet — generate some.',ai_fav:'Favorite',ai_download:'Download',
+   ai_working:'Working…',ai_working_img:'Generating copy + images…',ai_done:'Done'},
  pt:{login:'Entrar',signup:'Criar conta',welcome_back:'Bem-vindo de volta à Tektone Funnels',create_sub:'Crie funis em minutos',
    no_account:'Sem conta?',have_account:'Já tem conta?',create_one:'Criar uma',sign_in_link:'Entrar',
    email:'Email',password:'Palavra-passe',f_name:'Nome',logout:'Sair',updated:'Atualizado',auto:'Atualização automática',
-   nav_analytics:'Análises',nav_funnels:'Funis',range_all:'Todo o período',range_7:'Últimos 7 dias',range_30:'Últimos 30 dias',range_90:'Últimos 90 dias',
+   nav_analytics:'Painel',nav_funnels:'Funis',range_all:'Todo o período',range_7:'Últimos 7 dias',range_30:'Últimos 30 dias',range_90:'Últimos 90 dias',
+   perf_title:'Desempenho',dash_hint:'Toque num funil para filtrar o painel',conv_short:'Conv.',manage:'Gerir',
    all_funnels:'Todos os funis',kpi_total:'Leads totais',kpi_captured:'Capturados',kpi_purchases:'Compras',kpi_checkouts:'Checkouts',of_total:'do total',
    funnel_title:'Funil de conversão',utm_title:'Origem (UTM)',daily_title:'Novos leads · 14 dias',dropoff_title:'Alcance por pergunta (drop-off)',
    all_states:'Todos os estados',search_btn:'Procurar',search_ph:'Procurar email ou nome…',export_csv:'Exportar CSV',
@@ -355,7 +407,16 @@ const I18N={
    st_started:'Iniciou',st_lead:'Lead',st_offer:'Viu oferta',st_checkout:'Checkout',st_purchased:'Comprou',
    cv_lead:'Taxa de leads',cv_offer:'Taxa de oferta',cv_checkout:'Taxa de checkout',cv_purchase:'Taxa de compra',
    d_email:'Email',d_name:'Nome',d_state:'Estado',d_uid:'User ID',d_imc:'IMC',d_goal:'Objetivo',d_cur:'Peso atual',d_target:'Peso objetivo',d_height:'Altura',
-   d_src:'UTM source',d_med:'UTM medium',d_camp:'UTM campaign',d_country:'País',d_ref:'Referrer',d_created:'Criado',d_lead_at:'Lead em',d_checkout_at:'Checkout em',d_purchase_at:'Compra em'},
+   d_src:'UTM source',d_med:'UTM medium',d_camp:'UTM campaign',d_country:'País',d_ref:'Referrer',d_created:'Criado',d_lead_at:'Lead em',d_checkout_at:'Checkout em',d_purchase_at:'Compra em',
+   nav_ai:'Anúncios IA',ai_credits:'créditos',ai_gate_title:'Ative os Anúncios IA',ai_gate_text:'Encontre anúncios de concorrentes, gere uma estratégia de anúncios com IA e crie textos + imagens — ligados aos seus funis.',
+   ai_feat_find:'Encontre anúncios de concorrentes (Meta Ad Library + IA)',ai_feat_strategy:'Estratégia de anúncios, personas, funil e orçamento',ai_feat_creatives:'Gere textos + criativos de imagem com IA',
+   ai_unlock:'Ativar Anúncios IA',ai_gate_note:'Cobrado como complemento. Créditos são consumidos por geração.',ai_unlocked:'Anúncios IA ativados',ai_unlock_soon:'Checkout em breve — contate o suporte para ativar.',
+   ai_campaigns:'Campanhas',ai_new:'Nova campanha',ai_ready:'Pronto',ai_empty_t:'Nenhuma campanha ainda',ai_empty_d:'Crie sua primeira campanha de anúncios IA a partir de um funil ou URL.',
+   ai_new_help:'Vincule a um funil para reutilizar o contexto do produto, ou cole uma URL / briefing.',ai_from_funnel:'Do funil',ai_no_funnel:'sem funil',ai_name:'Nome da campanha',ai_name_ph:'Minha campanha',ai_url:'URL de referência',ai_notes:'Notas / briefing',ai_notes_ph:'O que a IA deve saber',ai_create:'Criar campanha',ai_need_input:'Escolha um funil ou informe nome/URL',ai_del_confirm:'Excluir esta campanha e todos os criativos?',
+   ai_back:'Campanhas',ai_strategy:'Estratégia',ai_strategy_help:'Gere uma estratégia completa: pontuação de prontidão, personas, funil TOFU/MOFU/BOFU, orçamento e textos por plataforma.',ai_generate:'Gerar',ai_regen:'Regerar',ai_personas:'Personas',ai_funnel:'Funil',ai_budget:'Orçamento',
+   ai_find:'Anúncios de concorrentes',ai_find_ph:'Marca ou palavra-chave',ai_country:'País (ISO-2)',ai_search:'Buscar',ai_meta_note:'A API da Meta retorna todos os tipos de anúncio para países da UE; fora da UE, apenas anúncios políticos.',ai_view_ad:'Ver anúncio',ai_no_ads:'Nenhum anúncio ainda — faça uma busca.',ai_enter_term:'Digite um termo de busca',
+   ai_creatives:'Criativos',ai_persona_ph:'Persona alvo (opcional)',ai_no_creatives:'Nenhum criativo ainda — gere alguns.',ai_fav:'Favorito',ai_download:'Baixar',
+   ai_working:'Processando…',ai_working_img:'Gerando textos + imagens…',ai_done:'Pronto'},
 };
 const QLABELS={en:{objetivo:'Goal',sensacao_corpo:'Body feeling',zonas_problematicas:'Problem areas',impacto_vida:'Life impact',espelho:'Mirror',bloqueio:'Blocker',objetivos_vida:'Life goals',altura:'Height',peso_atual:'Current weight',peso_objetivo:'Target weight',nome:'Name',rotina:'Routine',sono:'Sleep',agua:'Water',tipo_resultado:'Desired result',email:'Email',goal:'Goal',interests:'Interests'},
  pt:{objetivo:'Objetivo',sensacao_corpo:'Sensação corporal',zonas_problematicas:'Zonas',impacto_vida:'Impacto',espelho:'Espelho',bloqueio:'Bloqueio',objetivos_vida:'Objetivos',altura:'Altura',peso_atual:'Peso atual',peso_objetivo:'Peso objetivo',nome:'Nome',rotina:'Rotina',sono:'Sono',agua:'Água',tipo_resultado:'Resultado',email:'Email',goal:'Objetivo',interests:'Interesses'}};
@@ -385,7 +446,7 @@ const App=(()=>{
    renderAuthMode();
  }
  function setLang(l){lang=l;localStorage.setItem(LANG_KEY,l);applyI18n();
-   if(_stats)renderStats(_stats);if(_leads)renderRows(_leads);if(_funnels)renderFunnels();renderSwitcher();}
+   if(_stats)renderStats(_stats);if(_leads)renderRows(_leads);if(_funnels){renderFunnels();renderDashFunnels();}renderSwitcher();}
 
  // ── Auth ──
  function showAuth(){stopAuto();$('app').classList.add('hidden');$('auth').classList.remove('hidden');}
@@ -419,20 +480,54 @@ const App=(()=>{
  function showView(v){view=v;
    $('view-analytics').classList.toggle('hidden',v!=='analytics');
    $('view-funnels').classList.toggle('hidden',v!=='funnels');
+   $('view-ai').classList.toggle('hidden',v!=='ai');
    $('tab-analytics').classList.toggle('active',v==='analytics');
    $('tab-funnels').classList.toggle('active',v==='funnels');
+   $('tab-ai').classList.toggle('active',v==='ai');
    if(v==='funnels')loadFunnels();
+   if(v==='ai')aiLoad();
  }
 
  // ── Funnels ──
  async function loadFunnels(){
-   const d=await api('funnels');_funnels=d.results||[];renderSwitcher();renderFunnels();
+   const d=await api('funnels');_funnels=d.results||[];renderSwitcher();renderFunnels();renderDashFunnels();
  }
+ const F_ICON={quiz:'list-checks',optin:'mail',vsl:'play'};
+ const fconv=f=>{const l=f.lead_count||0;return l?Math.round((f.purchase_count||0)/l*1000)/10:0;};
+ function renderDashFunnels(){
+   const el=$('dash-funnels');if(!el)return;
+   const totLeads=_funnels.reduce((a,f)=>a+(f.lead_count||0),0);
+   const totSales=_funnels.reduce((a,f)=>a+(f.purchase_count||0),0);
+   const allConv=totLeads?Math.round(totSales/totLeads*1000)/10:0;
+   const stat=(n,k)=>`<div><div class="n">${n}</div><div class="k">${k}</div></div>`;
+   const allCard=`<div class="fmini allcard${funnelId===''?' active':''}" onclick="App.scopeFunnel('')">
+     <div class="fh"><div class="fi">${icon('layout-grid')}</div>
+       <div class="ft"><div class="nm">${t('all_funnels')}</div><div class="sl">${fmtN(_funnels.length)} ${t('nav_funnels').toLowerCase()}</div></div></div>
+     <div class="fnums">${stat(fmtN(totLeads),t('leads'))}${stat(fmtN(totSales),t('sales'))}${stat(allConv+'%',t('conv_short'))}</div>
+     <div class="fbar"><i style="width:${Math.min(100,allConv)}%"></i></div></div>`;
+   const cards=_funnels.map(f=>{
+     const conv=fconv(f),url=`${location.origin}/${esc(f.slug)}`;
+     const stp='event.stopPropagation()';
+     return `<div class="fmini${f.id===funnelId?' active':''}" onclick="App.scopeFunnel('${f.id}')">
+       <div class="fh"><div class="fi">${icon(F_ICON[f.type]||'layout-template')}</div>
+         <div class="ft"><div class="nm">${esc(f.name||f.slug)}</div>
+           <div class="sl"><span class="pill s-${f.status}">${STATE_LABEL[lang][f.status]||f.status}</span>/${esc(f.slug)}</div></div>
+         <div class="fma">
+           <a class="btn ghost icon" href="${url}" target="_blank" onclick="${stp}" title="${t('open')}">${icon('external-link')}</a>
+           <button class="btn ghost icon" onclick="${stp};App.openFunnelEditor('${f.id}')" title="${t('edit')}">${icon('settings')}</button>
+         </div></div>
+       <div class="fnums">${stat(fmtN(f.lead_count||0),t('leads'))}${stat(fmtN(f.purchase_count||0),t('sales'))}${stat(conv+'%',t('conv_short'))}</div>
+       <div class="fbar"><i style="width:${Math.min(100,conv)}%"></i></div></div>`;
+   }).join('');
+   el.innerHTML=(_funnels.length?allCard+cards:'')+`<div class="fmini addcard" onclick="App.openFunnelEditor()">${icon('plus')} ${t('new_funnel').replace(/^\+\s*/,'')}</div>`;
+   refreshIcons();
+ }
+ function scopeFunnel(id){funnelId=id;offset=0;const sel=$('funnel-switcher');if(sel)sel.value=id;renderDashFunnels();refresh();}
  function renderSwitcher(){
    const sel=$('funnel-switcher');
    sel.innerHTML=`<option value="">${t('all_funnels')}</option>`+_funnels.map(f=>`<option value="${f.id}"${f.id===funnelId?' selected':''}>${esc(f.name||f.slug)}</option>`).join('');
  }
- function onFunnelChange(){funnelId=$('funnel-switcher').value;offset=0;refresh();}
+ function onFunnelChange(){funnelId=$('funnel-switcher').value;offset=0;renderDashFunnels();refresh();}
  function renderFunnels(){
    const el=$('funnel-list');
    if(!_funnels.length){
@@ -440,13 +535,12 @@ const App=(()=>{
      refreshIcons();return;
    }
    const origin=location.origin;
-   const tIcon={quiz:'list-checks',optin:'mail',vsl:'play'};
    el.innerHTML=_funnels.map(f=>{
      const url=`${origin}/${f.slug}`;
      return `<div class="fcard">
-       <div class="ftype">${icon(tIcon[f.type]||'layout-template')}</div>
+       <div class="ftype">${icon(F_ICON[f.type]||'layout-template')}</div>
        <div class="fmeta"><div class="fn">${esc(f.name||f.slug)} <span class="pill s-${f.status}" style="margin-left:6px">${STATE_LABEL[lang][f.status]||f.status}</span></div>
-         <div class="fstats"><span><b>${fmtN(f.lead_count||0)}</b> ${t('leads')}</span><span><b>${fmtN(f.purchase_count||0)}</b> ${t('sales')}</span><span>/${esc(f.slug)}</span></div></div>
+         <div class="fstats"><span><b>${fmtN(f.lead_count||0)}</b> ${t('leads')}</span><span><b>${fmtN(f.purchase_count||0)}</b> ${t('sales')}</span><span><b>${fconv(f)}%</b> ${t('conv_short')}</span><span>/${esc(f.slug)}</span></div></div>
        <div class="factions">
          <a class="btn ghost" href="${url}" target="_blank" title="${t('open')}">${icon('external-link')}</a>
          <button class="btn ghost" onclick="App.copyText('${esc(url)}')" title="${t('copy')}">${icon('copy')}</button>
@@ -700,7 +794,7 @@ const App=(()=>{
 
  async function saveBuilder(){
    const btn=$('bld-save'),o=btn.textContent;btn.classList.add('busy');btn.textContent=t('saving');
-   try{await api('funnels/'+_b.id,{method:'PATCH',body:JSON.stringify({name:$('bld-name').value.trim(),config:{config:_b.config,screens:_b.screens}})});
+   try{await api('funnels/'+_b.id,{method:'PATCH',body:JSON.stringify({name:$('bld-name').value.trim(),status:'published',config:{config:_b.config,screens:_b.screens}})});
      _b.dirty=false;toast(t('b_built'),'ok');}catch(e){toast(String(e.message),'bad');}
    btn.classList.remove('busy');btn.textContent=o;
  }
@@ -780,6 +874,192 @@ const App=(()=>{
  function fmtN(n){return (n==null?0:n).toLocaleString(lang==='pt'?'pt-PT':'en-US');}
  function fmtDate(s){if(!s)return '—';const d=new Date(s);return isNaN(d)?'—':d.toLocaleString(lang==='pt'?'pt-PT':'en-GB',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});}
 
+ // ── AI Ads ──
+ let _aiAddon=null,_aiProjects=[],_aiProject=null,_aiBusy=false;
+ const PLAT=['meta','google','tiktok','linkedin','youtube','pinterest'];
+ async function aiApi(p,opts){return api('ai/'+p,opts);}
+ function aiBusy(b){_aiBusy=b;}
+
+ async function aiLoad(){
+   $('ai-body').innerHTML=`<div class="onb"><div class="big">${icon('loader')}</div><p>${t('loading')||'Loading…'}</p></div>`;refreshIcons();
+   try{
+     _aiAddon=await aiApi('addon');
+     if(!_aiAddon.enabled){aiRenderGate();return;}
+     const d=await aiApi('projects');_aiProjects=d.results||[];
+     _aiProject?aiOpenProject(_aiProject.id):aiRenderList();
+   }catch(e){$('ai-body').innerHTML=`<div class="onb"><p style="color:var(--red)">${esc(String(e.message))}</p></div>`;}
+ }
+
+ function aiCreditPill(){const c=_aiAddon?_aiAddon.credits:0;return `<span class="pill" style="background:#0e2436;color:var(--brand2)">${icon('coins')} ${fmtN(c)} ${t('ai_credits')}</span>`;}
+
+ function aiRenderGate(){
+   const canGrant=true; // self-grant route is env-gated server-side; button is harmless if disabled
+   $('ai-body').innerHTML=`<div class="card" style="margin-top:18px;text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
+     <div class="big" style="font-size:40px">${icon('megaphone')}</div>
+     <h2 style="justify-content:center">${t('ai_gate_title')}</h2>
+     <p style="color:var(--muted);max-width:480px;margin:8px auto 0">${t('ai_gate_text')}</p>
+     <ul style="text-align:left;max-width:420px;margin:16px auto;color:var(--muted);line-height:1.9;list-style:none;padding:0">
+       <li>${icon('search')} ${t('ai_feat_find')}</li>
+       <li>${icon('sparkles')} ${t('ai_feat_strategy')}</li>
+       <li>${icon('image')} ${t('ai_feat_creatives')}</li>
+     </ul>
+     <button class="btn" style="margin:8px auto 0" onclick="App.aiUnlock()">${icon('zap')} ${t('ai_unlock')}</button>
+     <p style="color:var(--faint);font-size:11px;margin-top:10px">${t('ai_gate_note')}</p>
+   </div>`;refreshIcons();
+ }
+
+ async function aiUnlock(){
+   // MVP: requests a credit grant (server only honors it when AI_ALLOW_SELF_GRANT=1; otherwise
+   // shows the billing path). Stripe checkout for the add-on is the production follow-up.
+   try{await aiApi('grant',{method:'POST',body:JSON.stringify({credits:500})});toast(t('ai_unlocked'),'ok');aiLoad();}
+   catch(e){toast(t('ai_unlock_soon'),'');}
+ }
+
+ function aiRenderList(){
+   _aiProject=null;
+   const cards=_aiProjects.map(p=>`<div class="fcard">
+     <div class="ftype">${icon('megaphone')}</div>
+     <div class="fmeta"><div class="fn">${esc(p.name)} ${p.has_strategy?`<span class="pill s-published" style="margin-left:6px">${t('ai_ready')}</span>`:''}</div>
+       <div class="fstats"><span>${fmtDate(p.updated_at)}</span></div></div>
+     <div class="factions">
+       <button class="btn" onclick="App.aiOpenProject('${p.id}')">${icon('arrow-right')} ${t('open')}</button>
+       <button class="btn ghost icon" onclick="App.aiDeleteProject('${p.id}')" title="${t('delete')}">${icon('trash-2')}</button>
+     </div></div>`).join('');
+   $('ai-body').innerHTML=`<div class="toolbar" style="margin-top:18px">
+       <h2 style="font-size:16px;color:var(--text)">${t('ai_campaigns')}</h2>
+       <div class="spacer"></div>${aiCreditPill()}
+       <button class="btn" onclick="App.aiNewProject()">${icon('plus')} ${t('ai_new')}</button>
+     </div>
+     ${_aiProjects.length?cards:`<div class="onb"><div class="big">${icon('megaphone')}</div><h3>${t('ai_empty_t')}</h3><p>${t('ai_empty_d')}</p><button class="btn" onclick="App.aiNewProject()">${t('ai_new')}</button></div>`}`;
+   refreshIcons();
+ }
+
+ function aiNewProject(){
+   const fopts=_funnels.map(f=>`<option value="${f.id}">${esc(f.name||f.slug)}</option>`).join('');
+   $('drawer').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:start">
+       <h3>${t('ai_new')}</h3><button class="btn ghost icon" onclick="App.closeDrawer()">✕</button></div>
+     <p style="color:var(--muted);font-size:13px">${t('ai_new_help')}</p>
+     <label>${t('ai_from_funnel')}</label>
+     <select id="ai-fn"><option value="">— ${t('ai_no_funnel')} —</option>${fopts}</select>
+     <label>${t('ai_name')}</label><input id="ai-name" placeholder="${t('ai_name_ph')}">
+     <label>${t('ai_url')}</label><input id="ai-url" placeholder="https://…">
+     <label>${t('ai_notes')}</label><textarea id="ai-notes" rows="3" placeholder="${t('ai_notes_ph')}"></textarea>
+     <button class="btn" style="width:100%;justify-content:center;margin-top:14px" onclick="App.aiCreateProject()">${t('ai_create')}</button>`;
+   $('overlay').classList.add('show');$('drawer').classList.add('show');refreshIcons();
+ }
+ async function aiCreateProject(){
+   const funnelId=$('ai-fn').value,name=$('ai-name').value.trim(),url=$('ai-url').value.trim(),notes=$('ai-notes').value.trim();
+   if(!funnelId&&!name&&!url){toast(t('ai_need_input'),'bad');return;}
+   try{const r=await aiApi('projects',{method:'POST',body:JSON.stringify({funnelId,name,url,notes})});
+     closeDrawer();const d=await aiApi('projects');_aiProjects=d.results||[];aiOpenProject(r.id);}
+   catch(e){toast(String(e.message),'bad');}
+ }
+ async function aiDeleteProject(id){if(!confirm(t('ai_del_confirm')))return;
+   try{await aiApi('projects/'+id,{method:'DELETE'});const d=await aiApi('projects');_aiProjects=d.results||[];aiRenderList();}
+   catch(e){toast(String(e.message),'bad');}
+ }
+
+ async function aiOpenProject(id){
+   try{_aiProject=await aiApi('projects/'+id);aiRenderProject();}
+   catch(e){toast(String(e.message),'bad');aiRenderList();}
+ }
+
+ function aiRenderProject(){
+   const p=_aiProject;
+   $('ai-body').innerHTML=`<div class="toolbar" style="margin-top:18px">
+       <button class="btn ghost" onclick="App.aiBack()">${icon('arrow-left')} ${t('ai_back')}</button>
+       <h2 style="font-size:16px;color:var(--text)">${esc(p.name)}</h2>
+       <div class="spacer"></div>${aiCreditPill()}
+     </div>
+     <section class="grid cols" style="margin-top:6px">
+       <div class="card" id="ai-strategy">${aiStrategyHtml(p.strategy)}</div>
+       <div class="card" id="ai-find">${aiFindHtml(p)}</div>
+     </section>
+     <section class="card" style="margin-top:14px" id="ai-creatives">${aiCreativesHtml(p)}</section>`;
+   refreshIcons();
+ }
+ function aiBack(){_aiProject=null;aiRenderList();}
+
+ function aiStrategyHtml(s){
+   const cost=_aiAddon.costs.strategy;
+   if(!s)return `<h2>${icon('sparkles')} ${t('ai_strategy')}</h2>
+     <p style="color:var(--muted);font-size:13px">${t('ai_strategy_help')}</p>
+     <button class="btn" style="margin-top:10px" onclick="App.aiGenStrategy()">${icon('sparkles')} ${t('ai_generate')} · ${cost} ${t('ai_credits')}</button>`;
+   const r=s.readiness||{},personas=(s.personas&&s.personas.personas)||[],f=s.funnel||{},b=s.budget||{},cp=(s.copy&&s.copy.platforms)||[];
+   const stage=(k,o)=>o?`<div style="margin:6px 0"><b style="text-transform:uppercase;font-size:11px;color:var(--brand2)">${k}</b> — ${esc(o.goal||'')}<div style="color:var(--muted);font-size:12px">${(o.angles||[]).map(esc).join(' · ')}</div></div>`:'';
+   return `<div style="display:flex;justify-content:space-between;align-items:start"><h2>${icon('sparkles')} ${t('ai_strategy')}</h2>
+       <button class="btn ghost" onclick="App.aiGenStrategy()">${icon('refresh-cw')} ${t('ai_regen')}</button></div>
+     ${r.score!=null?`<div style="display:flex;align-items:center;gap:14px;margin:8px 0">
+       <div style="font-size:34px;font-weight:800;color:var(--green)">${esc(r.grade||'')}</div>
+       <div><div style="font-size:20px;font-weight:700">${esc(String(r.score))}/100</div><div style="color:var(--muted);font-size:12px">${esc(r.summary||'')}</div></div></div>`:''}
+     ${personas.length?`<h3 style="margin-top:10px">${t('ai_personas')}</h3>${personas.map(pe=>`<div style="margin:4px 0;font-size:13px"><b>${esc(pe.name)}</b> <span style="color:var(--muted)">${esc(pe.demographics||'')}</span></div>`).join('')}`:''}
+     <h3 style="margin-top:10px">${t('ai_funnel')}</h3>${stage('TOFU',f.tofu)}${stage('MOFU',f.mofu)}${stage('BOFU',f.bofu)}
+     ${(b.allocations||[]).length?`<h3 style="margin-top:10px">${t('ai_budget')}</h3>${(b.allocations||[]).map(a=>`<div style="display:flex;justify-content:space-between;font-size:13px"><span>${esc(a.platform)}</span><b>${esc(String(a.percent))}%</b></div>`).join('')}`:''}`;
+ }
+ async function aiGenStrategy(){
+   const el=$('ai-strategy');if(el)el.innerHTML=`<h2>${icon('sparkles')} ${t('ai_strategy')}</h2><p style="color:var(--muted)">${icon('loader')} ${t('ai_working')}</p>`;refreshIcons();
+   try{const r=await aiApi('projects/'+_aiProject.id+'/strategy',{method:'POST'});
+     _aiProject.strategy=r.strategy;_aiAddon.credits=r.credits;aiRenderProject();toast(t('ai_done'),'ok');}
+   catch(e){toast(String(e.message),'bad');aiRenderProject();}
+ }
+
+ function aiFindHtml(p){
+   const cost=_aiAddon.costs.find_ads,ads=p.competitorAds||[];
+   const list=ads.slice(0,8).map(a=>`<div style="border-top:1px solid var(--line);padding:8px 0">
+       <div style="display:flex;justify-content:space-between"><b style="font-size:13px">${esc(a.page_name||'—')}</b><span class="pill" style="font-size:9px;background:#1b232e;color:var(--muted)">${a.source}</span></div>
+       <div style="font-size:12px;color:var(--muted)">${esc((a.ad_text||'').slice(0,140))}</div>
+       ${a.angle?`<div style="font-size:11px;color:var(--brand2)">↳ ${esc(a.angle)}</div>`:''}
+       ${a.media_url?`<a href="${esc(a.media_url)}" target="_blank" style="font-size:11px;color:var(--brand)">${t('ai_view_ad')}</a>`:''}
+     </div>`).join('');
+   return `<h2>${icon('search')} ${t('ai_find')}</h2>
+     <div class="toolbar" style="gap:6px;margin-top:6px">
+       <input id="ai-q" placeholder="${t('ai_find_ph')}" style="flex:1;min-width:120px">
+       <input id="ai-cc" value="US" maxlength="2" style="width:54px;text-transform:uppercase" title="${t('ai_country')}">
+       <button class="btn" onclick="App.aiFindAds()">${t('ai_search')} · ${cost}</button>
+     </div>
+     <p style="color:var(--faint);font-size:11px;margin-top:4px">${t('ai_meta_note')}</p>
+     <div id="ai-find-list">${list||`<p style="color:var(--muted);font-size:12px;margin-top:8px">${t('ai_no_ads')}</p>`}</div>`;
+ }
+ async function aiFindAds(){
+   const query=$('ai-q').value.trim(),country=($('ai-cc').value||'US').trim();
+   if(!query){toast(t('ai_enter_term'),'bad');return;}
+   $('ai-find-list').innerHTML=`<p style="color:var(--muted)">${icon('loader')} ${t('ai_working')}</p>`;refreshIcons();
+   try{const r=await aiApi('projects/'+_aiProject.id+'/find-ads',{method:'POST',body:JSON.stringify({query,country})});
+     _aiAddon.credits=r.credits;if(r.note)toast(r.note,'');
+     _aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();}
+   catch(e){toast(String(e.message),'bad');aiRenderProject();}
+ }
+
+ function aiCreativesHtml(p){
+   const cost=_aiAddon.costs.creative,cr=p.creatives||[];
+   const popts=PLAT.map(x=>`<option value="${x}">${x}</option>`).join('');
+   const cards=cr.map(c=>`<div class="card" style="padding:10px">
+       ${c.image_key?`<img src="/api/ai/creatives/${c.id}/image" style="width:100%;border-radius:8px;aspect-ratio:1;object-fit:cover" loading="lazy">`:`<div style="aspect-ratio:1;background:var(--panel2);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--faint)">${icon('image')}</div>`}
+       <div style="font-weight:700;margin-top:8px;font-size:13px">${esc(c.headline||'')}</div>
+       <div style="font-size:12px;color:var(--muted);margin:4px 0">${esc(c.primary_text||'')}</div>
+       <div style="font-size:11px;color:var(--brand2)">${esc(c.cta||'')}</div>
+       <div class="factions" style="margin-top:8px">
+         <button class="btn ghost icon" onclick="App.aiFav('${c.id}',${c.favorite?0:1})" title="${t('ai_fav')}" style="color:${c.favorite?'var(--amber)':'inherit'}">${icon('star')}</button>
+         ${c.image_key?`<a class="btn ghost icon" href="/api/ai/creatives/${c.id}/image" download title="${t('ai_download')}">${icon('download')}</a>`:''}
+         <button class="btn ghost icon" onclick="App.aiDelCreative('${c.id}')" title="${t('delete')}">${icon('trash-2')}</button>
+       </div></div>`).join('');
+   return `<div class="toolbar"><h2>${icon('image')} ${t('ai_creatives')}</h2><div class="spacer"></div>
+       <select id="ai-plat" style="width:auto">${popts}</select>
+       <input id="ai-persona" placeholder="${t('ai_persona_ph')}" style="width:auto;min-width:140px">
+       <button class="btn" onclick="App.aiGenCreatives()">${icon('sparkles')} ${t('ai_generate')} · ${cost*3}</button>
+     </div>
+     <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:10px">${cards||`<p style="color:var(--muted);font-size:13px">${t('ai_no_creatives')}</p>`}</div>`;
+ }
+ async function aiGenCreatives(){
+   const platform=$('ai-plat').value,persona=$('ai-persona').value.trim();
+   $('ai-creatives').querySelector('.grid').innerHTML=`<p style="color:var(--muted)">${icon('loader')} ${t('ai_working_img')}</p>`;refreshIcons();
+   try{const r=await aiApi('projects/'+_aiProject.id+'/creatives',{method:'POST',body:JSON.stringify({platform,persona,count:3})});
+     _aiAddon.credits=r.credits;_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();toast(t('ai_done'),'ok');}
+   catch(e){toast(String(e.message),'bad');aiRenderProject();}
+ }
+ async function aiFav(id,v){try{await aiApi('creatives/'+id,{method:'PATCH',body:JSON.stringify({favorite:v})});_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();}catch(e){toast(String(e.message),'bad');}}
+ async function aiDelCreative(id){try{await aiApi('creatives/'+id,{method:'DELETE'});_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();}catch(e){toast(String(e.message),'bad');}}
+
  // boot
  (function(){
    const stored=localStorage.getItem(LANG_KEY);lang=stored||'pt';  // default to Portuguese; EN toggle persists once chosen
@@ -791,9 +1071,11 @@ const App=(()=>{
  })();
 
  return {submitAuth,toggleAuthMode,logout,showView,refresh,loadStats,loadLeads,page,openLead,closeDrawer,exportCsv,
-   onFunnelChange,openFunnelEditor,saveFunnel,deleteFunnel,setLang,copyText,copyEl,pickTemplate,
+   onFunnelChange,scopeFunnel,openFunnelEditor,saveFunnel,deleteFunnel,setLang,copyText,copyEl,pickTemplate,
    openBuilder,closeBuilder,builderSelect,builderAdd,builderDelete,bset,boptSet,boptAdd,boptDel,
-   bfSet,bfAdd,bfDel,bstepSet,bstepAdd,bstepDel,bcfg,saveBuilder,loadDomains,addDomain,delDomain};
+   bfSet,bfAdd,bfDel,bstepSet,bstepAdd,bstepDel,bcfg,saveBuilder,loadDomains,addDomain,delDomain,
+   aiNewProject,aiCreateProject,aiOpenProject,aiDeleteProject,aiBack,aiUnlock,
+   aiGenStrategy,aiFindAds,aiGenCreatives,aiFav,aiDelCreative};
 })();
 </script>
 </body>

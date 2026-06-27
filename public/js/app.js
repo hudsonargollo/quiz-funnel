@@ -166,23 +166,29 @@
   // LANDING
   // ─────────────────────────────────────────────
   function buildLanding(s) {
+    // Optional blocks — render only when the screen defines them, so templates
+    // without an image/alert don't emit literal "undefined".
+    const imageBlock = (s.image || s.imagePlaceholder) ? `
+      <div class="landing-image-wrap">
+        ${s.image ? `<img src="${s.image}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ''}
+        <div class="landing-image-placeholder" style="display:${s.image ? 'none' : 'flex'}">${s.imagePlaceholder || ''}</div>
+      </div>` : '';
+    const alertBlock = (s.alertTitle || s.alertBody) ? `
+      <div class="alert-box">
+        ${s.alertTitle ? `<p class="alert-title">${icon('alert-triangle')} ${s.alertTitle}</p>` : ''}
+        ${s.alertBody ? `<p>${s.alertBody}</p>` : ''}
+      </div>` : '';
     return `
     <div class="screen landing">
-      <p class="landing-eyebrow">Avaliação gratuita</p>
+      ${s.eyebrow !== '' ? `<p class="landing-eyebrow">${s.eyebrow || 'Avaliação gratuita'}</p>` : ''}
       <h1 class="landing-headline">
-        ${s.headline}<br><span class="accent">${s.headlineAccent}</span>
+        ${s.headline || ''}${s.headlineAccent ? `<br><span class="accent">${s.headlineAccent}</span>` : ''}
       </h1>
-      <p class="landing-sub">${s.sub}</p>
-      <div class="landing-image-wrap">
-        <img src="${s.image}" alt="Antes e depois" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-        <div class="landing-image-placeholder" style="display:none">${s.imagePlaceholder}</div>
-      </div>
-      <div class="alert-box">
-        <p class="alert-title">${icon('alert-triangle')} ${s.alertTitle}</p>
-        <p>${s.alertBody}</p>
-      </div>
+      ${s.sub ? `<p class="landing-sub">${s.sub}</p>` : ''}
+      ${imageBlock}
+      ${alertBlock}
       <div class="btn-wrap">
-        <button class="btn" data-action="next">${s.cta}</button>
+        <button class="btn" data-action="next">${s.cta || 'Continue'}</button>
       </div>
     </div>`;
   }

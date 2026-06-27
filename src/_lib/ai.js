@@ -1,0 +1,211 @@
+/**
+ * AI Ads engine — Anthropic (strategy + copy) and OpenAI gpt-image-1 (creatives).
+ *
+ * Runs entirely from the Worker via fetch (no SDK). The strategy engine mirrors the
+ * referenced repo's "5 parallel agents" design by firing one Claude request per
+ * dimension with Promise.all. Models: Opus 4.8 for synthesis, Sonnet 4.6 for copy.
+ */
+
+const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
+const ANTHROPIC_VERSION = '2023-06-01';
+const OPENAI_IMAGE_URL = 'https://api.openai.com/v1/images/generations';
+
+export const MODELS = {
+  strategy: 'claude-opus-4-8',
+  copy: 'claude-sonnet-4-6',
+};
+
+const PLATFORMS = ['meta', 'google', 'tiktok', 'linkedin', 'youtube', 'pinterest'];
+
+/**
+ * Call Claude's Messages API. When `schema` is given, constrains the response to that
+ * JSON Schema (structured outputs) and returns the parsed object; otherwise returns text.
+ */
+export async function callClaude(env, { model = MODELS.copy, system, user, schema, maxTokens = 4096 }) {
+  if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY not configured');
+  const body = {
+    model,
+    max_tokens: maxTokens,
+    messages: [{ role: 'user', content: user }],
+  };
+  if (system) body.system = system;
+  if (schema) body.output_config = { format: { type: 'json_schema', schema } };
+
+  const res = await fetch(ANTHROPIC_URL, {
+    method: 'POST',
+    headers: {
+      'x-api-key': env.ANTHROPIC_API_KEY,
+      'anthropic-version': ANTHROPIC_VERSION,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => '');
+    throw new Error(`Claude ${res.status}: ${t.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  if (data.stop_reason === 'refusal') throw new Error('Request was declined by safety system');
+  const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+  if (!schema) return text;
+  try { return JSON.parse(text); } catch (e) { throw new Error('Model did not return valid JSON'); }
+}
+
+/**
+ * Generate an ad image via OpenAI gpt-image-1. Returns raw bytes + content type so the
+ * caller can persist to R2. Ad creatives need legible in-image text — gpt-image-1 is best
+ * at that; swap this one function to use fal.ai/Replicate if cost matters more.
+ */
+export async function generateImage(env, { prompt, size = '1024x1024' }) {
+  if (!env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not configured');
+  const res = await fetch(OPENAI_IMAGE_URL, {
+    method: 'POST',
+    headers: { 'authorization': `Bearer ${env.OPENAI_API_KEY}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ model: 'gpt-image-1', prompt, size, n: 1 }),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => '');
+    throw new Error(`Image API ${res.status}: ${t.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  const b64 = data?.data?.[0]?.b64_json;
+  if (!b64) throw new Error('Image API returned no image');
+  return { bytes: b64ToBytes(b64), contentType: 'image/png' };
+}
+
+function b64ToBytes(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+// ── Funnel context ────────────────────────────────
+/**
+ * Build a product brief from a funnel's stored config (product name, price, offer copy,
+ * quiz questions) so generated ads reflect the funnel rather than a generic URL.
+ */
+export function briefFromFunnel(funnel) {
+  let parsed = {};
+  try { parsed = JSON.parse(funnel.config || '{}'); } catch (e) {}
+  const cfg = parsed.config || {};
+  const screens = parsed.screens || [];
+  const offer = screens.find((s) => s.type === 'offer') || {};
+  const questions = screens.filter((s) => s.key).map((s) => s.title).filter(Boolean).slice(0, 12);
+  return {
+    name: funnel.name || cfg.productName || funnel.slug,
+    productName: cfg.productName || funnel.name || '',
+    price: cfg.productPrice || null,
+    currency: cfg.currency || '',
+    offerHeadline: offer.title || offer.headline || '',
+    offerBody: offer.body || offer.subtitle || '',
+    quizThemes: questions,
+    funnelType: funnel.type,
+  };
+}
+
+function briefText(brief) {
+  return [
+    `Product: ${brief.productName || brief.name}`,
+    brief.price ? `Price: ${brief.currency || ''}${brief.price}` : '',
+    brief.offerHeadline ? `Offer headline: ${brief.offerHeadline}` : '',
+    brief.offerBody ? `Offer detail: ${brief.offerBody}` : '',
+    brief.inputUrl ? `Reference URL: ${brief.inputUrl}` : '',
+    brief.notes ? `Notes: ${brief.notes}` : '',
+    brief.quizThemes?.length ? `Quiz themes: ${brief.quizThemes.join('; ')}` : '',
+  ].filter(Boolean).join('\n');
+}
+
+// ── Structured-output schemas (kept simple per structured-output limits) ──
+const obj = (props, required) => ({ type: 'object', additionalProperties: false, properties: props, required: required || Object.keys(props) });
+const str = { type: 'string' };
+const strArr = { type: 'array', items: { type: 'string' } };
+
+const READINESS_SCHEMA = obj({
+  score: { type: 'integer' }, grade: str, summary: str,
+  strengths: strArr, gaps: strArr,
+});
+const PERSONAS_SCHEMA = obj({
+  personas: { type: 'array', items: obj({
+    name: str, demographics: str, painPoints: strArr, desires: strArr, targeting: str,
+  }) },
+});
+const FUNNEL_SCHEMA = obj({
+  tofu: obj({ goal: str, angles: strArr, formats: strArr }),
+  mofu: obj({ goal: str, angles: strArr, formats: strArr }),
+  bofu: obj({ goal: str, angles: strArr, formats: strArr }),
+});
+const BUDGET_SCHEMA = obj({
+  total_note: str,
+  allocations: { type: 'array', items: obj({ platform: str, percent: { type: 'integer' }, rationale: str }) },
+});
+const COPY_SCHEMA = obj({
+  platforms: { type: 'array', items: obj({
+    platform: str,
+    headlines: strArr, primary_texts: strArr, ctas: strArr,
+  }) },
+});
+
+const SYSTEM = 'You are a senior performance-marketing strategist. Be specific, concrete, and actionable. Output only the requested JSON.';
+
+/**
+ * Run the parallel strategy engine. Five dimensions fire concurrently (like the repo's
+ * 5 agents); returns a single strategy object persisted as ad_projects.strategy.
+ */
+export async function generateStrategy(env, brief) {
+  const ctx = briefText(brief);
+  const ask = (label, instruction, schema, model = MODELS.copy) => callClaude(env, {
+    model, system: SYSTEM, schema, maxTokens: 3000,
+    user: `${instruction}\n\n--- BUSINESS BRIEF ---\n${ctx}`,
+  }).then((r) => [label, r]).catch((e) => [label, { error: String(e.message) }]);
+
+  const results = await Promise.all([
+    ask('readiness', 'Score this business\'s advertising readiness 0-100 with a letter grade (A+ to F). Give a one-paragraph summary, key strengths, and gaps.', READINESS_SCHEMA, MODELS.strategy),
+    ask('personas', 'Define 3 detailed audience personas with demographics, pain points, desires, and ad targeting parameters.', PERSONAS_SCHEMA),
+    ask('funnel', 'Design a TOFU/MOFU/BOFU campaign funnel. For each stage give the goal, 3-5 creative angles, and recommended ad formats.', FUNNEL_SCHEMA),
+    ask('budget', 'Recommend a budget allocation across Meta, Google, TikTok, LinkedIn, YouTube, Pinterest as percentages summing to 100, each with a short rationale.', BUDGET_SCHEMA),
+    ask('copy', `Write platform-specific ad copy for ${PLATFORMS.join(', ')}. For each platform give 3 headlines, 3 primary texts, and 3 CTAs.`, COPY_SCHEMA),
+  ]);
+  const out = {};
+  for (const [k, v] of results) out[k] = v;
+  out.generated_at = new Date().toISOString();
+  return out;
+}
+
+// ── Creatives (copy + image) ──────────────────────
+const CREATIVE_COPY_SCHEMA = obj({
+  variants: { type: 'array', items: obj({
+    headline: str, primary_text: str, cta: str, image_prompt: str,
+  }) },
+});
+
+/** Generate N ad-copy variants (each with an image prompt) for a platform + persona. */
+export async function generateCreativeCopy(env, { brief, platform, persona, count = 3 }) {
+  const ctx = briefText(brief);
+  const out = await callClaude(env, {
+    model: MODELS.copy, system: SYSTEM, schema: CREATIVE_COPY_SCHEMA, maxTokens: 2500,
+    user: `Create ${count} distinct ${platform} ad variants${persona ? ` targeting this persona: ${persona}` : ''}. `
+      + `Each variant: a scroll-stopping headline, primary text, a CTA, and an "image_prompt" — a vivid prompt for an image generator describing the ad creative (scene, style, mood, any short on-image text). `
+      + `\n\n--- BUSINESS BRIEF ---\n${ctx}`,
+  });
+  return out.variants || [];
+}
+
+// ── Competitor-ad AI analysis ─────────────────────
+const COMPETITOR_SCHEMA = obj({
+  ads: { type: 'array', items: obj({
+    page_name: str, ad_text: str, cta: str, angle: str,
+  }) },
+});
+
+/** LLM-reasoned competitor ad concepts/angles (used alongside real Meta Ad Library results). */
+export async function analyzeCompetitors(env, { brief, query }) {
+  const ctx = briefText(brief);
+  const out = await callClaude(env, {
+    model: MODELS.copy, system: SYSTEM, schema: COMPETITOR_SCHEMA, maxTokens: 2500,
+    user: `For the search "${query}", infer 5 likely competitor ad approaches in this market. `
+      + `For each: a plausible advertiser/page name, representative ad text, a CTA, and the strategic angle it exploits. `
+      + `\n\n--- BUSINESS BRIEF ---\n${ctx}`,
+  });
+  return out.ads || [];
+}

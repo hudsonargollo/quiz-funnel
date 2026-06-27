@@ -21,6 +21,11 @@ binding = "DB"
 database_name = "quiz-funnel-crm"
 database_id = "e59571a7-af41-4e9c-9106-51ffebbd1035"
 
+# AI Ads add-on: stores generated ad creative images (served via /api/ai/creatives/:id/image).
+[[r2_buckets]]
+binding = "AD_ASSETS"
+bucket_name = "quiz-funnel-ad-assets"
+
 [vars]
 ENVIRONMENT = "production"
 # Platform host: landing at "/", dashboard at "/admin", funnels at "/<slug>".
@@ -38,6 +43,10 @@ SAAS_ZONE_ID = ""                              # clubemkt.digital zone id (set w
 SAAS_CNAME_TARGET = "offers.clubemkt.digital"  # CNAME target customers point their domain at
 # CF_API_TOKEN is a secret: wrangler secret put CF_API_TOKEN  (Custom Hostnames edit scope)
 
+# AI Ads add-on
+META_GRAPH_VERSION = "v21.0"                    # Meta Graph API version for the Ad Library
+AI_ALLOW_SELF_GRANT = "1"                       # lets the "Unlock AI Ads" button grant test credits (set "0" once Stripe checkout ships)
+
 # Attach the Worker to the platform host as a Custom Domain (wrangler creates the
 # proxied DNS record + edge cert for this single hostname automatically).
 [[routes]]
@@ -51,4 +60,7 @@ custom_domain = true
 # PLATFORM_DOMAINS above, so /<slug> routing works once SaaS forwards the request.
 
 # Secrets (set via: wrangler secret put NAME):
-#   SECRETS_KEY  — base64 32-byte AES key for encrypting tenant Stripe keys
+#   SECRETS_KEY      — base64 32-byte AES key for encrypting tenant Stripe keys
+#   ANTHROPIC_API_KEY — AI Ads: strategy + copy generation (Claude)
+#   OPENAI_API_KEY    — AI Ads: image creatives (gpt-image-1)
+#   META_ADS_TOKEN    — AI Ads: Meta Ad Library access token (ads_archive)
