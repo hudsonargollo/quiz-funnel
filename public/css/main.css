@@ -3,37 +3,42 @@
    Privacy App Design System + Bebas Neue
    ============================================ */
 
-/* --- Design Tokens --- */
+/* --- Design Tokens ---
+   The funnel's named tokens now alias the shared design system
+   (tokens.css · data-theme="light"). Values are unchanged — this is a
+   single-source-of-truth re-point, not a restyle. Tokens with no exact
+   shared equivalent (warm accent, option-hover, fonts, layout, --speed)
+   stay as literals. */
 :root {
   /* Privacy App Brand Colors */
-  --brand-primary: #00AEEF;      /* Cyan blue — buttons, progress, CTAs */
-  --brand-primary-dark: #0090C8;
-  --brand-primary-light: #E6F7FD;
-  --brand-accent: #FF6B35;       /* Warm accent for urgency/warnings */
-  --brand-success: #22C55E;
-  --brand-danger: #EF4444;
+  --brand-primary: var(--brand-500);       /* Cyan blue — buttons, progress, CTAs */
+  --brand-primary-dark: var(--brand-600);
+  --brand-primary-light: var(--brand-50);
+  --brand-accent: #FF6B35;                 /* Warm accent for urgency/warnings */
+  --brand-success: var(--success);
+  --brand-danger: var(--danger);
 
   /* Surfaces */
-  --bg-page: #FFFFFF;
-  --bg-surface: #F7F9FC;
-  --bg-card: #FFFFFF;
-  --bg-option: #EFF8FD;
+  --bg-page: var(--bg);
+  --bg-surface: var(--surface-2);
+  --bg-card: var(--surface);
+  --bg-option: var(--surface-3);
   --bg-option-hover: #D6F0FA;
-  --bg-option-selected: #00AEEF;
+  --bg-option-selected: var(--brand-500);
 
   /* Text */
-  --text-primary: #0D1117;
-  --text-secondary: #4A5568;
-  --text-muted: #9CA3AF;
-  --text-on-brand: #FFFFFF;
+  --text-primary: var(--on-surface);
+  --text-secondary: var(--on-surface-muted);
+  --text-muted: var(--on-surface-faint);
+  --text-on-brand: var(--on-primary);
 
   /* Borders */
-  --border-default: #E2E8F0;
-  --border-focus: #00AEEF;
+  --border-default: var(--outline);
+  --border-focus: var(--brand-500);
 
   /* Shadows */
-  --shadow-card: 0 2px 16px rgba(0, 174, 239, 0.08);
-  --shadow-button: 0 4px 20px rgba(0, 174, 239, 0.35);
+  --shadow-card: var(--e-2);
+  --shadow-button: var(--glow-brand);
 
   /* Typography */
   --font-display: 'Bebas Neue', cursive;
@@ -42,13 +47,13 @@
   /* Layout */
   --max-width: 620px;
   --screen-pad: 24px;
-  --radius-sm: 8px;
-  --radius-md: 14px;
+  --radius-sm: var(--r-xs);
+  --radius-md: var(--r-md);
   --radius-lg: 20px;
   --radius-pill: 100px;
 
   /* Transitions */
-  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease: var(--ease-standard);
   --speed: 0.22s;
 }
 

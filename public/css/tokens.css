@@ -1,0 +1,156 @@
+/* ============================================================
+   DESIGN TOKENS — single source of truth for every surface
+   (funnel · admin · marketing). "Fluid premium" direction:
+   solid surfaces + a brand gradient reserved for CTAs/keylines,
+   hairline outlines, soft layered elevation, spring motion.
+
+   Methodology: Material 3 token model expressed as CSS custom
+   properties. Theme-agnostic scales live in :root; the semantic
+   surface/text/outline roles are swapped by [data-theme].
+
+   Surfaces opt in with:  <html data-theme="light|dark">
+     funnels      → light
+     admin / home → dark
+   ============================================================ */
+
+:root {
+  /* ── Brand tonal ramp (derived from #00AEEF) ───────────── */
+  --brand-50:  #e6f7fd;
+  --brand-100: #c4ecfb;
+  --brand-200: #93def8;
+  --brand-300: #54cbf3;
+  --brand-400: #1fb9f0;
+  --brand-500: #00aeef;   /* base brand */
+  --brand-600: #0090c8;
+  --brand-700: #0e74a2;
+  --brand-800: #155b80;
+  --brand-900: #164a66;
+  --brand:     var(--brand-500);
+  --brand-soft: #7ad9ff;  /* lighter twin used in the gradient */
+
+  /* Brand gradient — CTAs + active keylines ONLY (fluid premium) */
+  --brand-grad:      linear-gradient(135deg, var(--brand-500) 0%, var(--brand-soft) 100%);
+  --brand-grad-veil: linear-gradient(135deg, rgba(0,174,239,.18) 0%, rgba(122,217,255,.06) 100%);
+
+  /* ── Radius scale ──────────────────────────────────────── */
+  --r-xs:  8px;
+  --r-sm:  10px;
+  --r-md:  14px;
+  --r-lg:  18px;
+  --r-xl:  24px;
+  --r-pill: 999px;
+  --r:     var(--r-md);
+
+  /* ── Type scale (sizes only — font-family stays per surface) */
+  --fs-display: clamp(34px, 7vw, 54px);
+  --fs-h1:      clamp(26px, 5vw, 36px);
+  --fs-h2:      22px;
+  --fs-title:   18px;
+  --fs-body:    15px;
+  --fs-sm:      13px;
+  --fs-label:   11px;
+  --lh-tight:   1.05;
+  --lh-snug:    1.25;
+  --lh-body:    1.55;
+
+  /* ── Motion tokens ─────────────────────────────────────── */
+  /* Durations */
+  --dur-1: 120ms;   /* micro: press / state layer        */
+  --dur-2: 200ms;   /* small: hover / toggles            */
+  --dur-3: 320ms;   /* reveals / panel transitions       */
+  --dur-4: 480ms;   /* large surface / route transitions */
+  --dur-5: 640ms;   /* hero / orchestrated sequences     */
+  /* Easings (Material 3 emphasized family + a spring overshoot) */
+  --ease-standard:   cubic-bezier(.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(.2, 0, 0, 1);
+  --ease-decelerate: cubic-bezier(.05, .7, .1, 1);
+  --ease-accelerate: cubic-bezier(.3, 0, .8, .15);
+  --ease-spring:     cubic-bezier(.34, 1.56, .64, 1);
+  /* Spring constants consumed by motion.js (JS reads these) */
+  --spring-stiffness: 320;
+  --spring-damping:   26;
+  --spring-mass:      1;
+
+  /* Legacy aliases kept so existing main.css keeps compiling */
+  --ease:  var(--ease-standard);
+  --speed: var(--dur-2);
+}
+
+/* ── DARK theme (admin · marketing) ───────────────────────── */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg:            #0b0f14;
+  --surface:       #141b24;  /* primary card / panel        */
+  --surface-2:     #1b232e;  /* raised / inset within a card */
+  --surface-3:     #0e141b;  /* recessed / page gutters      */
+  --surface-glass: rgba(20, 27, 36, .72);
+
+  --on-surface:        #e6edf3;
+  --on-surface-muted:  #8b97a6;
+  --on-surface-faint:  #5b6573;
+
+  --outline:        #262f3a;
+  --outline-strong: #34404f;
+  --hairline:       rgba(255, 255, 255, .08);
+
+  --primary:            var(--brand-500);
+  --on-primary:         #04161f;
+  --primary-container:  #0e2436;
+  --on-primary-container: var(--brand-soft);
+
+  --success: #22c55e;
+  --warning: #fbbf24;
+  --danger:  #ef4444;
+  --orange:  #fb923c;
+
+  /* Elevation — soft, layered (fluid premium) */
+  --e-1: 0 1px 2px rgba(0,0,0,.30);
+  --e-2: 0 1px 2px rgba(0,0,0,.30), 0 8px 24px -12px rgba(0,0,0,.50);
+  --e-3: 0 2px 4px rgba(0,0,0,.32), 0 16px 40px -16px rgba(0,0,0,.60);
+  --e-4: 0 4px 8px rgba(0,0,0,.35), 0 32px 64px -24px rgba(0,0,0,.70);
+  --glow-brand: 0 0 0 1px rgba(0,174,239,.25), 0 8px 30px -8px rgba(0,174,239,.35);
+}
+
+/* ── LIGHT theme (funnels) ────────────────────────────────── */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg:            #ffffff;
+  --surface:       #ffffff;  /* card                         */
+  --surface-2:     #f7f9fc;  /* subtle inset / section bg     */
+  --surface-3:     #eff8fd;  /* tinted option / recessed      */
+  --surface-glass: rgba(255, 255, 255, .72);
+
+  --on-surface:        #0d1117;
+  --on-surface-muted:  #4a5568;
+  --on-surface-faint:  #9ca3af;
+
+  --outline:        #e2e8f0;
+  --outline-strong: #cbd5e1;
+  --hairline:       rgba(13, 17, 23, .06);
+
+  --primary:            var(--brand-500);
+  --on-primary:         #ffffff;
+  --primary-container:  var(--brand-50);
+  --on-primary-container: var(--brand-700);
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger:  #ef4444;
+  --orange:  #fb923c;
+
+  /* Elevation — light, brand-tinted (fluid premium) */
+  --e-1: 0 1px 2px rgba(13,17,23,.06);
+  --e-2: 0 2px 16px rgba(0,174,239,.08);
+  --e-3: 0 6px 24px -8px rgba(0,174,239,.14);
+  --e-4: 0 12px 40px -12px rgba(0,174,239,.20);
+  --glow-brand: 0 4px 20px rgba(0,174,239,.35);
+}
+
+/* ── Accessibility: honor reduced-motion globally ─────────── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 1ms; --dur-2: 1ms; --dur-3: 1ms; --dur-4: 1ms; --dur-5: 1ms;
+  }
+}

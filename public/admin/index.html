@@ -1,17 +1,22 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>Tektone Funnels</title>
+<link rel="stylesheet" href="/css/tokens.css">
 <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 <style>
+  /* Admin palette now aliases the shared design tokens (tokens.css · data-theme="dark").
+     Same values as before — single source of truth, zero visual change.
+     --bg and --orange are provided directly by tokens.css (identical names),
+     so they're intentionally not re-declared here (a self-var() would be cyclic). */
   :root{
-    --bg:#0b0f14;--bg2:#0e141b;--panel:#141b24;--panel2:#1b232e;--line:#262f3a;
-    --text:#e6edf3;--muted:#8b97a6;--faint:#5b6573;
-    --brand:#00AEEF;--brand2:#7ad9ff;--green:#22C55E;--amber:#FBBF24;--orange:#fb923c;--red:#EF4444;
-    --radius:14px;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+    --bg2:var(--surface-3);--panel:var(--surface);--panel2:var(--surface-2);--line:var(--outline);
+    --text:var(--on-surface);--muted:var(--on-surface-muted);--faint:var(--on-surface-faint);
+    --brand:var(--primary);--brand2:var(--brand-soft);--green:var(--success);--amber:var(--warning);--red:var(--danger);
+    --radius:var(--r-md);--shadow:var(--e-2);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;background:
