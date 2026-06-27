@@ -79,19 +79,26 @@ const toArray = (t) =>
    Micro-interactions (Motion One)
    ============================================================ */
 
-/** Staggered entrance — fade + rise. Returns when settled. */
+/** Staggered entrance — fade + rise. Returns when settled.
+ *  Pre-hides synchronously so there's no flash before the CDN module loads; the
+ *  caller must therefore only invoke reveal() on elements it intends to animate
+ *  (not on every re-render) or they'd briefly flicker. */
 async function reveal(target, { y = 14, delay = 0, stagger = 0.05, duration } = {}) {
   const els = toArray(target);
   if (!els.length) return;
   if (REDUCED) { els.forEach((el) => (el.style.opacity = '1')); return; }
+  els.forEach((el) => { el.style.opacity = '0'; });        // sync pre-hide → flash-free
+  const finish = () => els.forEach((el) => { el.style.opacity = '1'; el.style.transform = ''; });
   const lib = await loadMotion();
-  if (!lib) { els.forEach((el) => (el.style.opacity = '1')); return; }
+  if (!lib) { finish(); return; }
   const { animate, stagger: stg } = lib;
-  return animate(
-    els,
-    { opacity: [0, 1], transform: [`translateY(${y}px)`, 'translateY(0px)'] },
-    { duration: duration ?? TOK.d3, delay: stg ? stg(stagger, { startDelay: delay }) : delay, easing: [0.05, 0.7, 0.1, 1] }
-  ).finished;
+  try {
+    await animate(
+      els,
+      { opacity: [0, 1], transform: [`translateY(${y}px)`, 'translateY(0px)'] },
+      { duration: duration ?? TOK.d3, delay: stg ? stg(stagger, { startDelay: delay }) : delay, easing: [0.05, 0.7, 0.1, 1] }
+    ).finished;
+  } finally { finish(); }                                  // guarantee visible end state
 }
 
 /** Tactile spring press on pointer-down for interactive elements. */
