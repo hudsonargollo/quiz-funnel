@@ -405,7 +405,7 @@ const I18N={
    ai_new_help:'Attach to a funnel to reuse its product context, or paste a URL / brief.',ai_from_funnel:'From funnel',ai_no_funnel:'no funnel',ai_name:'Campaign name',ai_name_ph:'My campaign',ai_url:'Reference URL',ai_notes:'Notes / brief',ai_notes_ph:'Anything the AI should know',ai_create:'Create campaign',ai_need_input:'Pick a funnel or enter a name/URL',ai_del_confirm:'Delete this campaign and all its creatives?',
    ai_back:'Campaigns',ai_strategy:'Ad strategy',ai_strategy_help:'Generate a full strategy: readiness score, personas, TOFU/MOFU/BOFU funnel, budget split and platform copy.',ai_generate:'Generate',ai_regen:'Regenerate',ai_personas:'Personas',ai_funnel:'Funnel',ai_budget:'Budget split',
    ai_find:'Find competitor ads',ai_find_ph:'Brand or keyword',ai_country:'Country (ISO-2)',ai_search:'Search',ai_meta_note:'Meta’s API returns all ad types for EU countries; outside the EU only political/issue ads.',ai_view_ad:'View ad',ai_no_ads:'No ads found yet — run a search.',ai_enter_term:'Enter a search term',
-   ai_creatives:'Creatives',ai_persona_ph:'Target persona (optional)',ai_no_creatives:'No creatives yet — generate some.',ai_fav:'Favorite',ai_download:'Download',
+   ai_creatives:'Creatives',ai_persona_ph:'Target persona (optional)',ai_no_creatives:'No creatives yet — generate some.',ai_fav:'Favorite',ai_copy:'Copy text',ai_download:'Download',
    ai_working:'Working…',ai_working_img:'Generating copy + images…',ai_done:'Done',ai_img_failed:'Copy saved, but image generation failed',
    dl_enable:'Email the deliverable on opt-in',dl_help:'When a lead submits their email, automatically send them the asset below.',
    dl_from:'From name',dl_subject:'Subject',dl_subject_ph:'Your free guide is here',
@@ -448,7 +448,7 @@ const I18N={
    ai_new_help:'Vincule a um funil para reutilizar o contexto do produto, ou cole uma URL / briefing.',ai_from_funnel:'Do funil',ai_no_funnel:'sem funil',ai_name:'Nome da campanha',ai_name_ph:'Minha campanha',ai_url:'URL de referência',ai_notes:'Notas / briefing',ai_notes_ph:'O que a IA deve saber',ai_create:'Criar campanha',ai_need_input:'Escolha um funil ou informe nome/URL',ai_del_confirm:'Excluir esta campanha e todos os criativos?',
    ai_back:'Campanhas',ai_strategy:'Estratégia',ai_strategy_help:'Gere uma estratégia completa: pontuação de prontidão, personas, funil TOFU/MOFU/BOFU, orçamento e textos por plataforma.',ai_generate:'Gerar',ai_regen:'Regerar',ai_personas:'Personas',ai_funnel:'Funil',ai_budget:'Orçamento',
    ai_find:'Anúncios de concorrentes',ai_find_ph:'Marca ou palavra-chave',ai_country:'País (ISO-2)',ai_search:'Buscar',ai_meta_note:'A API da Meta retorna todos os tipos de anúncio para países da UE; fora da UE, apenas anúncios políticos.',ai_view_ad:'Ver anúncio',ai_no_ads:'Nenhum anúncio ainda — faça uma busca.',ai_enter_term:'Digite um termo de busca',
-   ai_creatives:'Criativos',ai_persona_ph:'Persona alvo (opcional)',ai_no_creatives:'Nenhum criativo ainda — gere alguns.',ai_fav:'Favorito',ai_download:'Baixar',
+   ai_creatives:'Criativos',ai_persona_ph:'Persona alvo (opcional)',ai_no_creatives:'Nenhum criativo ainda — gere alguns.',ai_fav:'Favorito',ai_copy:'Copiar texto',ai_download:'Baixar',
    ai_working:'Processando…',ai_working_img:'Gerando textos + imagens…',ai_done:'Pronto',ai_img_failed:'Texto salvo, mas a geração de imagem falhou',
    dl_enable:'Enviar o material por email no opt-in',dl_help:'Quando um lead enviar o email, mande automaticamente o material abaixo.',
    dl_from:'Nome do remetente',dl_subject:'Assunto',dl_subject_ph:'Seu material chegou',
@@ -1168,6 +1168,7 @@ const App=(()=>{
        <div style="font-size:11px;color:var(--brand2)">${esc(c.cta||'')}</div>
        <div class="factions" style="margin-top:8px">
          <button class="btn ghost icon" onclick="App.aiFav('${c.id}',${c.favorite?0:1})" title="${t('ai_fav')}" style="color:${c.favorite?'var(--amber)':'inherit'}">${icon('star')}</button>
+         <button class="btn ghost icon" onclick="App.aiCopyCreative('${c.id}')" title="${t('ai_copy')}">${icon('copy')}</button>
          ${c.image_key?`<a class="btn ghost icon" href="/api/ai/creatives/${c.id}/image" download title="${t('ai_download')}">${icon('download')}</a>`:''}
          <button class="btn ghost icon" onclick="App.aiDelCreative('${c.id}')" title="${t('delete')}">${icon('trash-2')}</button>
        </div></div>`).join('');
@@ -1185,6 +1186,11 @@ const App=(()=>{
      _aiAddon.credits=r.credits;_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();
      if(r.imageError)toast(t('ai_img_failed')+': '+r.imageError,'bad');else toast(t('ai_done'),'ok');}
    catch(e){toast(String(e.message),'bad');aiRenderProject();}
+ }
+ function aiCopyCreative(id){
+   const c=(_aiProject&&_aiProject.creatives||[]).find(x=>x.id===id);
+   if(!c)return;
+   copyText([c.headline,c.primary_text,c.cta].filter(Boolean).join('\n\n'));
  }
  async function aiFav(id,v){try{await aiApi('creatives/'+id,{method:'PATCH',body:JSON.stringify({favorite:v})});_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();}catch(e){toast(String(e.message),'bad');}}
  async function aiDelCreative(id){try{await aiApi('creatives/'+id,{method:'DELETE'});_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();}catch(e){toast(String(e.message),'bad');}}
@@ -1204,7 +1210,7 @@ const App=(()=>{
    openBuilder,closeBuilder,builderSelect,builderAdd,builderDelete,bset,boptSet,boptAdd,boptDel,
    bfSet,bfAdd,bfDel,bstepSet,bstepAdd,bstepDel,bcfg,bdel,testDelivery,saveBuilder,loadDomains,addDomain,delDomain,
    aiNewProject,aiCreateProject,aiOpenProject,aiDeleteProject,aiBack,aiUnlock,aiBuy,aiBuyMore,
-   aiGenStrategy,aiFindAds,aiGenCreatives,aiFav,aiDelCreative};
+   aiGenStrategy,aiFindAds,aiGenCreatives,aiFav,aiCopyCreative,aiDelCreative};
 })();
 </script>
 </body>
