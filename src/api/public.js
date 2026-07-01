@@ -5,6 +5,7 @@ import { getFunnelBySlug, getFunnelById, getSlugByHostname, publicFunnel } from 
 import { decryptSecret } from '../_lib/crypto.js';
 import { createCheckoutSession, verifyStripeSignature } from '../_lib/stripe.js';
 import { deliverLeadMagnet } from '../_lib/messaging/index.js';
+import { grantCredits, grantExists } from '../_lib/credits.js';
 
 // First path segment of a funnel-page URL (e.g. "/drapatricia/..." → "drapatricia").
 function slugFromPath(pathname) {
@@ -169,6 +170,41 @@ export async function handlePublic(request, env, path, url, ctx) {
       }
     } catch (e) {
       console.error('webhook handler error:', e);
+    }
+    return json({ received: true });
+  }
+
+  // ── Platform AI-Ads billing webhook (the platform's own Stripe account) ──
+  // Separate from the per-funnel webhook above: this charges the account owner for the
+  // AI Ads add-on, so it uses the platform key (AI_STRIPE_WEBHOOK_SECRET) and grants
+  // credits rather than touching lead state.
+  if (path === '/api/public/ai-webhook' && request.method === 'POST') {
+    const whSecret = env.AI_STRIPE_WEBHOOK_SECRET;
+    if (!whSecret) return new Response('AI billing webhook not configured', { status: 500 });
+    const raw = await request.text();
+    let event;
+    try {
+      event = await verifyStripeSignature(raw, request.headers.get('stripe-signature'), whSecret);
+    } catch (e) {
+      return new Response(`Webhook signature invalid: ${e.message}`, { status: 400 });
+    }
+    try {
+      if (event.type === 'checkout.session.completed') {
+        const s = event.data.object;
+        const m = s.metadata || {};
+        const accountId = m.accountId;
+        const credits = parseInt(m.credits || '0', 10);
+        // Only act on our own AI-Ads sessions that actually paid; ignore anything else.
+        if (m.kind === 'ai_ads' && accountId && credits > 0 && s.payment_status === 'paid') {
+          if (await grantExists(db, s.id)) return json({ received: true, duplicate: true });
+          await grantCredits(db, accountId, credits, {
+            enable: true, plan: m.pack || null, ref: s.id, reason: 'purchase',
+          });
+        }
+      }
+    } catch (e) {
+      console.error('ai-webhook handler error:', e);
+      return new Response('handler error', { status: 500 }); // let Stripe retry
     }
     return json({ received: true });
   }

@@ -46,6 +46,7 @@ SAAS_CNAME_TARGET = "offers.clubemkt.digital"  # CNAME target customers point th
 # AI Ads add-on
 META_GRAPH_VERSION = "v21.0"                    # Meta Graph API version for the Ad Library
 AI_ALLOW_SELF_GRANT = "1"                       # lets the "Unlock AI Ads" button grant test credits (set "0" once Stripe checkout ships)
+AI_BILLING_CURRENCY = "eur"                     # currency for AI Ads credit-pack checkout (minor units in credits.js AI_PACKS)
 
 # Messaging / deliverables (lead-magnet mailer)
 MAIL_FROM_DEFAULT = "Tektone Funnels <noreply@mail.clubemkt.digital>"  # verified Resend sender
@@ -67,6 +68,9 @@ custom_domain = true
 #   ANTHROPIC_API_KEY — AI Ads: strategy + copy generation (Claude)
 #   OPENAI_API_KEY    — AI Ads: image creatives (gpt-image-1)
 #   META_ADS_TOKEN    — AI Ads: Meta Ad Library access token (ads_archive)
+#   AI_STRIPE_SECRET_KEY     — AI Ads billing: platform's own Stripe secret (sells credit packs)
+#   AI_STRIPE_WEBHOOK_SECRET — AI Ads billing: signing secret for /api/public/ai-webhook
+#                              (Stripe webhook endpoint → checkout.session.completed)
 #   RESEND_API_KEY    — Mailer: deliverable emails (verify mail.clubemkt.digital in Resend)
 #   WHATSAPP_TOKEN / WHATSAPP_PHONE_ID       — (future) WhatsApp Cloud API channel
 #   INSTAGRAM_TOKEN / INSTAGRAM_IG_ID        — (future) Instagram Messaging channel

@@ -14,6 +14,23 @@ export const COSTS = {
   creative: 5,    // one copy + AI image variant
 };
 
+// Purchasable credit packs (platform billing). Prices are charged on the PLATFORM's
+// own Stripe account (AI_STRIPE_SECRET_KEY), not the tenant's per-funnel keys. Amounts
+// are minor units (cents) in AI_BILLING_CURRENCY. The first purchase also unlocks the
+// add-on. Defined server-side so the client can never set its own price/credit ratio.
+export const AI_PACKS = {
+  starter: { credits: 500, amount: 4900, label: 'Starter' },
+  growth: { credits: 1500, amount: 12900, label: 'Growth' },
+  scale: { credits: 5000, amount: 39900, label: 'Scale' },
+};
+
+/** Pack descriptor for the UI (adds the per-credit price for display). */
+export function packCatalog(currency = 'eur') {
+  return Object.entries(AI_PACKS).map(([id, p]) => ({
+    id, label: p.label, credits: p.credits, amount: p.amount, currency,
+  }));
+}
+
 function nowISO() { return new Date().toISOString(); }
 
 /** Fetch the account's add-on row, creating a locked/zero row on first access. */
@@ -70,7 +87,7 @@ export async function refundCredits(db, accountId, n, ref) {
 }
 
 /** Grant credits and (optionally) unlock the add-on — used by purchase/admin grant. */
-export async function grantCredits(db, accountId, n, { enable = true, plan, subscriptionId } = {}) {
+export async function grantCredits(db, accountId, n, { enable = true, plan, subscriptionId, ref, reason = 'grant' } = {}) {
   await getAddon(db, accountId);
   const sets = ['credits = credits + ?', 'updated_at = ?'];
   const binds = [n, nowISO()];
@@ -80,6 +97,18 @@ export async function grantCredits(db, accountId, n, { enable = true, plan, subs
   binds.push(accountId);
   await db.prepare(`UPDATE ai_addons SET ${sets.join(', ')} WHERE account_id = ?`).bind(...binds).run();
   const a = await getAddon(db, accountId);
-  await ledger(db, accountId, n, 'grant', null, a.credits);
+  await ledger(db, accountId, n, reason, ref || null, a.credits);
   return a.credits;
+}
+
+/**
+ * Has a grant for this external reference (e.g. a Stripe session id) already been
+ * recorded? Used to make the billing webhook idempotent across Stripe retries.
+ */
+export async function grantExists(db, ref) {
+  if (!ref) return false;
+  const row = await db.prepare(
+    "SELECT 1 FROM ai_credit_ledger WHERE ref = ? AND delta > 0 LIMIT 1"
+  ).bind(ref).first();
+  return !!row;
 }

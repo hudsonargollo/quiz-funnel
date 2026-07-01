@@ -6,11 +6,16 @@
 import { json, err } from '../_lib/http.js';
 import { randomId } from '../_lib/crypto.js';
 import { getFunnelById } from '../_lib/funnels.js';
-import { getAddon, isEnabled, chargeCredits, refundCredits, grantCredits, COSTS } from '../_lib/credits.js';
+import { getAddon, isEnabled, chargeCredits, refundCredits, grantCredits, packCatalog, AI_PACKS, COSTS } from '../_lib/credits.js';
 import { briefFromFunnel, generateStrategy, generateCreativeCopy, generateImage, analyzeCompetitors } from '../_lib/ai.js';
 import { searchAdLibrary, isConfigured as metaConfigured } from '../_lib/meta_ads.js';
+import { createCheckoutSession } from '../_lib/stripe.js';
 
 const nowISO = () => new Date().toISOString();
+
+/** True when platform AI-Ads billing (the platform's own Stripe account) is configured. */
+function billingConfigured(env) { return !!env.AI_STRIPE_SECRET_KEY; }
+function billingCurrency(env) { return (env.AI_BILLING_CURRENCY || 'eur').toLowerCase(); }
 
 export async function handleAi(db, env, request, path, url, acc) {
   // ── Entitlement + credit balance ──
@@ -19,8 +24,45 @@ export async function handleAi(db, env, request, path, url, acc) {
     return json({
       enabled: !!a.enabled, credits: a.credits, plan: a.plan || null,
       costs: COSTS,
+      billing: billingConfigured(env),       // real Stripe checkout available
+      selfGrant: env.AI_ALLOW_SELF_GRANT === '1',  // dev unlock available
       providers: { anthropic: !!env.ANTHROPIC_API_KEY, openai: !!env.OPENAI_API_KEY, meta: metaConfigured(env) },
     });
+  }
+
+  // ── Credit packs (catalog for the buy UI) ──
+  if (path === '/api/ai/packs' && request.method === 'GET') {
+    return json({ packs: packCatalog(billingCurrency(env)), billing: billingConfigured(env) });
+  }
+
+  // ── Buy a credit pack: create a platform Stripe Checkout session ──
+  if (path === '/api/ai/checkout' && request.method === 'POST') {
+    if (!billingConfigured(env)) return err('Billing is not configured', 503);
+    const b = await request.json().catch(() => ({}));
+    const pack = AI_PACKS[b.pack];
+    if (!pack) return err('Unknown pack', 400);
+    const currency = billingCurrency(env);
+    // Return to the dashboard's AI Ads view; ?ai=success triggers a balance refresh + toast.
+    const base = `${url.origin}/admin/`;
+    const params = {
+      mode: 'payment',
+      'line_items[0][quantity]': '1',
+      'line_items[0][price_data][currency]': currency,
+      'line_items[0][price_data][unit_amount]': String(pack.amount),
+      'line_items[0][price_data][product_data][name]': `AI Ads — ${pack.label} (${pack.credits} credits)`,
+      success_url: `${base}?ai=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${base}?ai=cancelled`,
+      'payment_method_types[0]': 'card',
+      'billing_address_collection': 'auto',
+      'allow_promotion_codes': 'true',
+      'metadata[kind]': 'ai_ads',
+      'metadata[accountId]': acc,
+      'metadata[pack]': b.pack,
+      'metadata[credits]': String(pack.credits),
+    };
+    const { ok, json: sess } = await createCheckoutSession(env.AI_STRIPE_SECRET_KEY, params);
+    if (!ok || !sess.url) return err(sess.error?.message || 'Stripe error', 400);
+    return json({ url: sess.url, sessionId: sess.id });
   }
 
   // Dev/admin helper: grant credits (guarded — only the account owner, and only when
@@ -162,6 +204,7 @@ export async function handleAi(db, env, request, path, url, acc) {
       const variants = await generateCreativeCopy(env, { brief, platform, persona, count });
       const ts = nowISO();
       const saved = [];
+      let imageError = null;  // first non-fatal image failure (copy still saved)
       for (const v of variants) {
         const id = randomId('crv');
         let imageKey = null;
@@ -170,7 +213,13 @@ export async function handleAi(db, env, request, path, url, acc) {
             const img = await generateImage(env, { prompt: v.image_prompt });
             imageKey = `creatives/${acc}/${id}.png`;
             await env.AD_ASSETS.put(imageKey, img.bytes, { httpMetadata: { contentType: img.contentType } });
-          } catch (e) { imageKey = null; /* keep copy even if image fails */ }
+          } catch (e) {
+            imageKey = null; /* keep copy even if image fails */
+            if (!imageError) imageError = e.message;
+            console.error('creative image generation failed:', e.message);
+          }
+        } else if (withImages && !env.OPENAI_API_KEY && !imageError) {
+          imageError = 'OPENAI_API_KEY not configured';
         }
         await db.prepare(
           'INSERT INTO ad_creatives (id, account_id, project_id, platform, persona, headline, primary_text, cta, image_key, favorite, created_at) VALUES (?,?,?,?,?,?,?,?,?,0,?)'
@@ -178,7 +227,7 @@ export async function handleAi(db, env, request, path, url, acc) {
         saved.push({ id, platform, persona, headline: v.headline, primary_text: v.primary_text, cta: v.cta, image_key: imageKey, favorite: 0, created_at: ts });
       }
       await db.prepare('UPDATE ad_projects SET updated_at = ? WHERE account_id = ? AND id = ?').bind(ts, acc, project.id).run();
-      return json({ creatives: saved, credits: charge.balance });
+      return json({ creatives: saved, credits: charge.balance, imageError });
     } catch (e) {
       const credits = await refundCredits(db, acc, cost, project.id);
       return json({ error: `Creative generation failed: ${e.message}`, credits }, 502);
