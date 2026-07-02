@@ -153,16 +153,20 @@ header.nav{position:sticky;top:0;z-index:50}
 
 /* ── Schedule (8-week macro) ── */
 .sched{display:flex;flex-direction:column;gap:14px;margin-top:var(--s-6)}
-.sched-row{position:relative;display:grid;grid-template-columns:64px 1fr;gap:18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px}
-.sched-row .wk{font-family:var(--font-display);font-weight:700;font-size:.98rem;background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+.sched-row{position:relative;display:grid;grid-template-columns:minmax(84px,auto) minmax(0,1fr);gap:18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px;min-width:0}
+.sched-row .wk{font-family:var(--font-display);font-weight:700;font-size:.94rem;background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sched-row .wk small{display:block;margin-top:3px;font-family:var(--font-body);font-weight:500;font-size:.68rem;color:var(--text-3);-webkit-text-fill-color:var(--text-3)}
+.sched-body{min-width:0}
 .sched-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
-.sched-focus{font-size:var(--fs-h3);font-family:var(--font-display);font-weight:700}
-.sched-chip{font-size:.72rem;font-weight:600;color:var(--cyan-300);background:rgba(54,196,255,.09);border:1px solid rgba(54,196,255,.2);padding:4px 10px;border-radius:var(--r-pill);white-space:nowrap}
+.sched-focus{font-size:var(--fs-h3);font-family:var(--font-display);font-weight:700;min-width:0}
+.sched-chip{font-size:.72rem;font-weight:600;color:var(--cyan-300);background:rgba(54,196,255,.09);border:1px solid rgba(54,196,255,.2);padding:4px 10px;border-radius:var(--r-pill);white-space:nowrap;flex-shrink:0}
 .sched-milestone{font-size:.88rem;color:var(--text-2);margin-bottom:10px}
-.sched-details{display:flex;flex-direction:column;gap:6px}
-.sched-details div{display:flex;align-items:flex-start;gap:8px;font-size:.82rem;color:var(--text-3)}
+.sched-details{display:flex;flex-direction:column;gap:7px}
+.sched-details div{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;font-size:.82rem;color:var(--text-3)}
+.sched-details .dtxt{display:flex;align-items:flex-start;gap:8px;min-width:0}
 .sched-details svg{flex-shrink:0;margin-top:3px;color:var(--brand-2)}
-@media(max-width:600px){.sched-row{grid-template-columns:1fr}.sched-row .wk{margin-bottom:-4px}}
+.sched-details .ddate{flex-shrink:0;font-size:.72rem;font-weight:600;color:var(--brand-2);white-space:nowrap;background:rgba(54,196,255,.07);border:1px solid rgba(54,196,255,.16);padding:2px 8px;border-radius:var(--r-pill)}
+@media(max-width:600px){.sched-row{grid-template-columns:1fr}.sched-details div{flex-direction:column;gap:4px}}
 
 /* ── Detail hero ── */
 .hero{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);overflow:hidden;position:relative}
@@ -276,15 +280,29 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
   var slug = (location.pathname.replace(/\/+$/,'').split('/')[2]) || null;
   var STATE = { isAdmin:false, me:null, milestones:[] };
 
+  // Sprint start: Sunday, June 28 2026 — each phase is a 2-week block, delivery
+  // date per week is that week's last day (Saturday).
   var SCHEDULE = [
-    { phase:'Fase 1', weeks:'Semanas 1-2', focus:'Prioridade 1: Core Funcional (MVP)', milestone:'MVP funcional implantado internamente', slug:'milestone01',
-      details:['Semana 1: Infraestrutura e Fundação (Auth, DB, Dashboard, Criação Flow)', 'Semana 2: Editor Visual e Entrega do MVP (Textos, Imagens, CTA, Tracking básico)'] },
-    { phase:'Fase 2', weeks:'Semanas 3-4', focus:'Prioridade 2: Automação com IA', milestone:'Módulos de Copy e Criativos com IA ativos', slug:'milestone02',
-      details:['Semana 3: Motor de Copywriting (LLM API, Prompts, Geração em 1 clique)', 'Semana 4: Geração de Criativos (10 variações, Biblioteca, Exportação)'] },
-    { phase:'Fase 3', weeks:'Semanas 5-6', focus:'Prioridade 3: Mineração de Produtos', milestone:'Mineração interna e biblioteca de anúncios conectadas', slug:'milestone03',
-      details:['Semana 5: Módulo de Mineração Interna (Filtros, Favoritos, 1-Click Funnel)', 'Semana 6: Biblioteca de Anúncios e Inspiração (Scraping Meta Ads, Moodboard)'] },
-    { phase:'Fase 4', weeks:'Semanas 7-8', focus:'Prioridade 4: Tráfego e Métricas', milestone:'Meta Ads sincronizado e versão estável final lançada', slug:'milestone04',
-      details:['Semana 7: Integração com Meta Ads (OAuth, API Marketing, Mapeamento)', 'Semana 8: Métricas Avançadas e Refinamento para SaaS (Dashboard Global, Gráficos, Code Review)'] },
+    { phase:'Fase 1', weeks:'Semanas 1-2', range:'28/06 – 11/07', focus:'Prioridade 1: Core Funcional (MVP)', milestone:'MVP funcional implantado internamente', slug:'milestone01',
+      details:[
+        { text:'Semana 1: Infraestrutura e Fundação (Auth, DB, Dashboard, Criação Flow)', date:'04/07' },
+        { text:'Semana 2: Editor Visual e Entrega do MVP (Textos, Imagens, CTA, Tracking básico)', date:'11/07' },
+      ] },
+    { phase:'Fase 2', weeks:'Semanas 3-4', range:'12/07 – 25/07', focus:'Prioridade 2: Automação com IA', milestone:'Módulos de Copy e Criativos com IA ativos', slug:'milestone02',
+      details:[
+        { text:'Semana 3: Motor de Copywriting (LLM API, Prompts, Geração em 1 clique)', date:'18/07' },
+        { text:'Semana 4: Geração de Criativos (10 variações, Biblioteca, Exportação)', date:'25/07' },
+      ] },
+    { phase:'Fase 3', weeks:'Semanas 5-6', range:'26/07 – 08/08', focus:'Prioridade 3: Mineração de Produtos', milestone:'Mineração interna e biblioteca de anúncios conectadas', slug:'milestone03',
+      details:[
+        { text:'Semana 5: Módulo de Mineração Interna (Filtros, Favoritos, 1-Click Funnel)', date:'01/08' },
+        { text:'Semana 6: Biblioteca de Anúncios e Inspiração (Scraping Meta Ads, Moodboard)', date:'08/08' },
+      ] },
+    { phase:'Fase 4', weeks:'Semanas 7-8', range:'09/08 – 22/08', focus:'Prioridade 4: Tráfego e Métricas', milestone:'Meta Ads sincronizado e versão estável final lançada', slug:'milestone04',
+      details:[
+        { text:'Semana 7: Integração com Meta Ads (OAuth, API Marketing, Mapeamento)', date:'15/08' },
+        { text:'Semana 8: Métricas Avançadas e Refinamento para SaaS (Dashboard Global, Gráficos, Code Review)', date:'22/08' },
+      ] },
   ];
 
   function icon(name, extra){ return '<i data-lucide="'+name+'"'+(extra||'')+'></i>'; }
@@ -401,10 +419,12 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
     }).join('');
 
     var schedRows = SCHEDULE.map(function(row, i){
-      var details = row.details.map(function(d){ return '<div>'+icon('chevron-right', ' width="14" height="14"')+'<span>'+esc(d)+'</span></div>'; }).join('');
+      var details = row.details.map(function(d){
+        return '<div><span class="dtxt">'+icon('chevron-right', ' width="14" height="14"')+'<span>'+esc(d.text)+'</span></span><span class="ddate">'+icon('calendar-check-2', ' width="12" height="12"')+' Entrega '+esc(d.date)+'</span></div>';
+      }).join('');
       return '<a class="sched-row reveal" href="/milestones/'+row.slug+'">'
-        + '<div class="wk">'+esc(row.weeks)+'</div>'
-        + '<div>'
+        + '<div class="wk">'+esc(row.weeks)+'<small>'+esc(row.range)+'</small></div>'
+        + '<div class="sched-body">'
         + '<div class="sched-head"><span class="sched-focus">'+esc(row.focus)+'</span><span class="sched-chip">'+esc(row.phase)+'</span></div>'
         + '<div class="sched-milestone">'+icon('flag', ' width="13" height="13"')+' '+esc(row.milestone)+'</div>'
         + '<div class="sched-details">'+details+'</div>'
@@ -424,7 +444,7 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
       + '<section class="sec" id="cronograma">'
       + '<div class="sec-head reveal"><span class="eyebrow">Cronograma macro</span>'
       + '<h2>As <span class="gradient-text">8 semanas</span>, fase a fase.</h2>'
-      + '<p>Cada fase liga direto ao marco correspondente — clique para ver as tarefas.</p></div>'
+      + '<p>Sprint iniciado em 28 de junho de 2026 — cada fase liga direto à página correspondente, com a previsão de entrega de cada semana.</p></div>'
       + '<div class="sched">'+schedRows+'</div>'
       + '</section>';
   }
@@ -482,7 +502,7 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
       + navHtml
       + '<div class="comments reveal"><h3>'+icon('message-circle')+'Feedback &amp; Comentários</h3>'
       + '<div class="clist">'+commentsHtml+'</div>'
-      + '<div class="cform"><textarea id="cmt-input" placeholder="Escreva um comentário ou feedback sobre este marco..."></textarea>'
+      + '<div class="cform"><textarea id="cmt-input" placeholder="Escreva um comentário ou feedback sobre esta fase..."></textarea>'
       + '<div class="row"><button class="btn btn-primary" id="cmt-submit">Enviar comentário</button></div></div>'
       + '</div>'
       + '</section>';
