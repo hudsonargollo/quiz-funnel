@@ -15,14 +15,22 @@ export async function handleAdmin(request, env, path, url) {
   if (!s) return err('Unauthorized', 401);
   const acc = s.accountId;
 
+  // ── Milestones (/api/milestones*) — internal roadmap tracker + comments.
+  // Has its own finer-grained role checks (viewers read/comment, only the
+  // owner ticks tasks) — handled before the blanket owner-only gate below. ──
+  if (path.startsWith('/api/milestones')) return handleMilestones(db, env, request, path, url, acc, s.userId);
+
+  // ── Everything else (funnels, CRM, AI Ads, domains, messaging) is
+  // owner-only. Viewer accounts (jorge/pedro/alison) share hudson's tenant
+  // for the milestones feature but must not reach any other admin data. ──
+  const me = await db.prepare('SELECT role FROM users WHERE id = ?').bind(s.userId).first();
+  if (!me || me.role !== 'owner') return err('Forbidden', 403);
+
   // ── AI Ads add-on (/api/ai/*) — reuses this session + account scope ──
   if (path.startsWith('/api/ai/')) return handleAi(db, env, request, path, url, acc);
 
   // ── Messaging (/api/messaging/*) — deliverable status, test send, log ──
   if (path.startsWith('/api/messaging/')) return handleMessaging(db, env, request, path, url, acc);
-
-  // ── Milestones (/api/milestones*) — internal roadmap tracker + comments ──
-  if (path.startsWith('/api/milestones')) return handleMilestones(db, env, request, path, url, acc, s.userId);
 
   // ── Funnels CRUD ──
   if (path === '/api/funnels') {

@@ -27,9 +27,9 @@ export async function handleAuth(request, env, path) {
   if (path === '/api/auth/me' && request.method === 'GET') {
     const s = await getSession(db, request);
     if (!s) return err('Unauthorized', 401);
-    const user = await db.prepare('SELECT u.email, a.name AS account_name FROM users u JOIN accounts a ON a.id = u.account_id WHERE u.id = ?')
+    const user = await db.prepare('SELECT u.email, u.role, a.name AS account_name FROM users u JOIN accounts a ON a.id = u.account_id WHERE u.id = ?')
       .bind(s.userId).first();
-    return json({ accountId: s.accountId, userId: s.userId, email: user?.email, accountName: user?.account_name });
+    return json({ accountId: s.accountId, userId: s.userId, email: user?.email, role: user?.role, accountName: user?.account_name });
   }
 
   return err('Not found', 404);

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>Milestones · Tektone Funnels</title>
+<title>Progresso · Tektone Funnels</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
@@ -72,7 +72,7 @@ body::after{
           mask-image:radial-gradient(1000px 700px at 50% -5%,#000,transparent 70%);
 }
 
-.wrap{max-width:980px;margin:0 auto;padding:0 24px}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
 h1,h2,h3{font-family:var(--font-display);line-height:1.1;letter-spacing:-.02em;font-weight:700}
 .gradient-text{background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .eyebrow{
@@ -97,14 +97,19 @@ h1,h2,h3{font-family:var(--font-display);line-height:1.1;letter-spacing:-.02em;f
 .authcard h1{font-size:1.5rem;margin:0 0 4px}
 .authcard p.sub{color:var(--text-2);font-size:.86rem;margin:0 0 22px}
 .authcard label{display:block;font-size:.76rem;color:var(--text-2);margin:14px 0 6px;font-weight:500}
-.authcard input{width:100%;padding:11px 13px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface-2);color:var(--text);font-size:14px;font-family:inherit}
+.authcard .field{position:relative}
+.authcard .field svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-3);pointer-events:none}
+.authcard input{width:100%;padding:11px 13px 11px 40px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface-2);color:var(--text);font-size:14px;font-family:inherit;transition:border-color .2s}
 .authcard input:focus{outline:none;border-color:var(--brand)}
+.authcard .pw-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-3);padding:6px;display:flex;border-radius:8px}
+.authcard .pw-toggle:hover{color:var(--text);background:rgba(255,255,255,.05)}
 .authcard .btn{width:100%;margin-top:22px}
+.authcard .btn .spin-sm{width:15px;height:15px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
 .autherr{color:var(--danger);font-size:.78rem;margin-top:10px;min-height:16px}
 
 /* ── Nav ── */
 header.nav{position:sticky;top:0;z-index:50}
-.nav-inner{margin:14px auto;max-width:980px;display:flex;align-items:center;gap:14px;padding:9px 14px 9px 16px;border-radius:var(--r-pill);background:rgba(11,15,21,.72);backdrop-filter:blur(16px);border:1px solid var(--line);box-shadow:var(--shadow-md)}
+.nav-inner{margin:12px auto;max-width:1160px;display:flex;align-items:center;gap:14px;padding:9px 14px 9px 16px;border-radius:var(--r-pill);background:rgba(11,15,21,.72);backdrop-filter:blur(16px);border:1px solid var(--line);box-shadow:var(--shadow-md)}
 .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:.98rem}
 .logo{width:30px;height:30px;border-radius:9px;background:var(--grad-brand);display:grid;place-items:center;color:#fff;font-weight:700;font-size:.95rem;box-shadow:0 6px 18px -6px rgba(0,174,239,.7)}
 .brand .sep{color:var(--text-3);font-weight:400;font-size:.85em}
@@ -117,10 +122,11 @@ header.nav{position:sticky;top:0;z-index:50}
 .navlink:hover{color:var(--text)}
 @media(max-width:640px){.whoami{display:none}}
 
-.sec{padding:var(--s-8) 0}
-.sec-head{max-width:60ch;margin:0 auto var(--s-6)}
-.sec-head h1,.sec-head h2{font-size:var(--fs-h2);margin-top:14px}
-.sec-head p{color:var(--text-2);font-size:1.02rem;margin-top:12px}
+.sec{padding:40px 0}
+.sec:first-of-type{padding-top:12px}
+.sec-head{margin:0 0 28px}
+.sec-head h1,.sec-head h2{font-size:var(--fs-h2);margin-top:12px}
+.sec-head p{color:var(--text-2);font-size:1.02rem;margin-top:10px;max-width:60ch}
 
 /* ── Overview: overall progress band ── */
 .band{display:flex;align-items:center;gap:22px;padding:24px 28px;border-radius:var(--r-xl);background:linear-gradient(135deg,rgba(0,174,239,.08),rgba(124,92,255,.06)),var(--surface);border:1px solid var(--line)}
@@ -230,12 +236,21 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
   <div class="authcard">
     <div class="logo">T</div>
     <h1>Entrar</h1>
-    <p class="sub">Acesso interno · Tektone Funnels Milestones</p>
+    <p class="sub">Acesso interno · Tektone Funnels</p>
     <label>Email</label>
-    <input id="au-email" type="email" autocomplete="username" placeholder="voce@tektone.com.br">
+    <div class="field">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+      <input id="au-email" type="email" autocomplete="username" placeholder="voce@tektone.com.br">
+    </div>
     <label>Senha</label>
-    <input id="au-pass" type="password" autocomplete="current-password">
-    <button class="btn btn-primary" id="au-btn">Entrar</button>
+    <div class="field">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <input id="au-pass" type="password" autocomplete="current-password" style="padding-right:40px">
+      <button type="button" class="pw-toggle" id="au-pw-toggle" tabindex="-1" aria-label="Mostrar senha">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <button class="btn btn-primary" id="au-btn"><span id="au-btn-label">Entrar</span></button>
     <div class="autherr" id="au-err"></div>
   </div>
 </div>
@@ -245,10 +260,10 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
 <div id="app" class="hidden">
   <header class="nav wrap">
     <nav class="nav-inner">
-      <a class="brand" href="/milestones"><span class="logo">T</span>Tektone Funnels<span class="sep">/ Milestones</span></a>
+      <a class="brand" href="/milestones"><span class="logo">T</span>Tektone Funnels<span class="sep">/ Progresso</span></a>
       <div class="spacer"></div>
       <span class="whoami" id="whoami"></span>
-      <a class="navlink" href="/admin">← Dashboard</a>
+      <a class="navlink hidden" id="dash-link" href="/admin">← Dashboard</a>
       <button class="btn btn-ghost" id="signout-btn">Sair</button>
     </nav>
   </header>
@@ -300,20 +315,30 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
   }
 
   document.getElementById('au-btn').addEventListener('click', submitLogin);
+  document.getElementById('au-email').addEventListener('keydown', function(e){ if (e.key==='Enter') { e.preventDefault(); document.getElementById('au-pass').focus(); } });
   document.getElementById('au-pass').addEventListener('keydown', function(e){ if (e.key==='Enter') submitLogin(); });
+  document.getElementById('au-pw-toggle').addEventListener('click', function(){
+    var pw = document.getElementById('au-pass');
+    pw.type = pw.type === 'password' ? 'text' : 'password';
+    this.setAttribute('aria-label', pw.type === 'password' ? 'Mostrar senha' : 'Ocultar senha');
+  });
 
   async function submitLogin(){
     var email = document.getElementById('au-email').value.trim();
     var pass = document.getElementById('au-pass').value;
     var errEl = document.getElementById('au-err');
+    var btn = document.getElementById('au-btn');
+    var label = document.getElementById('au-btn-label');
     errEl.textContent = '';
     if (!email || !pass) { errEl.textContent = 'Preencha email e senha.'; return; }
+    btn.disabled = true;
+    label.innerHTML = '<span class="spin-sm"></span>';
     try {
       var r = await fetch('/api/auth/login', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:email, password:pass}) });
       var data = await r.json().catch(function(){ return {}; });
-      if (!r.ok) { errEl.textContent = data.error || 'Falha ao entrar.'; return; }
+      if (!r.ok) { errEl.textContent = data.error || 'Falha ao entrar.'; btn.disabled = false; label.textContent = 'Entrar'; return; }
       boot();
-    } catch(e) { errEl.textContent = 'Falha ao entrar.'; }
+    } catch(e) { errEl.textContent = 'Falha ao entrar.'; btn.disabled = false; label.textContent = 'Entrar'; }
   }
 
   document.getElementById('signout-btn').addEventListener('click', async function(){
@@ -336,6 +361,11 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
     return '<span class="role-badge '+cls+'">'+label+'</span>';
   }
 
+  function applyRole(me){
+    document.getElementById('whoami').innerHTML = esc(me.email) + roleBadge(me.role);
+    document.getElementById('dash-link').classList.toggle('hidden', me.role !== 'owner');
+  }
+
   async function boot(){
     document.getElementById('loading').classList.remove('hidden');
     try {
@@ -355,7 +385,7 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
   async function renderOverview(){
     var data = await api('/milestones');
     STATE.isAdmin = data.isAdmin; STATE.me = data.me; STATE.milestones = data.results;
-    document.getElementById('whoami').innerHTML = esc(data.me.email) + roleBadge(data.me.role);
+    applyRole(data.me);
     var totalAll = data.results.reduce(function(s,m){ return s + m.totalTasks; }, 0);
     var doneAll = data.results.reduce(function(s,m){ return s + m.doneTasks; }, 0);
     var pctAll = totalAll ? Math.round(doneAll/totalAll*100) : 0;
@@ -384,7 +414,7 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
     document.getElementById('content').innerHTML =
       '<section class="sec">'
       + '<div class="sec-head reveal"><span class="eyebrow">Roadmap interno</span>'
-      + '<h1>Tektone Funnels — <span class="gradient-text">Marcos do produto</span></h1>'
+      + '<h1>Tektone Funnels — <span class="gradient-text">Progresso do produto</span></h1>'
       + '<p>Progresso geral do desenvolvimento em 8 semanas.</p></div>'
       + '<div class="band reveal"><div class="bignum gradient-text">'+pctAll+'%</div>'
       + '<div class="bandbar"><div class="pbar"><div style="width:'+pctAll+'%"></div></div></div>'
@@ -402,7 +432,7 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
   async function renderDetail(slug){
     var data = await api('/milestones/'+encodeURIComponent(slug));
     STATE.isAdmin = data.isAdmin; STATE.me = data.me;
-    document.getElementById('whoami').innerHTML = esc(data.me.email) + roleBadge(data.me.role);
+    applyRole(data.me);
 
     var idx = data.milestone.order_index;
     var m = data.milestone;
@@ -433,15 +463,15 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
     var prevSlug = idx > 1 ? 'milestone0'+(idx-1) : null;
     var nextSlug = idx < 4 ? 'milestone0'+(idx+1) : null;
     var navHtml = '<div class="mnav reveal">'
-      + (prevSlug ? '<a href="/milestones/'+prevSlug+'"><small>Anterior</small>Marco 0'+(idx-1)+'</a>' : '<span></span>')
-      + (nextSlug ? '<a class="next" href="/milestones/'+nextSlug+'"><small>Próximo</small>Marco 0'+(idx+1)+'</a>' : '<span></span>')
+      + (prevSlug ? '<a href="/milestones/'+prevSlug+'"><small>Anterior</small>Fase 0'+(idx-1)+'</a>' : '<span></span>')
+      + (nextSlug ? '<a class="next" href="/milestones/'+nextSlug+'"><small>Próximo</small>Fase 0'+(idx+1)+'</a>' : '<span></span>')
       + '</div>';
 
     document.getElementById('content').innerHTML =
       '<section class="sec" style="padding-top:var(--s-6)">'
       + '<div class="hero reveal">'
       + '<div class="hero-grad">'
-      + '<span class="badge eyebrow">Marco 0'+idx+' de 04</span>'
+      + '<span class="badge eyebrow">Fase 0'+idx+' de 04</span>'
       + '<h1>'+esc(m.title)+'</h1>'
       + infogrid
       + '</div>'
