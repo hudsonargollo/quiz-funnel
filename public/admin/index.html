@@ -264,6 +264,7 @@
       <button id="tab-analytics" class="active" onclick="App.showView('analytics')" data-i18n="nav_analytics">Analytics</button>
       <button id="tab-funnels" onclick="App.showView('funnels')" data-i18n="nav_funnels">Funnels</button>
       <button id="tab-ai" onclick="App.showView('ai')" data-i18n="nav_ai">AI Ads</button>
+      <button onclick="location.href='/milestones'" data-i18n="nav_milestones">Milestones</button>
     </div>
     <div class="seg" id="seg-app"><button data-lang="en">EN</button><button data-lang="pt">PT</button></div>
     <button class="btn ghost" onclick="App.logout()" data-i18n="logout">Sign out</button>
@@ -397,7 +398,7 @@ const I18N={
    cv_lead:'Lead rate',cv_offer:'Offer rate',cv_checkout:'Checkout rate',cv_purchase:'Purchase rate',
    d_email:'Email',d_name:'Name',d_state:'State',d_uid:'User ID',d_imc:'BMI',d_goal:'Goal',d_cur:'Current weight',d_target:'Target weight',d_height:'Height',
    d_src:'UTM source',d_med:'UTM medium',d_camp:'UTM campaign',d_country:'Country',d_ref:'Referrer',d_created:'Created',d_lead_at:'Lead at',d_checkout_at:'Checkout at',d_purchase_at:'Purchase at',
-   nav_ai:'AI Ads',ai_credits:'credits',ai_gate_title:'Unlock AI Ads',ai_gate_text:'Find competitor ads, get an AI ad strategy, and generate ad copy + images — all tied to your funnels.',
+   nav_ai:'AI Ads',nav_milestones:'Milestones',ai_credits:'credits',ai_gate_title:'Unlock AI Ads',ai_gate_text:'Find competitor ads, get an AI ad strategy, and generate ad copy + images — all tied to your funnels.',
    ai_feat_find:'Find live competitor ads (Meta Ad Library + AI analysis)',ai_feat_strategy:'AI ad strategy, personas, funnel & budget',ai_feat_creatives:'Generate ad copy + AI image creatives',
    ai_unlock:'Unlock AI Ads',ai_gate_note:'Billed as an add-on. Credits are consumed per generation.',ai_unlocked:'AI Ads unlocked',ai_unlock_soon:'Checkout coming soon — contact support to enable.',
    ai_choose_pack:'Choose a credit pack',ai_buy:'Buy',ai_buy_credits:'Buy credits',ai_credits_suffix:'credits',ai_redirecting:'Redirecting to checkout…',ai_purchase_ok:'Credits added — thank you!',ai_purchase_cancelled:'Checkout cancelled.',ai_dev_unlock:'Dev unlock (test credits)',ai_most_popular:'Most popular',
@@ -440,7 +441,7 @@ const I18N={
    cv_lead:'Taxa de leads',cv_offer:'Taxa de oferta',cv_checkout:'Taxa de checkout',cv_purchase:'Taxa de compra',
    d_email:'Email',d_name:'Nome',d_state:'Estado',d_uid:'User ID',d_imc:'IMC',d_goal:'Objetivo',d_cur:'Peso atual',d_target:'Peso objetivo',d_height:'Altura',
    d_src:'UTM source',d_med:'UTM medium',d_camp:'UTM campaign',d_country:'País',d_ref:'Referrer',d_created:'Criado',d_lead_at:'Lead em',d_checkout_at:'Checkout em',d_purchase_at:'Compra em',
-   nav_ai:'Anúncios IA',ai_credits:'créditos',ai_gate_title:'Ative os Anúncios IA',ai_gate_text:'Encontre anúncios de concorrentes, gere uma estratégia de anúncios com IA e crie textos + imagens — ligados aos seus funis.',
+   nav_ai:'Anúncios IA',nav_milestones:'Milestones',ai_credits:'créditos',ai_gate_title:'Ative os Anúncios IA',ai_gate_text:'Encontre anúncios de concorrentes, gere uma estratégia de anúncios com IA e crie textos + imagens — ligados aos seus funis.',
    ai_feat_find:'Encontre anúncios de concorrentes (Meta Ad Library + IA)',ai_feat_strategy:'Estratégia de anúncios, personas, funil e orçamento',ai_feat_creatives:'Gere textos + criativos de imagem com IA',
    ai_unlock:'Ativar Anúncios IA',ai_gate_note:'Cobrado como complemento. Créditos são consumidos por geração.',ai_unlocked:'Anúncios IA ativados',ai_unlock_soon:'Checkout em breve — contate o suporte para ativar.',
    ai_choose_pack:'Escolha um pacote de créditos',ai_buy:'Comprar',ai_buy_credits:'Comprar créditos',ai_credits_suffix:'créditos',ai_redirecting:'Redirecionando para o checkout…',ai_purchase_ok:'Créditos adicionados — obrigado!',ai_purchase_cancelled:'Checkout cancelado.',ai_dev_unlock:'Ativação dev (créditos de teste)',ai_most_popular:'Mais popular',

@@ -7,6 +7,7 @@ import { randomId } from '../_lib/crypto.js';
 import { isConfigured, cnameTarget, createCustomHostname, getCustomHostname, deleteCustomHostname } from '../_lib/cfsaas.js';
 import { handleAi } from './ai.js';
 import { handleMessaging } from './messaging.js';
+import { handleMilestones } from './milestones.js';
 
 export async function handleAdmin(request, env, path, url) {
   const db = env.DB;
@@ -19,6 +20,9 @@ export async function handleAdmin(request, env, path, url) {
 
   // ── Messaging (/api/messaging/*) — deliverable status, test send, log ──
   if (path.startsWith('/api/messaging/')) return handleMessaging(db, env, request, path, url, acc);
+
+  // ── Milestones (/api/milestones*) — internal roadmap tracker + comments ──
+  if (path.startsWith('/api/milestones')) return handleMilestones(db, env, request, path, url, acc, s.userId);
 
   // ── Funnels CRUD ──
   if (path === '/api/funnels') {

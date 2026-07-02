@@ -18,7 +18,7 @@ import { getFunnelBySlug, getSlugByHostname, publicFunnel } from './_lib/funnels
 // First path segments that are real assets/endpoints, never funnel slugs.
 const RESERVED = new Set([
   'api', 'admin', 'app', 'home', 'css', 'js', 'images', 'assets', 'privacidade',
-  'favicon.ico', 'robots.txt', 'sitemap.xml', 'index.html', '.well-known',
+  'favicon.ico', 'robots.txt', 'sitemap.xml', 'index.html', '.well-known', 'milestones',
 ]);
 
 export default {
@@ -67,6 +67,8 @@ export default {
       }
       const seg = path.split('/')[1];
       if (seg === 'admin' || seg === 'app') return serveAsset(env, '/admin/index.html', request);
+      // Internal milestones tracker/report pages (/milestones or /milestones/<slug>) — SPA shell.
+      if (seg === 'milestones') return serveAsset(env, '/milestones/index.html', request);
       // Reserved names and any path with a file extension → static asset.
       if (RESERVED.has(seg) || seg.includes('.')) return env.ASSETS.fetch(request);
       // Otherwise the first segment is a funnel slug (?f= still honored for preview).
