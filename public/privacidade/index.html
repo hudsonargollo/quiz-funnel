@@ -8,8 +8,17 @@
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/main.css">
 <style>
-  .policy-wrap { max-width: 640px; margin: 0 auto; padding: 40px 24px 80px; }
-  h1 { font-family: var(--font-display); font-size: 40px; margin-bottom: 8px; color: var(--text-primary); }
+  /* main.css locks <body> to a fixed, non-scrolling viewport for the quiz SPA shell —
+     this is a plain long-form document, so it needs normal document flow/scroll. */
+  html, body { position: static; height: auto; min-height: 100%; display: block; overflow: visible; }
+  .policy-wrap { max-width: 640px; margin: 0 auto; padding: 24px 24px 80px; }
+  .policy-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500; color: var(--text-secondary);
+    text-decoration: none; padding: 8px 0;
+  }
+  .policy-back:hover { color: var(--brand-primary); }
+  h1 { font-family: var(--font-display); font-size: 40px; margin: 16px 0 8px; color: var(--text-primary); }
   h2 { font-size: 16px; font-weight: 600; margin: 28px 0 8px; color: var(--text-primary); }
   p, li { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 8px; }
   ul { padding-left: 20px; }
@@ -18,6 +27,7 @@
 </head>
 <body>
 <div class="policy-wrap">
+  <a class="policy-back" href="/">← Voltar</a>
   <h1>Política de Privacidade</h1>
   <p>Última atualização: Janeiro 2026</p>
 

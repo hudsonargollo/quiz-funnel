@@ -88,6 +88,7 @@ body {
   align-items: center;
   gap: 12px;
   padding: 12px 20px;
+  padding-top: max(12px, env(safe-area-inset-top));
   background: var(--bg-page);
   border-bottom: 1px solid var(--border-default);
   max-width: 100%;
@@ -97,11 +98,16 @@ body {
   font-size: 18px;
   cursor: pointer;
   color: var(--text-secondary);
-  padding: 4px 8px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: var(--radius-sm);
   transition: background var(--speed) var(--ease);
   user-select: none;
   flex-shrink: 0;
+  margin: -8px;
 }
 .progress-back:hover { background: var(--bg-surface); }
 
@@ -447,7 +453,7 @@ body {
 
 .slider-display {
   font-family: var(--font-display);
-  font-size: 72px;
+  font-size: clamp(44px, 16vw, 72px);
   letter-spacing: 0.01em;
   color: var(--text-primary);
   line-height: 1;
@@ -455,7 +461,7 @@ body {
 }
 
 .slider-display .unit {
-  font-size: 28px;
+  font-size: clamp(18px, 6vw, 28px);
   color: var(--text-secondary);
 }
 
@@ -468,7 +474,8 @@ body {
 }
 
 .unit-btn {
-  padding: 6px 18px;
+  padding: 12px 18px;
+  min-height: 44px;
   border-radius: var(--radius-pill);
   border: none;
   background: transparent;
@@ -496,6 +503,11 @@ body {
   height: 60px;
   overflow: hidden;
   cursor: ew-resize;
+}
+.slider-ruler:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .ruler-line {
@@ -1202,7 +1214,8 @@ body {
   width: 100%;
 }
 
-.sticky-price-info { flex: 1; }
+.sticky-price-info { flex: 1; min-width: 0; }
+
 .sticky-price-label { font-size: 11px; color: var(--text-muted); }
 .sticky-price-value {
   font-family: var(--font-display);
@@ -1260,6 +1273,14 @@ body {
 }
 
 .btn-success:hover { background: #16A34A; }
+
+.sticky-cta-btn {
+  width: auto;
+  max-width: 260px;
+  font-size: 17px;
+  padding: 14px 20px;
+  flex-shrink: 0;
+}
 
 .btn-wrap {
   display: flex;
@@ -1599,6 +1620,16 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
   :root { --screen-pad: 16px; }
   .landing-headline { font-size: 34px; }
   .question-title { font-size: 26px; }
+}
+
+/* Narrow phones (iPhone SE/mini and similar ~320-380px) — scale down
+   elements sized off viewport width rather than height so they don't
+   crowd the smallest screens. */
+@media (max-width: 380px) {
+  .option-icon-wrap { width: 40px; height: 40px; }
+  .options-grid { grid-template-columns: 1fr; }
+  .option-card-img { aspect-ratio: 16/9; }
+  .profile-avatar { width: 96px; height: 112px; }
 }
 
 @media (min-width: 621px) {

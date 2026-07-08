@@ -103,7 +103,7 @@ h1,h2,h3{font-family:var(--font-display);line-height:1.1;letter-spacing:-.02em;f
 .authcard input{width:100%;padding:12px 14px 12px 42px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface-2);color:var(--text);font-size:14px;font-family:inherit;transition:border-color .2s,box-shadow .2s}
 .authcard input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(54,196,255,.12)}
 .authcard input::placeholder{color:var(--text-3)}
-.authcard .pw-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-3);padding:7px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:color .2s,background .2s}
+.authcard .pw-toggle{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-3);width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:color .2s,background .2s}
 .authcard .pw-toggle svg{display:block}
 .authcard .pw-toggle:hover{color:var(--text);background:rgba(255,255,255,.06)}
 .authcard .btn{width:100%;margin-top:26px}
@@ -124,6 +124,16 @@ header.nav{position:sticky;top:0;z-index:50}
 .navlink{font-size:.85rem;color:var(--text-2);padding:8px 10px}
 .navlink:hover{color:var(--text)}
 @media(max-width:640px){.whoami{display:none}}
+@media(max-width:480px){
+  .nav-inner{gap:8px;padding:8px 10px}
+  .brand{gap:8px}
+  .brand .sep{display:none}
+  .navlink{padding:8px 6px;font-size:.78rem}
+  #signout-btn{padding:9px 13px;font-size:.82rem}
+}
+@media(max-width:360px){
+  .brand .wordmark{display:none}
+}
 
 .sec{padding:40px 0}
 .sec:first-of-type{padding-top:12px}
@@ -169,7 +179,7 @@ header.nav{position:sticky;top:0;z-index:50}
 .sched-details .dtxt{display:flex;align-items:flex-start;gap:8px;min-width:0}
 .sched-details svg{flex-shrink:0;margin-top:3px;color:var(--brand-2)}
 .sched-details .ddate{flex-shrink:0;font-size:.72rem;font-weight:600;color:var(--brand-2);white-space:nowrap;background:rgba(54,196,255,.07);border:1px solid rgba(54,196,255,.16);padding:2px 8px;border-radius:var(--r-pill)}
-@media(max-width:600px){.sched-row{grid-template-columns:1fr}.sched-details div{flex-direction:column;gap:4px}}
+@media(max-width:680px){.sched-row{grid-template-columns:1fr}.sched-details div{flex-direction:column;gap:4px}}
 
 /* ── Detail hero ── */
 .hero{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);overflow:hidden;position:relative}
@@ -267,7 +277,7 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
 <div id="app" class="hidden">
   <header class="nav wrap">
     <nav class="nav-inner">
-      <a class="brand" href="/milestones"><span class="logo">T</span>Tektone Funnels<span class="sep">/ Progresso</span></a>
+      <a class="brand" href="/milestones"><span class="logo">T</span><span class="wordmark">Tektone Funnels</span><span class="sep">/ Progresso</span></a>
       <div class="spacer"></div>
       <span class="whoami" id="whoami"></span>
       <a class="navlink hidden" id="dash-link" href="/admin">← Dashboard</a>

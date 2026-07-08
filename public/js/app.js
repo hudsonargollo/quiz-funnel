@@ -278,7 +278,8 @@
       </div>
 
       <div class="slider-track-wrap">
-        <div class="slider-ruler" id="slider-ruler"
+        <div class="slider-ruler" id="slider-ruler" tabindex="0" role="slider"
+          aria-valuemin="${s.min}" aria-valuemax="${s.max}" aria-valuenow="${defVal}" aria-valuetext="${defVal} ${unit}"
           data-min="${s.min}" data-max="${s.max}" data-step="${s.step}" data-val="${defVal}"
           data-min-alt="${s.minAlt || s.min}" data-max-alt="${s.maxAlt || s.max}"
           data-default-alt="${s.defaultAlt || defVal}" data-conv="${s.conversionFactor || 1}">
@@ -288,7 +289,7 @@
             <div class="ruler-needle-label" id="needle-label">${defVal} ${unit}</div>
           </div>
         </div>
-        <p class="slider-hint">Arraste para ajustar</p>
+        <p class="slider-hint">Arraste ou use as setas do teclado para ajustar</p>
       </div>
 
       ${infoBox}
@@ -709,7 +710,7 @@
             <p class="sticky-price-label">Preço especial</p>
             <p class="sticky-price-value">€${cfg.productPrice.toFixed(2).replace('.',',')}</p>
           </div>
-          <button class="btn btn-success" style="max-width:260px;font-size:17px;padding:14px 20px" data-action="checkout">
+          <button class="btn btn-success sticky-cta-btn" data-action="checkout">
             Comprar agora →
           </button>
         </div>
@@ -882,6 +883,8 @@
       valDisplay.textContent = val;
       unitDisplay.textContent = ' ' + unit;
       if (needleLabel) needleLabel.textContent = val + ' ' + unit;
+      ruler.setAttribute('aria-valuenow', val);
+      ruler.setAttribute('aria-valuetext', val + ' ' + unit);
 
       // Shift ticks so current value is centered
       const center = ruler.offsetWidth / 2;
@@ -919,6 +922,14 @@
     window.addEventListener('touchmove', onMove, { passive: false });
     window.addEventListener('mouseup', onEnd);
     window.addEventListener('touchend', onEnd);
+
+    ruler.addEventListener('keydown', (e) => {
+      const big = e.shiftKey ? 10 : 1;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { updateDisplay(val + step * big); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { updateDisplay(val - step * big); e.preventDefault(); }
+      else if (e.key === 'Home') { updateDisplay(min); e.preventDefault(); }
+      else if (e.key === 'End') { updateDisplay(max); e.preventDefault(); }
+    });
   }
 
   function toggleSliderUnit(ruler, el, isPrimary) {
