@@ -45,7 +45,7 @@ SAAS_CNAME_TARGET = "offers.clubemkt.digital"  # CNAME target customers point th
 
 # AI Ads add-on
 META_GRAPH_VERSION = "v21.0"                    # Meta Graph API version for the Ad Library
-AI_ALLOW_SELF_GRANT = "1"                       # lets the "Unlock AI Ads" button grant test credits (set "0" once Stripe checkout ships)
+AI_ALLOW_SELF_GRANT = "0"                       # lets the "Unlock AI Ads" button grant test credits (dev/staging only — Stripe checkout is live in prod)
 AI_BILLING_CURRENCY = "eur"                     # currency for AI Ads credit-pack checkout (minor units in credits.js AI_PACKS)
 
 # Messaging / deliverables (lead-magnet mailer)

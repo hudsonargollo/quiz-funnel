@@ -15,7 +15,39 @@ export const MODELS = {
   copy: 'claude-sonnet-4-6',
 };
 
-const PLATFORMS = ['meta', 'google', 'tiktok', 'linkedin', 'youtube', 'pinterest'];
+export const PLATFORMS = ['meta', 'google', 'tiktok', 'linkedin', 'youtube', 'pinterest'];
+
+function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+/**
+ * fetch() with retry on network errors and 429/5xx, exponential backoff + jitter, and a
+ * per-attempt timeout (a hung upstream would otherwise tie up the Worker invocation until
+ * the platform's own subrequest limit kills it). Shared by callClaude, generateImage, and
+ * the Meta Ad Library client.
+ */
+export async function fetchWithRetry(url, opts, { retries = 2, baseDelayMs = 400, timeoutMs = 20000 } = {}) {
+  let lastErr;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    let res;
+    try {
+      res = await fetch(url, { ...opts, signal: AbortSignal.timeout(timeoutMs) });
+    } catch (e) {
+      if (e.name === 'TimeoutError' || e.name === 'AbortError') e = new Error(`Request timed out after ${timeoutMs}ms`);
+      lastErr = e;
+      if (attempt === retries) throw e;
+      await sleep(baseDelayMs * 2 ** attempt + Math.random() * baseDelayMs);
+      continue;
+    }
+    if (res.status === 429 || res.status >= 500) {
+      lastErr = new Error(`HTTP ${res.status}`);
+      if (attempt === retries) return res;
+      await sleep(baseDelayMs * 2 ** attempt + Math.random() * baseDelayMs);
+      continue;
+    }
+    return res;
+  }
+  throw lastErr;
+}
 
 /**
  * Call Claude's Messages API. When `schema` is given, constrains the response to that
@@ -31,7 +63,7 @@ export async function callClaude(env, { model = MODELS.copy, system, user, schem
   if (system) body.system = system;
   if (schema) body.output_config = { format: { type: 'json_schema', schema } };
 
-  const res = await fetch(ANTHROPIC_URL, {
+  const res = await fetchWithRetry(ANTHROPIC_URL, {
     method: 'POST',
     headers: {
       'x-api-key': env.ANTHROPIC_API_KEY,
@@ -58,7 +90,7 @@ export async function callClaude(env, { model = MODELS.copy, system, user, schem
  */
 export async function generateImage(env, { prompt, size = '1024x1024' }) {
   if (!env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not configured');
-  const res = await fetch(OPENAI_IMAGE_URL, {
+  const res = await fetchWithRetry(OPENAI_IMAGE_URL, {
     method: 'POST',
     headers: { 'authorization': `Bearer ${env.OPENAI_API_KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({ model: 'gpt-image-1', prompt, size, n: 1 }),

@@ -7,7 +7,7 @@ import { json, err } from '../_lib/http.js';
 import { randomId } from '../_lib/crypto.js';
 import { getFunnelById } from '../_lib/funnels.js';
 import { getAddon, isEnabled, chargeCredits, refundCredits, grantCredits, packCatalog, AI_PACKS, COSTS } from '../_lib/credits.js';
-import { briefFromFunnel, generateStrategy, generateCreativeCopy, generateImage, analyzeCompetitors } from '../_lib/ai.js';
+import { briefFromFunnel, generateStrategy, generateCreativeCopy, generateImage, analyzeCompetitors, PLATFORMS } from '../_lib/ai.js';
 import { searchAdLibrary, isConfigured as metaConfigured } from '../_lib/meta_ads.js';
 import { createCheckoutSession } from '../_lib/stripe.js';
 
@@ -87,13 +87,13 @@ export async function handleAi(db, env, request, path, url, acc) {
     if (request.method === 'POST') {
       if (!(await isEnabled(db, acc))) return err('AI Ads add-on is not active', 403);
       const b = await request.json().catch(() => ({}));
-      let funnelId = null, name = (b.name || '').trim(), brief = {};
+      let funnelId = null, name = (b.name || '').trim().slice(0, 200), brief = {};
       if (b.funnelId) {
         const f = await getFunnelById(db, acc, b.funnelId);
         if (!f) return err('Funnel not found', 404);
         funnelId = f.id; brief = briefFromFunnel(f); if (!name) name = `Ads — ${f.name || f.slug}`;
       } else {
-        brief = { name: name || 'New campaign', inputUrl: (b.url || '').trim(), notes: (b.notes || '').trim() };
+        brief = { name: name || 'New campaign', inputUrl: (b.url || '').trim().slice(0, 500), notes: (b.notes || '').trim().slice(0, 2000) };
       }
       if (!name) name = 'New campaign';
       const id = randomId('adp'); const ts = nowISO();
@@ -157,8 +157,10 @@ export async function handleAi(db, env, request, path, url, acc) {
     const project = await db.prepare('SELECT * FROM ad_projects WHERE account_id = ? AND id = ?').bind(acc, fm[1]).first();
     if (!project) return err('Not found', 404);
     const b = await request.json().catch(() => ({}));
-    const query = (b.query || '').trim();
+    const query = (b.query || '').trim().slice(0, 200);
     if (!query) return err('Enter a search term', 400);
+    const country = (b.country || 'US').trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(country)) return err('Invalid country code', 400);
     const charge = await chargeCredits(db, acc, COSTS.find_ads, 'find_ads', project.id);
     if (!charge.ok) return err(charge.enabled ? 'Not enough credits' : 'AI Ads add-on is not active', 402);
     try {
@@ -166,7 +168,7 @@ export async function handleAi(db, env, request, path, url, acc) {
       const wantMeta = b.source !== 'ai';
       const wantAi = b.source !== 'meta';
       const [meta, ai] = await Promise.all([
-        wantMeta ? searchAdLibrary(env, { query, country: b.country || 'US' }) : Promise.resolve({ ads: [], note: null }),
+        wantMeta ? searchAdLibrary(env, { query, country }) : Promise.resolve({ ads: [], note: null }),
         wantAi ? analyzeCompetitors(env, { brief, query }).catch(() => []) : Promise.resolve([]),
       ]);
       const ts = nowISO();
@@ -192,7 +194,8 @@ export async function handleAi(db, env, request, path, url, acc) {
     if (!project) return err('Not found', 404);
     const b = await request.json().catch(() => ({}));
     const platform = (b.platform || 'meta').toLowerCase();
-    const persona = (b.persona || '').trim();
+    if (!PLATFORMS.includes(platform)) return err('Unknown platform', 400);
+    const persona = (b.persona || '').trim().slice(0, 300);
     const count = Math.min(Math.max(parseInt(b.count || 3, 10), 1), 4);
     const withImages = b.images !== false;
 
