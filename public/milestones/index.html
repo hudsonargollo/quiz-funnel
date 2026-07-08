@@ -144,8 +144,9 @@ header.nav{position:sticky;top:0;z-index:50}
 /* ── Overview: overall progress band ── */
 .band{display:flex;align-items:center;gap:22px;padding:24px 28px;border-radius:var(--r-xl);background:linear-gradient(135deg,rgba(0,174,239,.08),rgba(124,92,255,.06)),var(--surface);border:1px solid var(--line)}
 .band .bignum{font-family:var(--font-display);font-size:clamp(2.2rem,5vw,3rem);font-weight:700}
-.band .bandbar{flex:1}
+.band .bandbar{flex:1;min-width:0}
 .band .bandmeta{font-size:.85rem;color:var(--text-2);white-space:nowrap}
+@media(max-width:460px){.band{flex-wrap:wrap;padding:20px}.band .bandbar{flex:1 1 100%;order:1}}
 .pbar{height:8px;border-radius:var(--r-pill);background:var(--surface-2);overflow:hidden;border:1px solid var(--line)}
 .pbar>div{height:100%;background:var(--grad-brand);border-radius:var(--r-pill);transition:width .6s var(--ease)}
 
@@ -221,7 +222,7 @@ header.nav{position:sticky;top:0;z-index:50}
 .clist{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
 .cmt{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px}
 .cmt-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:10px}
-.cmt-author{font-size:.8rem;font-weight:700;color:var(--text)}
+.cmt-author{font-size:.8rem;font-weight:700;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cmt-date{font-size:.72rem;color:var(--text-3);white-space:nowrap}
 .cmt-body{font-size:.87rem;color:var(--text-2);white-space:pre-wrap;line-height:1.55}
 .cempty{font-size:.85rem;color:var(--text-3);padding:18px 0}
