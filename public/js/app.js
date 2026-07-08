@@ -162,6 +162,21 @@
       );
   }
 
+  // Initials avatar for testimonials: these are real customers who submitted
+  // before/after photos with faces intentionally cropped out, so we render an
+  // initials badge instead of a face — never fabricate a photo for a named
+  // real person. Color is deterministic per name (same person, same color).
+  const AVATAR_PALETTE = ['av-c1', 'av-c2', 'av-c3', 'av-c4'];
+  function avatarInitials(name) {
+    const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    const initials = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : parts[0].slice(0, 2);
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
+    const cls = AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+    return `<div class="testimonial-avatar ${cls}">${initials.toUpperCase()}</div>`;
+  }
+
   // ─────────────────────────────────────────────
   // LANDING
   // ─────────────────────────────────────────────
@@ -363,7 +378,7 @@
     const testimonial = s.testimonial ? `
       <div class="testimonial-card">
         <div class="testimonial-header">
-          <div class="testimonial-avatar"><img src="" alt="${s.testimonial.name}"></div>
+          ${avatarInitials(s.testimonial.name)}
           <div>
             <div class="stars">${icon('star').repeat(5)}</div>
             <p class="testimonial-name">${s.testimonial.name}</p>
@@ -458,9 +473,7 @@
     return `
     <div class="screen profile-summary with-progress" id="profile-screen">
       <h2 class="question-title" style="text-align:center">${s.headline}</h2>
-      <div class="profile-avatar">
-        <img src="/images/avatar-default.png" alt="Perfil" onerror="this.style.display='none'">
-      </div>
+      <div class="profile-avatar">${icon('user-round')}</div>
       <div class="profile-data-card" id="profile-data">
         <!-- filled by renderProfile() -->
       </div>
@@ -683,7 +696,7 @@
         <!-- More testimonials -->
         <div class="testimonial-card">
           <div class="testimonial-header">
-            <div class="testimonial-avatar"></div>
+            ${avatarInitials('Rosana Alves')}
             <div>
               <div class="stars">${icon('star').repeat(5)}</div>
               <p class="testimonial-name">Rosana Alves</p>
