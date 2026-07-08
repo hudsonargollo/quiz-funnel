@@ -258,7 +258,17 @@
   .opt-ed .oh .sx{color:var(--faint);cursor:pointer;display:flex}.opt-ed .oh .sx:hover{color:var(--red)}
   .opt-ed input{margin-bottom:5px}.opt-ed input:last-child{margin-bottom:0}
   .addbtn{width:100%;justify-content:center;margin-top:4px}
-  @media(max-width:900px){.bld-body{grid-template-columns:1fr}.bld-left,.bld-right{border:0;border-bottom:1px solid var(--line)}.bld-mid{display:none}}
+  .bld-preview-toggle{display:none}
+  @media(max-width:900px){
+    .bld-body{grid-template-columns:1fr}
+    .bld-left,.bld-right{border:0;border-bottom:1px solid var(--line)}
+    .bld-mid{display:none}
+    .bld-preview-toggle{display:inline-flex}
+    /* Preview mode: swap to just the live device, edit panels hidden. */
+    .bld-body.preview .bld-left,.bld-body.preview .bld-right{display:none}
+    .bld-body.preview .bld-mid{display:flex;padding:14px}
+    .bld-body.preview .device{max-height:none;height:calc(100vh - 140px)}
+  }
 </style>
 </head>
 <body>
@@ -377,10 +387,11 @@
     <span class="ttl" id="bld-title">Builder</span>
     <input class="nm" id="bld-name" placeholder="Funnel name">
     <div style="flex:1"></div>
+    <button class="btn ghost bld-preview-toggle" id="bld-preview-toggle" onclick="App.toggleBuilderPreview()"><i data-lucide="eye"></i> <span data-i18n="b_preview">Preview</span></button>
     <a class="btn ghost" id="bld-open" target="_blank">↗ <span data-i18n="open">Open</span></a>
     <button class="btn" id="bld-save" onclick="App.saveBuilder()" data-i18n="save">Save</button>
   </div>
-  <div class="bld-body">
+  <div class="bld-body" id="bld-body">
     <div class="bld-pane bld-left">
       <div class="bld-h"><span data-i18n="b_screens">Screens</span></div>
       <div id="bld-screens"></div>
@@ -416,7 +427,7 @@ const I18N={
    tpl_quiz_t:'Quiz',tpl_quiz_d:'Multi-step quiz that captures leads and sells.',
    tpl_optin_t:'Lead magnet',tpl_optin_d:'Simple opt-in to capture emails.',
    tpl_vsl_t:'VSL → checkout',tpl_vsl_d:'Video sales letter into a checkout.',
-   b_screens:'Screens',b_add:'Add screen',b_props:'Properties',b_builder:'Visual builder',b_select:'Select a screen to edit it.',
+   b_screens:'Screens',b_add:'Add screen',b_props:'Properties',b_builder:'Visual builder',b_select:'Select a screen to edit it.',b_preview:'Preview',b_edit:'Edit',
    b_option:'Option',b_addopt:'+ Add option',b_field:'Field',b_step:'Step',b_addstep:'+ Add step',b_built:'Funnel saved',
    dom_title:'Custom domain',dom_add:'Connect',dom_ph:'funnel.yourdomain.com',dom_cname:'Point a CNAME record to:',
    dom_none:'No custom domain yet.',dom_notcfg:'Custom domains activate once your platform domain is configured on Cloudflare.',dom_connected:'Domain connected',dom_removed:'Domain removed',
@@ -464,7 +475,7 @@ const I18N={
    tpl_quiz_t:'Quiz',tpl_quiz_d:'Quiz de vários passos que capta leads e vende.',
    tpl_optin_t:'Lead magnet',tpl_optin_d:'Opt-in simples para captar emails.',
    tpl_vsl_t:'VSL → checkout',tpl_vsl_d:'Vídeo de vendas até ao checkout.',
-   b_screens:'Ecrãs',b_add:'Adicionar ecrã',b_props:'Propriedades',b_builder:'Editor visual',b_select:'Selecione um ecrã para editar.',
+   b_screens:'Ecrãs',b_add:'Adicionar ecrã',b_props:'Propriedades',b_builder:'Editor visual',b_select:'Selecione um ecrã para editar.',b_preview:'Pré-visualizar',b_edit:'Editar',
    b_option:'Opção',b_addopt:'+ Adicionar opção',b_field:'Campo',b_step:'Passo',b_addstep:'+ Adicionar passo',b_built:'Funil guardado',
    dom_title:'Domínio personalizado',dom_add:'Ligar',dom_ph:'funil.seudominio.com',dom_cname:'Aponte um registo CNAME para:',
    dom_none:'Sem domínio personalizado.',dom_notcfg:'Os domínios personalizados ativam quando o domínio da plataforma estiver configurado no Cloudflare.',dom_connected:'Domínio ligado',dom_removed:'Domínio removido',
@@ -780,11 +791,22 @@ const App=(()=>{
    $('bld-palette').innerHTML=PALETTE.map(ty=>`<button onclick="App.builderAdd('${ty}')">${icon(SCR_ICON[ty]||'square')} ${ty}</button>`).join('');
    renderScreens();renderProps();
    $('bld-frame').src=location.origin+'/'+f.slug+'?preview=1&t='+Date.now();
+   $('bld-body').classList.remove('preview');
+   $('bld-preview-toggle').innerHTML=`<i data-lucide="eye"></i> ${t('b_preview')}`;
    $('builder').classList.remove('hidden');applyI18n();refreshIcons();
  }
  function closeBuilder(){
    if(_b.dirty&&!confirm('Discard unsaved changes?'))return;
    $('builder').classList.add('hidden');$('bld-frame').src='about:blank';_b.ready=false;loadFunnels();
+ }
+ // Mobile-only: the builder's 3-column layout collapses to 1 column under 900px
+ // with the live device preview hidden (no room for it alongside the edit panels),
+ // so this toggles between the edit panels and a fullscreen preview on demand.
+ function toggleBuilderPreview(){
+   const on=$('bld-body').classList.toggle('preview');
+   $('bld-preview-toggle').innerHTML=on?`<i data-lucide="pencil"></i> ${t('b_edit')}`:`<i data-lucide="eye"></i> ${t('b_preview')}`;
+   refreshIcons();
+   if(on)pushPreview();
  }
  function pushPreview(){const fr=$('bld-frame');if(fr&&fr.contentWindow&&_b.ready)fr.contentWindow.postMessage({type:'qf-preview',screens:_b.screens,config:_b.config,index:_b.sel},'*');}
  window.addEventListener('message',e=>{if((e.data||{}).type==='qf-preview-ready'){_b.ready=true;pushPreview();}});
@@ -1364,7 +1386,7 @@ const App=(()=>{
 
  return {submitAuth,toggleAuthMode,logout,showView,refresh,loadStats,loadLeads,page,openLead,closeDrawer,exportCsv,
    onFunnelChange,scopeFunnel,openFunnelEditor,saveFunnel,deleteFunnel,setLang,copyText,copyEl,pickTemplate,
-   openBuilder,closeBuilder,builderSelect,builderAdd,builderDelete,bset,boptSet,boptAdd,boptDel,
+   openBuilder,closeBuilder,toggleBuilderPreview,builderSelect,builderAdd,builderDelete,bset,boptSet,boptAdd,boptDel,
    bfSet,bfAdd,bfDel,bstepSet,bstepAdd,bstepDel,bcfg,bdel,testDelivery,saveBuilder,loadDomains,addDomain,delDomain,
    aiNewProject,aiCreateProject,aiOpenProject,aiDeleteProject,aiBack,aiUnlock,aiBuy,aiBuyMore,
    aiGenStrategy,aiFindAds,aiGenCreatives,aiFav,aiCopyCreative,aiCopyStr,aiCopyPlatform,aiDelCreative,
