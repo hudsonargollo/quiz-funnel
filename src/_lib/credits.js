@@ -12,6 +12,7 @@ export const COSTS = {
   strategy: 10,   // full parallel strategy run
   find_ads: 1,    // one ad-discovery search
   creative: 5,    // one copy + AI image variant
+  score: 1,       // AI score + feedback for one creative
 };
 
 // Purchasable credit packs (platform billing). Prices are charged on the PLATFORM's

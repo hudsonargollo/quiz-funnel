@@ -145,6 +145,7 @@ function briefText(brief) {
     brief.inputUrl ? `Reference URL: ${brief.inputUrl}` : '',
     brief.notes ? `Notes: ${brief.notes}` : '',
     brief.quizThemes?.length ? `Quiz themes: ${brief.quizThemes.join('; ')}` : '',
+    brief.brandText || '',
   ].filter(Boolean).join('\n');
 }
 
@@ -240,4 +241,34 @@ export async function analyzeCompetitors(env, { brief, query }) {
       + `\n\n--- BUSINESS BRIEF ---\n${ctx}`,
   });
   return out.ads || [];
+}
+
+// ── Creative scoring ───────────────────────────────
+const SCORE_SCHEMA = obj({
+  score: { type: 'integer' }, summary: str, strengths: strArr, improvements: strArr,
+});
+
+const SCORE_SYSTEM = 'You are a blunt, expert performance-marketing creative director reviewing ad copy '
+  + 'before it goes to paid media. Judge hook strength, clarity, specificity, and how well it matches the '
+  + 'brief and brand guidelines. Do not be generous — most first-draft ad copy scores 40-70.';
+
+/**
+ * Score one generated creative 0-100 against the brief/brand, with a short summary and
+ * concrete strengths/improvements. Independent of generation so it can be re-run on demand.
+ */
+export async function scoreCreative(env, { brief, creative }) {
+  const ctx = briefText(brief);
+  const ad = [
+    `Platform: ${creative.platform || ''}`,
+    creative.persona ? `Persona: ${creative.persona}` : '',
+    `Headline: ${creative.headline || ''}`,
+    `Primary text: ${creative.primary_text || ''}`,
+    `CTA: ${creative.cta || ''}`,
+  ].filter(Boolean).join('\n');
+  const out = await callClaude(env, {
+    model: MODELS.copy, system: SCORE_SYSTEM, schema: SCORE_SCHEMA, maxTokens: 1200,
+    user: `Score this ad creative 0-100. Give a one-sentence summary, 2-3 strengths, and 2-3 concrete improvements.`
+      + `\n\n--- BUSINESS BRIEF ---\n${ctx}\n\n--- AD CREATIVE ---\n${ad}`,
+  });
+  return { score: Math.max(0, Math.min(100, out.score | 0)), summary: out.summary || '', strengths: out.strengths || [], improvements: out.improvements || [] };
 }

@@ -7,9 +7,10 @@ import { json, err } from '../_lib/http.js';
 import { randomId } from '../_lib/crypto.js';
 import { getFunnelById } from '../_lib/funnels.js';
 import { getAddon, isEnabled, chargeCredits, refundCredits, grantCredits, packCatalog, AI_PACKS, COSTS } from '../_lib/credits.js';
-import { briefFromFunnel, generateStrategy, generateCreativeCopy, generateImage, analyzeCompetitors, PLATFORMS } from '../_lib/ai.js';
+import { briefFromFunnel, generateStrategy, generateCreativeCopy, generateImage, analyzeCompetitors, scoreCreative, PLATFORMS } from '../_lib/ai.js';
 import { searchAdLibrary, isConfigured as metaConfigured } from '../_lib/meta_ads.js';
 import { createCheckoutSession } from '../_lib/stripe.js';
+import { getBrandKit, upsertBrandKit, setBrandLogo, brandKitText } from '../_lib/brandkit.js';
 
 const nowISO = () => new Date().toISOString();
 
@@ -111,14 +112,14 @@ export async function handleAi(db, env, request, path, url, acc) {
     if (!project) return err('Not found', 404);
     if (request.method === 'GET') {
       const creatives = await db.prepare(
-        'SELECT id, platform, persona, headline, primary_text, cta, image_key, favorite, created_at FROM ad_creatives WHERE account_id = ? AND project_id = ? ORDER BY created_at DESC'
+        'SELECT id, platform, persona, headline, primary_text, cta, image_key, favorite, score, score_feedback, created_at FROM ad_creatives WHERE account_id = ? AND project_id = ? ORDER BY created_at DESC'
       ).bind(acc, project.id).all();
       const comp = await db.prepare(
         'SELECT id, source, page_name, ad_text, cta, media_url, angle, fetched_at FROM competitor_ads WHERE account_id = ? AND project_id = ? ORDER BY fetched_at DESC LIMIT 60'
       ).bind(acc, project.id).all();
       return json({
         ...projectPublic(project),
-        creatives: creatives.results || [],
+        creatives: (creatives.results || []).map(creativePublic),
         competitorAds: comp.results || [],
       });
     }
@@ -140,7 +141,7 @@ export async function handleAi(db, env, request, path, url, acc) {
     const charge = await chargeCredits(db, acc, COSTS.strategy, 'strategy', project.id);
     if (!charge.ok) return err(charge.enabled ? 'Not enough credits' : 'AI Ads add-on is not active', 402);
     try {
-      const brief = safeBrief(project);
+      const brief = await safeBrief(db, acc, project);
       const strategy = await generateStrategy(env, brief);
       await db.prepare('UPDATE ad_projects SET strategy = ?, status = ?, updated_at = ? WHERE account_id = ? AND id = ?')
         .bind(JSON.stringify(strategy), 'ready', nowISO(), acc, project.id).run();
@@ -164,7 +165,7 @@ export async function handleAi(db, env, request, path, url, acc) {
     const charge = await chargeCredits(db, acc, COSTS.find_ads, 'find_ads', project.id);
     if (!charge.ok) return err(charge.enabled ? 'Not enough credits' : 'AI Ads add-on is not active', 402);
     try {
-      const brief = safeBrief(project);
+      const brief = await safeBrief(db, acc, project);
       const wantMeta = b.source !== 'ai';
       const wantAi = b.source !== 'meta';
       const [meta, ai] = await Promise.all([
@@ -203,7 +204,7 @@ export async function handleAi(db, env, request, path, url, acc) {
     const charge = await chargeCredits(db, acc, cost, 'creative', project.id);
     if (!charge.ok) return err(charge.enabled ? 'Not enough credits' : 'AI Ads add-on is not active', 402);
     try {
-      const brief = safeBrief(project);
+      const brief = await safeBrief(db, acc, project);
       const variants = await generateCreativeCopy(env, { brief, platform, persona, count });
       const ts = nowISO();
       const saved = [];
@@ -271,7 +272,63 @@ export async function handleAi(db, env, request, path, url, acc) {
     });
   }
 
+  // ── AI-score a creative (re-runnable; independent of generation) ──
+  const scm = path.match(/^\/api\/ai\/creatives\/([^/]+)\/score$/);
+  if (scm && request.method === 'POST') {
+    const cr = await db.prepare('SELECT * FROM ad_creatives WHERE account_id = ? AND id = ?').bind(acc, scm[1]).first();
+    if (!cr) return err('Not found', 404);
+    const project = await db.prepare('SELECT * FROM ad_projects WHERE account_id = ? AND id = ?').bind(acc, cr.project_id).first();
+    if (!project) return err('Not found', 404);
+    const charge = await chargeCredits(db, acc, COSTS.score, 'score', cr.id);
+    if (!charge.ok) return err(charge.enabled ? 'Not enough credits' : 'AI Ads add-on is not active', 402);
+    try {
+      const brief = await safeBrief(db, acc, project);
+      const result = await scoreCreative(env, { brief, creative: cr });
+      await db.prepare('UPDATE ad_creatives SET score = ?, score_feedback = ? WHERE account_id = ? AND id = ?')
+        .bind(result.score, JSON.stringify({ summary: result.summary, strengths: result.strengths, improvements: result.improvements }), acc, cr.id).run();
+      return json({ score: result.score, score_feedback: { summary: result.summary, strengths: result.strengths, improvements: result.improvements }, credits: charge.balance });
+    } catch (e) {
+      const credits = await refundCredits(db, acc, COSTS.score, cr.id);
+      return json({ error: `Scoring failed: ${e.message}`, credits }, 502);
+    }
+  }
+
+  // ── Brand kit (account-wide; folded into every generation prompt) ──
+  if (path === '/api/ai/brand' && request.method === 'GET') {
+    return json({ brand: await getBrandKit(db, acc) });
+  }
+  if (path === '/api/ai/brand' && request.method === 'PUT') {
+    const b = await request.json().catch(() => ({}));
+    const brand = await upsertBrandKit(db, acc, b);
+    return json({ brand });
+  }
+  if (path === '/api/ai/brand/logo' && request.method === 'POST') {
+    const ct = request.headers.get('content-type') || '';
+    if (!ct.startsWith('image/')) return err('Expected an image body', 400);
+    const bytes = await request.arrayBuffer();
+    if (bytes.byteLength > 2 * 1024 * 1024) return err('Logo must be under 2MB', 400);
+    const logoKey = `brand/${acc}/logo`;
+    await env.AD_ASSETS.put(logoKey, bytes, { httpMetadata: { contentType: ct } });
+    await setBrandLogo(db, acc, logoKey);
+    return json({ ok: true });
+  }
+  if (path === '/api/ai/brand/logo' && request.method === 'GET') {
+    const kit = await getBrandKit(db, acc);
+    if (!kit.logo_key) return err('Not found', 404);
+    const obj = await env.AD_ASSETS.get(kit.logo_key);
+    if (!obj) return err('Not found', 404);
+    return new Response(obj.body, {
+      headers: { 'Content-Type': obj.httpMetadata?.contentType || 'image/png', 'Cache-Control': 'private, max-age=86400' },
+    });
+  }
+
   return err('Not found', 404);
+}
+
+function creativePublic(c) {
+  let score_feedback = null;
+  try { score_feedback = c.score_feedback ? JSON.parse(c.score_feedback) : null; } catch (e) {}
+  return { ...c, score_feedback };
 }
 
 function projectPublic(p) {
@@ -284,10 +341,13 @@ function projectPublic(p) {
   };
 }
 
-function safeBrief(project) {
+/** Project brief plus the account's brand guidelines folded in as `brandText`, so every
+ * generation call (strategy/copy/competitor-analysis/scoring) stays on-brand. */
+async function safeBrief(db, acc, project) {
   let brief = {};
   try { brief = JSON.parse(project.brief || '{}'); } catch (e) {}
   if (!brief.name) brief.name = project.name;
   if (!brief.inputUrl && project.input_url) brief.inputUrl = project.input_url;
+  brief.brandText = brandKitText(await getBrandKit(db, acc));
   return brief;
 }

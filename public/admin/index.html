@@ -437,6 +437,11 @@ const I18N={
    ai_find:'Find competitor ads',ai_find_ph:'Brand or keyword',ai_country:'Country (ISO-2)',ai_search:'Search',ai_meta_note:'Meta’s API returns all ad types for EU countries; outside the EU only political/issue ads.',ai_view_ad:'View ad',ai_no_ads:'No ads found yet — run a search.',ai_enter_term:'Enter a search term',ai_bad_country:'Enter a valid 2-letter country code (e.g. US)',
    ai_creatives:'Creatives',ai_persona_ph:'Target persona (optional)',ai_no_creatives:'No creatives yet — generate some.',ai_fav:'Favorite',ai_copy:'Copy text',ai_download:'Download',
    ai_working:'Working…',ai_working_img:'Generating copy + images…',ai_done:'Done',ai_img_failed:'Copy saved, but image generation failed',ai_need_credits:'Not enough credits',
+   ai_brand_kit:'Brand kit',ai_brand_help:'Folded into every strategy, copy, and image prompt so generated creatives stay on-brand.',ai_brand_name:'Brand name',ai_brand_name_ph:'Your brand',
+   ai_brand_tone:'Voice & tone',ai_brand_tone_ph:'e.g. confident, warm, no hype, short sentences…',ai_brand_colors:'Brand colors',ai_brand_colors_ph:'#00AEEF, #0B0F15',ai_brand_colors_help:'Comma-separated hex codes',
+   ai_brand_fonts:'Fonts / style notes',ai_brand_fonts_ph:'e.g. bold sans-serif headlines',ai_brand_dos:'Lean into',ai_brand_dos_ph:'Angles, phrases, proof points to favor',
+   ai_brand_donts:'Avoid',ai_brand_donts_ph:'Words, claims, angles to avoid',ai_brand_logo:'Logo',ai_brand_upload:'Upload logo',ai_brand_save:'Save brand kit',ai_brand_saved:'Brand kit saved',
+   ai_score:'Score',ai_rescore:'Re-score',ai_scoring:'Scoring…',ai_score_of:'Improve',
    dl_enable:'Email the deliverable on opt-in',dl_help:'When a lead submits their email, automatically send them the asset below.',
    dl_from:'From name',dl_subject:'Subject',dl_subject_ph:'Your free guide is here',
    dl_intro:'Message',dl_intro_ph:'Thanks! Here is the material you requested…',
@@ -480,6 +485,11 @@ const I18N={
    ai_find:'Anúncios de concorrentes',ai_find_ph:'Marca ou palavra-chave',ai_country:'País (ISO-2)',ai_search:'Buscar',ai_meta_note:'A API da Meta retorna todos os tipos de anúncio para países da UE; fora da UE, apenas anúncios políticos.',ai_view_ad:'Ver anúncio',ai_no_ads:'Nenhum anúncio ainda — faça uma busca.',ai_enter_term:'Digite um termo de busca',ai_bad_country:'Informe um código de país válido de 2 letras (ex: US)',
    ai_creatives:'Criativos',ai_persona_ph:'Persona alvo (opcional)',ai_no_creatives:'Nenhum criativo ainda — gere alguns.',ai_fav:'Favorito',ai_copy:'Copiar texto',ai_download:'Baixar',
    ai_working:'Processando…',ai_working_img:'Gerando textos + imagens…',ai_done:'Pronto',ai_img_failed:'Texto salvo, mas a geração de imagem falhou',ai_need_credits:'Créditos insuficientes',
+   ai_brand_kit:'Identidade da marca',ai_brand_help:'Aplicado em toda estratégia, texto e imagem gerados para manter a identidade da marca.',ai_brand_name:'Nome da marca',ai_brand_name_ph:'Sua marca',
+   ai_brand_tone:'Voz e tom',ai_brand_tone_ph:'ex: confiante, acolhedor, sem exagero, frases curtas…',ai_brand_colors:'Cores da marca',ai_brand_colors_ph:'#00AEEF, #0B0F15',ai_brand_colors_help:'Códigos hex separados por vírgula',
+   ai_brand_fonts:'Fontes / estilo',ai_brand_fonts_ph:'ex: títulos em sans-serif bold',ai_brand_dos:'Priorize',ai_brand_dos_ph:'Ângulos, frases, provas a favorecer',
+   ai_brand_donts:'Evite',ai_brand_donts_ph:'Palavras, promessas, ângulos a evitar',ai_brand_logo:'Logo',ai_brand_upload:'Enviar logo',ai_brand_save:'Guardar identidade',ai_brand_saved:'Identidade guardada',
+   ai_score:'Pontuar',ai_rescore:'Repontuar',ai_scoring:'Pontuando…',ai_score_of:'Melhorar',
    dl_enable:'Enviar o material por email no opt-in',dl_help:'Quando um lead enviar o email, mande automaticamente o material abaixo.',
    dl_from:'Nome do remetente',dl_subject:'Assunto',dl_subject_ph:'Seu material chegou',
    dl_intro:'Mensagem',dl_intro_ph:'Obrigado! Aqui está o material que você pediu…',
@@ -976,7 +986,7 @@ const App=(()=>{
  function fmtDate(s){if(!s)return '—';const d=new Date(s);return isNaN(d)?'—':d.toLocaleString(lang==='pt'?'pt-PT':'en-GB',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});}
 
  // ── AI Ads ──
- let _aiAddon=null,_aiProjects=[],_aiProject=null,_aiPacks=null,_aiLastPlat=null,_aiLastPersona='';
+ let _aiAddon=null,_aiProjects=[],_aiProject=null,_aiPacks=null,_aiLastPlat=null,_aiLastPersona='',_aiBrand=null;
  const PLAT=['meta','google','tiktok','linkedin','youtube','pinterest'];
  async function aiApi(p,opts){return api('ai/'+p,opts);}
  function fmtMoney(minor,cur){try{return new Intl.NumberFormat(lang==='pt'?'pt-BR':'en-US',{style:'currency',currency:(cur||'eur').toUpperCase()}).format((minor||0)/100);}catch(e){return ((minor||0)/100).toFixed(2)+' '+(cur||'').toUpperCase();}}
@@ -1075,6 +1085,53 @@ const App=(()=>{
 
  function aiBuyBtn(){return _aiAddon&&_aiAddon.billing?`<button class="btn ghost" onclick="App.aiBuyMore()" title="${t('ai_buy_credits')}">${icon('plus')} ${t('ai_buy_credits')}</button>`:'';}
 
+ // ── Brand kit (account-wide; drives every strategy/copy/image prompt) ──
+ async function aiOpenBrandKit(){
+   $('drawer').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:start">
+       <h3>${t('ai_brand_kit')}</h3><button class="btn ghost icon" onclick="App.closeDrawer()">✕</button></div>
+     <p style="color:var(--muted);font-size:13px">${icon('loader')} ${t('loading')||'Loading…'}</p>`;
+   $('overlay').classList.add('show');$('drawer').classList.add('show');refreshIcons();
+   try{const r=await aiApi('brand');_aiBrand=r.brand;aiRenderBrandKit();}
+   catch(e){toast(String(e.message),'bad');closeDrawer();}
+ }
+ function aiRenderBrandKit(){
+   const b=_aiBrand||{};
+   $('drawer').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:start">
+       <h3>${t('ai_brand_kit')}</h3><button class="btn ghost icon" onclick="App.closeDrawer()">✕</button></div>
+     <p style="color:var(--muted);font-size:13px">${t('ai_brand_help')}</p>
+     <label>${t('ai_brand_logo')}</label>
+     <div style="display:flex;align-items:center;gap:10px">
+       <div style="width:52px;height:52px;border-radius:10px;background:var(--panel2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+         ${b.logo_key?`<img src="/api/ai/brand/logo?_=${Date.now()}" style="width:100%;height:100%;object-fit:contain">`:icon('image')}
+       </div>
+       <input type="file" id="ai-brand-logo" accept="image/*" onchange="App.aiUploadBrandLogo(this)">
+     </div>
+     <label>${t('ai_brand_name')}</label><input id="ai-brand-name" placeholder="${t('ai_brand_name_ph')}" value="${esc(b.name||'')}">
+     <label>${t('ai_brand_tone')}</label><textarea id="ai-brand-tone" rows="2" placeholder="${t('ai_brand_tone_ph')}">${esc(b.tone||'')}</textarea>
+     <label>${t('ai_brand_colors')}</label><input id="ai-brand-colors" placeholder="${t('ai_brand_colors_ph')}" value="${esc((b.colors||[]).join(', '))}">
+     <p style="color:var(--faint);font-size:11px;margin-top:2px">${t('ai_brand_colors_help')}</p>
+     <label>${t('ai_brand_fonts')}</label><input id="ai-brand-fonts" placeholder="${t('ai_brand_fonts_ph')}" value="${esc(b.fonts||'')}">
+     <label>${t('ai_brand_dos')}</label><textarea id="ai-brand-dos" rows="2" placeholder="${t('ai_brand_dos_ph')}">${esc(b.voice_dos||'')}</textarea>
+     <label>${t('ai_brand_donts')}</label><textarea id="ai-brand-donts" rows="2" placeholder="${t('ai_brand_donts_ph')}">${esc(b.voice_donts||'')}</textarea>
+     <button class="btn" style="width:100%;justify-content:center;margin-top:14px" onclick="App.aiSaveBrandKit()">${t('ai_brand_save')}</button>`;
+   refreshIcons();
+ }
+ async function aiUploadBrandLogo(input){
+   const f=input.files&&input.files[0];if(!f)return;
+   try{await aiApi('brand/logo',{method:'POST',headers:{'Content-Type':f.type},body:f});
+     _aiBrand=(await aiApi('brand')).brand;aiRenderBrandKit();toast(t('ai_brand_saved'),'ok');}
+   catch(e){toast(String(e.message),'bad');}
+ }
+ async function aiSaveBrandKit(){
+   const colors=$('ai-brand-colors').value.split(',').map(c=>c.trim()).filter(Boolean);
+   const patch={
+     name:$('ai-brand-name').value.trim(),tone:$('ai-brand-tone').value.trim(),colors,
+     fonts:$('ai-brand-fonts').value.trim(),voice_dos:$('ai-brand-dos').value.trim(),voice_donts:$('ai-brand-donts').value.trim(),
+   };
+   try{const r=await aiApi('brand',{method:'PUT',body:JSON.stringify(patch)});_aiBrand=r.brand;closeDrawer();toast(t('ai_brand_saved'),'ok');}
+   catch(e){toast(String(e.message),'bad');}
+ }
+
  async function aiUnlock(){
    // Dev unlock: server only honors it when AI_ALLOW_SELF_GRANT=1 (test/staging).
    try{await aiApi('grant',{method:'POST',body:JSON.stringify({credits:500})});toast(t('ai_unlocked'),'ok');aiLoad();}
@@ -1094,6 +1151,7 @@ const App=(()=>{
    $('ai-body').innerHTML=`<div class="toolbar" style="margin-top:18px">
        <h2 style="font-size:16px;color:var(--text)">${t('ai_campaigns')}</h2>
        <div class="spacer"></div>${aiCreditPill()}${aiBuyBtn()}
+       <button class="btn ghost" onclick="App.aiOpenBrandKit()">${icon('palette')} ${t('ai_brand_kit')}</button>
        <button class="btn" onclick="App.aiNewProject()">${icon('plus')} ${t('ai_new')}</button>
      </div>
      ${_aiProjects.length?cards:`<div class="onb"><div class="big">${icon('megaphone')}</div><h3>${t('ai_empty_t')}</h3><p>${t('ai_empty_d')}</p><button class="btn" onclick="App.aiNewProject()">${t('ai_new')}</button></div>`}`;
@@ -1229,11 +1287,14 @@ const App=(()=>{
    const popts=PLAT.map(x=>`<option value="${x}"${x===(_aiLastPlat||PLAT[0])?' selected':''}>${x}</option>`).join('');
    const cards=cr.map(c=>`<div class="card" style="padding:10px">
        ${c.image_key?`<img src="/api/ai/creatives/${c.id}/image" style="width:100%;border-radius:8px;aspect-ratio:1;object-fit:cover" loading="lazy">`:`<div style="aspect-ratio:1;background:var(--panel2);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--faint)">${icon('image')}</div>`}
+       ${aiScoreBadge(c)}
        <div style="font-weight:700;margin-top:8px;font-size:13px">${esc(c.headline||'')}</div>
        <div style="font-size:12px;color:var(--muted);margin:4px 0">${esc(c.primary_text||'')}</div>
        <div style="font-size:11px;color:var(--brand2)">${esc(c.cta||'')}</div>
+       ${aiScoreFeedback(c)}
        <div class="factions" style="margin-top:8px">
          <button class="btn ghost icon" onclick="App.aiFav('${c.id}',${c.favorite?0:1})" title="${t('ai_fav')}" style="color:${c.favorite?'var(--amber)':'inherit'}">${icon('star')}</button>
+         ${aiScoreBtn(c)}
          <button class="btn ghost icon" onclick="App.aiCopyCreative('${c.id}')" title="${t('ai_copy')}">${icon('copy')}</button>
          ${c.image_key?`<a class="btn ghost icon" href="/api/ai/creatives/${c.id}/image" download title="${t('ai_download')}">${icon('download')}</a>`:''}
          <button class="btn ghost icon" onclick="App.aiDelCreative('${c.id}')" title="${t('delete')}">${icon('trash-2')}</button>
@@ -1261,6 +1322,27 @@ const App=(()=>{
  }
  async function aiFav(id,v){try{await aiApi('creatives/'+id,{method:'PATCH',body:JSON.stringify({favorite:v})});_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();}catch(e){toast(String(e.message),'bad');}}
  async function aiDelCreative(id){try{await aiApi('creatives/'+id,{method:'DELETE'});_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();}catch(e){toast(String(e.message),'bad');}}
+
+ // AI creative scoring: a 0-100 score + strengths/improvements, re-runnable on demand.
+ function aiScoreBadge(c){
+   if(c.score==null)return '';
+   const color=c.score>=75?'var(--green)':c.score>=50?'var(--amber)':'var(--red)';
+   return `<div class="pill" style="background:#0e2436;color:${color};margin-top:6px">${icon('gauge')} ${c.score}/100</div>`;
+ }
+ function aiScoreFeedback(c){
+   const f=c.score_feedback;if(!f)return '';
+   const imp=(f.improvements||[]).length?`<div style="font-size:11px;color:var(--muted);margin-top:2px"><b>${t('ai_score_of')}:</b> ${f.improvements.map(esc).join(' · ')}</div>`:'';
+   return `<div style="font-size:11px;color:var(--muted);margin-top:4px">${esc(f.summary||'')}</div>${imp}`;
+ }
+ function aiScoreBtn(c){
+   const cost=_aiAddon.costs.score,label=c.score==null?t('ai_score'):t('ai_rescore');
+   if(_aiAddon.credits<cost)return `<button class="btn ghost icon" onclick="App.aiBuyMore()" title="${t('ai_need_credits')}">${icon('coins')}</button>`;
+   return `<button class="btn ghost icon" onclick="App.aiScoreCreative('${c.id}')" title="${label} · ${cost} ${t('ai_credits')}">${icon('gauge')}</button>`;
+ }
+ async function aiScoreCreative(id){
+   try{const r=await aiApi('creatives/'+id+'/score',{method:'POST'});_aiAddon.credits=r.credits;_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();toast(t('ai_done'),'ok');}
+   catch(e){toast(String(e.message),'bad');}
+ }
 
  // boot
  (function(){
