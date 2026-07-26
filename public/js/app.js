@@ -300,9 +300,7 @@
           data-default-alt="${s.defaultAlt || defVal}" data-conv="${s.conversionFactor || 1}">
           <div class="ruler-ticks" id="ruler-ticks"></div>
           <div class="ruler-line"></div>
-          <div class="ruler-needle">
-            <div class="ruler-needle-label" id="needle-label">${defVal} ${unit}</div>
-          </div>
+          <div class="ruler-needle"></div>
         </div>
         <p class="slider-hint">Arraste ou use as setas do teclado para ajustar</p>
       </div>
@@ -867,14 +865,13 @@
   function initSlider(ruler, el) {
     const valDisplay = el.querySelector('#slider-val');
     const unitDisplay = el.querySelector('#slider-unit');
-    const needleLabel = el.querySelector('#needle-label');
     const ticksEl = el.querySelector('#ruler-ticks');
 
     let min = +ruler.dataset.min;
     let max = +ruler.dataset.max;
     let val = +ruler.dataset.val;
     let step = +ruler.dataset.step || 1;
-    const unit = ruler.dataset.sliderUnit || 'cm';
+    const unit = ruler.closest('[data-slider-unit]')?.dataset.sliderUnit || 'cm';
 
     const TICK_SPACING = 16; // px per unit
 
@@ -895,7 +892,6 @@
       val = Math.round(Math.max(min, Math.min(max, v)) / step) * step;
       valDisplay.textContent = val;
       unitDisplay.textContent = ' ' + unit;
-      if (needleLabel) needleLabel.textContent = val + ' ' + unit;
       ruler.setAttribute('aria-valuenow', val);
       ruler.setAttribute('aria-valuetext', val + ' ' + unit);
 
@@ -917,17 +913,19 @@
 
     function onStart(e) {
       dragging = true;
+      ruler.classList.add('dragging');
       startX = (e.touches ? e.touches[0].clientX : e.clientX);
       startVal = val;
       e.preventDefault();
     }
     function onMove(e) {
       if (!dragging) return;
+      e.preventDefault();
       const cx = (e.touches ? e.touches[0].clientX : e.clientX);
       const delta = (startX - cx) / TICK_SPACING;
       updateDisplay(startVal + delta * step);
     }
-    function onEnd() { dragging = false; }
+    function onEnd() { dragging = false; ruler.classList.remove('dragging'); }
 
     ruler.addEventListener('mousedown', onStart);
     ruler.addEventListener('touchstart', onStart, { passive: false });
