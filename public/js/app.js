@@ -79,6 +79,9 @@
     if (screen.type === 'loading') {
       runLoadingSequence(screen);
     }
+    if (screen.type === 'loading_social') {
+      runLoadingSocialSequence(screen);
+    }
     if (screen.type === 'imc') {
       renderIMC();
     }
@@ -97,7 +100,7 @@
   // ── PROGRESS ─────────────────────────────────
   function updateProgress(screen) {
     const noProgress = totalQuestions === 0 ||
-      ['landing', 'loading', 'offer', 'success', 'video'].includes(screen.type);
+      ['landing', 'loading', 'loading_social', 'offer', 'success', 'video'].includes(screen.type);
 
     if (noProgress) {
       progWrap.classList.add('hidden');
@@ -129,6 +132,7 @@
       case 'grid':    return buildGrid(screen);
       case 'video':   return buildVideo(screen);
       case 'loading': return buildLoading(screen);
+      case 'loading_social': return buildLoadingSocial(screen);
       case 'profile': return buildProfileScreen(screen);
       case 'imc':     return buildIMCScreen(screen);
       case 'offer':   return buildOffer();
@@ -466,6 +470,33 @@
   }
 
   // ─────────────────────────────────────────────
+  // LOADING WITH SOCIAL PROOF (progress % + rotating testimonial carousel)
+  // ─────────────────────────────────────────────
+  function buildLoadingSocial(s) {
+    const testimonials = s.testimonials || [];
+    const slides = testimonials.map((t, i) => `
+      <div class="loading-social-slide${i === 0 ? ' active' : ''}" data-slide="${i}">
+        <img src="${t.image}" alt="" onerror="this.closest('.loading-social-slide').style.display='none'">
+        <p class="loading-social-caption">${t.name}${t.detail ? `, ${t.detail}` : ''}</p>
+      </div>`).join('');
+    const dots = testimonials.map((_, i) =>
+      `<span class="loading-social-dot${i === 0 ? ' active' : ''}" data-dot="${i}"></span>`).join('');
+
+    return `
+    <div class="screen loading-social-screen">
+      <div class="loading-social-header">
+        <span class="loading-social-label">${s.headline || 'Quase pronto...'}</span>
+        <span class="loading-social-pct" id="loading-social-pct">0%</span>
+      </div>
+      <div class="loading-social-bar"><div class="loading-social-bar-fill" id="loading-social-fill"></div></div>
+      ${s.body ? `<p class="loading-social-body">${s.body}</p>` : ''}
+      ${testimonials.length ? `
+        <div class="loading-social-carousel" id="loading-social-carousel">${slides}</div>
+        <div class="loading-social-dots">${dots}</div>` : ''}
+    </div>`;
+  }
+
+  // ─────────────────────────────────────────────
   // PROFILE SUMMARY (dynamic)
   // ─────────────────────────────────────────────
   function buildProfileScreen(s) {
@@ -697,7 +728,7 @@
           <button class="btn btn-success" id="checkout-btn" data-action="checkout">
             ${icon('check')} QUERO O MEU PROTOCOLO — R$ ${cfg.productPrice.toFixed(2).replace('.',',')}
           </button>
-          <p class="btn-note">${icon('lock')} Pagamento 100% seguro via Stripe · Acesso imediato</p>
+          <p class="btn-note">${icon('lock')} Pagamento 100% seguro · Acesso imediato</p>
         </div>
 
       </div>
@@ -1005,6 +1036,34 @@
     setTimeout(() => advance(), screen.duration || 3500);
   }
 
+  function runLoadingSocialSequence(screen) {
+    const duration = screen.duration || 5000;
+    const pctEl = document.getElementById('loading-social-pct');
+    const fillEl = document.getElementById('loading-social-fill');
+    const start = Date.now();
+    const pctTimer = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const pct = Math.min(99, Math.round((elapsed / duration) * 100));
+      if (pctEl) pctEl.textContent = pct + '%';
+      if (fillEl) fillEl.style.width = pct + '%';
+      if (elapsed >= duration) clearInterval(pctTimer);
+    }, 100);
+
+    const slides = screen.testimonials || [];
+    if (slides.length > 1) {
+      let idx = 0;
+      const rotateMs = Math.max(1200, Math.floor(duration / slides.length));
+      const rotateTimer = setInterval(() => {
+        idx = (idx + 1) % slides.length;
+        document.querySelectorAll('.loading-social-slide').forEach((el, i) => el.classList.toggle('active', i === idx));
+        document.querySelectorAll('.loading-social-dot').forEach((el, i) => el.classList.toggle('active', i === idx));
+      }, rotateMs);
+      setTimeout(() => clearInterval(rotateTimer), duration);
+    }
+
+    setTimeout(() => advance(), duration);
+  }
+
   // ─────────────────────────────────────────────
   // CHECKOUT
   // ─────────────────────────────────────────────
@@ -1015,6 +1074,14 @@
 
     CRM.track('checkout_initiated');
     CRM.setState('checkout_initiated');
+
+    // Funnels with an external checkout link (e.g. Cakto) skip the Stripe
+    // session flow entirely and go straight to the provider's own page.
+    const cfg = window.QUIZ_CONFIG || {};
+    if (cfg.checkoutUrl) {
+      window.location.href = cfg.checkoutUrl;
+      return;
+    }
 
     try {
       const sess = CRM.getSession();
