@@ -12,7 +12,9 @@
   // Preview mode (visual builder iframe): render screens on demand, no tracking.
   const PREVIEW = (window.FUNNEL && window.FUNNEL.preview) ||
     new URLSearchParams(location.search).has('preview');
-  const QUIZ_SCREENS = window.SCREENS || [];
+  const QUIZ_SCREENS = (window.SCREENS || []).map(s =>
+    (!s.type && s.id === 'offer') ? { ...s, type: 'offer' } : s
+  );
   const session = PREVIEW ? null : window.CRM.init();
 
   // ── DOM refs ─────────────────────────────────
