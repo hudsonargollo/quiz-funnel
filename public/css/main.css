@@ -792,8 +792,14 @@ body {
   width: 3px;
   background: var(--brand-primary);
   border-radius: 2px;
-  opacity: 0.5;
+  opacity: 0.35;
   animation: audioWave 1s ease-in-out infinite;
+  animation-play-state: paused;
+}
+
+.audio-wave.playing .audio-bar {
+  opacity: 0.9;
+  animation-play-state: running;
 }
 
 @keyframes audioWave {

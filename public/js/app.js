@@ -347,12 +347,13 @@
   function buildBridge(s) {
     const audio = s.hasAudio ? `
       <div class="audio-player" id="audio-play-btn" role="button" tabindex="0">
+        ${s.audioUrl ? `<audio id="bridge-audio" src="${s.audioUrl}" preload="metadata"></audio>` : ''}
         <div class="audio-play-btn" id="play-icon">▶</div>
         <div class="audio-info">
           <p class="audio-name">${s.audioName}</p>
-          <p class="audio-time">${s.audioDuration}</p>
+          <p class="audio-time" id="audio-time">${s.audioDuration}</p>
         </div>
-        <div class="audio-wave">
+        <div class="audio-wave" id="audio-wave">
           ${Array(12).fill(0).map((_,i) =>
             `<div class="audio-bar" style="height:${6+Math.random()*14}px;animation-delay:${i*0.08}s"></div>`
           ).join('')}
@@ -852,6 +853,44 @@
     el.querySelectorAll('[data-action="checkout"]').forEach(btn => {
       btn.addEventListener('click', initiateCheckout);
     });
+
+    // Bridge audio player
+    const audioEl = el.querySelector('#bridge-audio');
+    const audioBtn = el.querySelector('#audio-play-btn');
+    if (audioEl && audioBtn) {
+      const playIcon = el.querySelector('#play-icon');
+      const timeLabel = el.querySelector('#audio-time');
+      const wave = el.querySelector('#audio-wave');
+      const fmtTime = (sec) => {
+        if (!isFinite(sec) || sec < 0) return '0:00';
+        const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+        return `${m}:${String(s).padStart(2, '0')}`;
+      };
+      const totalLabel = () => isFinite(audioEl.duration) ? fmtTime(audioEl.duration) : (screen.audioDuration || '');
+
+      audioBtn.addEventListener('click', () => {
+        if (audioEl.paused) audioEl.play(); else audioEl.pause();
+      });
+      audioEl.addEventListener('play', () => {
+        playIcon.textContent = '❚❚';
+        wave?.classList.add('playing');
+      });
+      audioEl.addEventListener('pause', () => {
+        playIcon.textContent = '▶';
+        wave?.classList.remove('playing');
+      });
+      audioEl.addEventListener('ended', () => {
+        playIcon.textContent = '▶';
+        wave?.classList.remove('playing');
+        timeLabel.textContent = totalLabel();
+      });
+      audioEl.addEventListener('timeupdate', () => {
+        timeLabel.textContent = `${fmtTime(audioEl.currentTime)} / ${totalLabel()}`;
+      });
+      audioEl.addEventListener('loadedmetadata', () => {
+        timeLabel.textContent = totalLabel();
+      });
+    }
 
     // Back button
     progBack.onclick = () => {
