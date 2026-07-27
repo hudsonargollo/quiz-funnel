@@ -696,7 +696,7 @@ body {
 /* The "how it works" diagram (bridge1) carries readable text/labels, and the
    bridge2 before/after photo is a key proof point — give both more room than
    the default bridge-image sizing. */
-#bridge1 .bridge-image, #bridge2 .bridge-image { max-width: 480px; }
+#bridge1 .bridge-image, #bridge2 .bridge-image, #bridge3 .bridge-image { max-width: 480px; }
 
 .testimonial-card {
   width: 100%;
@@ -1601,7 +1601,8 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
 .bridge-image { max-height: 30vh; display: flex; }
 .bridge-image img { max-height: 30vh; object-fit: contain; }
 #bridge1 .bridge-image, #bridge1 .bridge-image img,
-#bridge2 .bridge-image, #bridge2 .bridge-image img { max-height: 40vh; }
+#bridge2 .bridge-image, #bridge2 .bridge-image img,
+#bridge3 .bridge-image, #bridge3 .bridge-image img { max-height: 40vh; }
 
 /* --- FIT-TO-VIEWPORT: compress content on shorter screens so every step
    fits without scrolling and the CTA stays in view. --- */
@@ -1614,7 +1615,8 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
   .bridge-screen { gap: 10px; }
   .bridge-image, .bridge-image img { max-height: 24vh; }
   #bridge1 .bridge-image, #bridge1 .bridge-image img,
-  #bridge2 .bridge-image, #bridge2 .bridge-image img { max-height: 34vh; }
+  #bridge2 .bridge-image, #bridge2 .bridge-image img,
+  #bridge3 .bridge-image, #bridge3 .bridge-image img { max-height: 34vh; }
   .imc-value { font-size: 34px; }
   .imc-screen { gap: 8px; }
 }
@@ -1643,7 +1645,8 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
   .bridge-body { font-size: 13px; line-height: 1.5; }
   .bridge-image, .bridge-image img { max-height: 24vh; }
   #bridge1 .bridge-image, #bridge1 .bridge-image img,
-  #bridge2 .bridge-image, #bridge2 .bridge-image img { max-height: 30vh; }
+  #bridge2 .bridge-image, #bridge2 .bridge-image img,
+  #bridge3 .bridge-image, #bridge3 .bridge-image img { max-height: 30vh; }
   .testimonial-card { padding: 12px; }
   .testimonial-body { font-size: 12.5px; line-height: 1.5; }
 }

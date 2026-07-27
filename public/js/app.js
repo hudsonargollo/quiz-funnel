@@ -644,8 +644,8 @@
               <p style="font-size:12px;color:var(--text-secondary);margin-top:2px">Acesso imediato</p>
             </div>
             <div class="offer-price-wrap">
-              <p class="offer-price-original">€49,90</p>
-              <p class="offer-price">€${cfg.productPrice.toFixed(2).replace('.',',')}</p>
+              <p class="offer-price-original">R$ 49,90</p>
+              <p class="offer-price">R$ ${cfg.productPrice.toFixed(2).replace('.',',')}</p>
               <p class="offer-price-note">Pagamento único</p>
             </div>
           </div>
@@ -656,15 +656,7 @@
                 <p class="include-name">App exclusiva do protocolo</p>
                 <p class="include-desc">Acesso imediato ao protocolo completo e guia de receitas</p>
               </div>
-              <span class="include-value">€29</span>
-            </div>
-            <div class="offer-include-item">
-              <div class="include-icon">${icon('clapperboard')}</div>
-              <div class="include-info">
-                <p class="include-name">Vídeo-aulas passo a passo</p>
-                <p class="include-desc">Como preparar a gelatina barátrica em 20 minutos</p>
-              </div>
-              <span class="include-value">€14</span>
+              <span class="include-value">R$ 27,90</span>
             </div>
             <div class="offer-include-item">
               <div class="include-icon">${icon('clipboard-list')}</div>
@@ -672,15 +664,6 @@
                 <p class="include-name">Plano semanal personalizado</p>
                 <p class="include-desc">Adaptado ao seu perfil e objetivos específicos</p>
               </div>
-              <span class="include-value">€19</span>
-            </div>
-            <div class="offer-include-item">
-              <div class="include-icon">${icon('message-circle')}</div>
-              <div class="include-info">
-                <p class="include-name">Grupo privado de apoio</p>
-                <p class="include-desc">Comunidade de mulheres + suporte da equipa</p>
-              </div>
-              <span class="include-value">€7</span>
             </div>
           </div>
         </div>
@@ -688,10 +671,10 @@
         <!-- Guarantee -->
         <div class="guarantee-box">
           <div class="guarantee-badge">
-            <span>30</span>DIAS<br>GARANTIA
+            <span>7</span>DIAS<br>GARANTIA
           </div>
           <div class="guarantee-text">
-            <h4>Garantia de Devolução 30 Dias</h4>
+            <h4>Garantia de Devolução 7 Dias</h4>
             <p>Se não ficar satisfeita, devolvemos o seu dinheiro. Sem perguntas, sem complicações.</p>
           </div>
         </div>
@@ -712,7 +695,7 @@
         <!-- CTA -->
         <div class="btn-wrap" style="padding-bottom:120px">
           <button class="btn btn-success" id="checkout-btn" data-action="checkout">
-            ${icon('check')} QUERO O MEU PROTOCOLO — €${cfg.productPrice.toFixed(2).replace('.',',')}
+            ${icon('check')} QUERO O MEU PROTOCOLO — R$ ${cfg.productPrice.toFixed(2).replace('.',',')}
           </button>
           <p class="btn-note">${icon('lock')} Pagamento 100% seguro via Stripe · Acesso imediato</p>
         </div>
@@ -724,7 +707,7 @@
         <div class="sticky-cta-inner">
           <div class="sticky-price-info">
             <p class="sticky-price-label">Preço especial</p>
-            <p class="sticky-price-value">€${cfg.productPrice.toFixed(2).replace('.',',')}</p>
+            <p class="sticky-price-value">R$ ${cfg.productPrice.toFixed(2).replace('.',',')}</p>
           </div>
           <button class="btn btn-success sticky-cta-btn" data-action="checkout">
             Comprar agora →
