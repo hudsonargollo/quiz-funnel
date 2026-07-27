@@ -717,7 +717,7 @@
             <div>
               <div class="stars">${icon('star').repeat(5)}</div>
               <p class="testimonial-name">Rosana Alves</p>
-              <p class="testimonial-location">${icon('map-pin')} Braga</p>
+              <p class="testimonial-location">${icon('map-pin')} Rio de Janeiro</p>
             </div>
           </div>
           <p class="testimonial-body">Perdi 15kg ao longo do processo e, mais importante, deixei de sentir aquele inchaço constante. Hoje sinto-me muito mais leve e confiante.</p>

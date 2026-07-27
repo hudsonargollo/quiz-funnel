@@ -163,7 +163,7 @@ window.SCREENS = [
     socialProofImagePlaceholder: 'Antes/depois — Fernanda Oliveira 93.3kg → 76.5kg',
     testimonial: {
       name: 'Fernanda Oliveira',
-      location: 'Lisboa',
+      location: 'São Paulo',
       text: 'Já tinha tentado várias dietas, mas acabava sempre por recuperar o peso. Depois de começar o protocolo de gelatina, senti a diferença logo nas primeiras semanas. Perdi 17kg ao longo do processo e, o mais importante, a minha fome descontrolada diminuiu muito. Pela primeira vez senti que o meu corpo estava finalmente a responder.',
     },
     cta: 'Continuar',
@@ -321,7 +321,7 @@ window.SCREENS = [
     imagePlaceholder: 'Antes/depois — Rosana Alves (3 fases)',
     testimonial: {
       name: 'Rosana Alves',
-      location: 'Braga',
+      location: 'Rio de Janeiro',
       text: 'Já tinha tentado várias dietas, mas acabava sempre por desistir. Comecei a seguir o protocolo todas as manhãs e senti a diferença logo nas primeiras semanas. Ao longo do processo perdi 15kg e, mais importante, deixei de sentir aquele inchaço constante. Hoje sinto-me muito mais leve e confiante.',
     },
     cta: 'Gerar meu protocolo',
