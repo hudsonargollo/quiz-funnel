@@ -693,9 +693,10 @@ body {
 
 .bridge-image img { width: 100%; display: block; }
 
-/* The "how it works" diagram (bridge1) carries readable text/labels — give it
-   more room than the plain before/after photos on the other bridge screens. */
-#bridge1 .bridge-image { max-width: 480px; }
+/* The "how it works" diagram (bridge1) carries readable text/labels, and the
+   bridge2 before/after photo is a key proof point — give both more room than
+   the default bridge-image sizing. */
+#bridge1 .bridge-image, #bridge2 .bridge-image { max-width: 480px; }
 
 .testimonial-card {
   width: 100%;
@@ -1599,7 +1600,8 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
 /* Bridge media can't grow tall enough to push the CTA off-screen */
 .bridge-image { max-height: 30vh; display: flex; }
 .bridge-image img { max-height: 30vh; object-fit: contain; }
-#bridge1 .bridge-image, #bridge1 .bridge-image img { max-height: 40vh; }
+#bridge1 .bridge-image, #bridge1 .bridge-image img,
+#bridge2 .bridge-image, #bridge2 .bridge-image img { max-height: 40vh; }
 
 /* --- FIT-TO-VIEWPORT: compress content on shorter screens so every step
    fits without scrolling and the CTA stays in view. --- */
@@ -1611,7 +1613,8 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
   .landing-image-wrap { max-width: 260px; margin-bottom: 14px; }
   .bridge-screen { gap: 10px; }
   .bridge-image, .bridge-image img { max-height: 24vh; }
-  #bridge1 .bridge-image, #bridge1 .bridge-image img { max-height: 34vh; }
+  #bridge1 .bridge-image, #bridge1 .bridge-image img,
+  #bridge2 .bridge-image, #bridge2 .bridge-image img { max-height: 34vh; }
   .imc-value { font-size: 34px; }
   .imc-screen { gap: 8px; }
 }
@@ -1639,7 +1642,8 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
   .bridge-headline { font-size: clamp(22px, 6vw, 30px); }
   .bridge-body { font-size: 13px; line-height: 1.5; }
   .bridge-image, .bridge-image img { max-height: 24vh; }
-  #bridge1 .bridge-image, #bridge1 .bridge-image img { max-height: 30vh; }
+  #bridge1 .bridge-image, #bridge1 .bridge-image img,
+  #bridge2 .bridge-image, #bridge2 .bridge-image img { max-height: 30vh; }
   .testimonial-card { padding: 12px; }
   .testimonial-body { font-size: 12.5px; line-height: 1.5; }
 }
