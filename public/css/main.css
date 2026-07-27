@@ -693,6 +693,10 @@ body {
 
 .bridge-image img { width: 100%; display: block; }
 
+/* The "how it works" diagram (bridge1) carries readable text/labels — give it
+   more room than the plain before/after photos on the other bridge screens. */
+#bridge1 .bridge-image { max-width: 480px; }
+
 .testimonial-card {
   width: 100%;
   max-width: 440px;
@@ -815,8 +819,8 @@ body {
 }
 
 .profile-avatar {
-  width: 120px;
-  height: 140px;
+  width: 148px;
+  height: 190px;
   background: linear-gradient(135deg, var(--brand-50), var(--bg-surface));
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
@@ -826,8 +830,12 @@ body {
   align-items: center;
   justify-content: center;
   color: var(--brand-primary);
+  flex-shrink: 0;
 }
 
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+
+.profile-avatar-fallback { width: 100%; height: 100%; align-items: center; justify-content: center; }
 .profile-avatar svg { width: 48px; height: 48px; stroke-width: 1.5; }
 
 .profile-data-card {
@@ -1591,6 +1599,7 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
 /* Bridge media can't grow tall enough to push the CTA off-screen */
 .bridge-image { max-height: 30vh; display: flex; }
 .bridge-image img { max-height: 30vh; object-fit: contain; }
+#bridge1 .bridge-image, #bridge1 .bridge-image img { max-height: 40vh; }
 
 /* --- FIT-TO-VIEWPORT: compress content on shorter screens so every step
    fits without scrolling and the CTA stays in view. --- */
@@ -1602,6 +1611,7 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
   .landing-image-wrap { max-width: 260px; margin-bottom: 14px; }
   .bridge-screen { gap: 10px; }
   .bridge-image, .bridge-image img { max-height: 24vh; }
+  #bridge1 .bridge-image, #bridge1 .bridge-image img { max-height: 34vh; }
   .imc-value { font-size: 34px; }
   .imc-screen { gap: 8px; }
 }
@@ -1629,6 +1639,7 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
   .bridge-headline { font-size: clamp(22px, 6vw, 30px); }
   .bridge-body { font-size: 13px; line-height: 1.5; }
   .bridge-image, .bridge-image img { max-height: 24vh; }
+  #bridge1 .bridge-image, #bridge1 .bridge-image img { max-height: 30vh; }
   .testimonial-card { padding: 12px; }
   .testimonial-body { font-size: 12.5px; line-height: 1.5; }
 }
@@ -1660,7 +1671,7 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
   .option-icon-wrap { width: 40px; height: 40px; }
   .options-grid { grid-template-columns: 1fr; }
   .option-card-img { aspect-ratio: 16/9; }
-  .profile-avatar { width: 96px; height: 112px; }
+  .profile-avatar { width: 120px; height: 154px; }
 }
 
 @media (min-width: 621px) {

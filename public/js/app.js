@@ -388,7 +388,7 @@
       </div>` : '';
 
     return `
-    <div class="screen bridge-screen with-progress">
+    <div class="screen bridge-screen with-progress" id="${s.id}">
       <h2 class="bridge-headline">${fmtRed(s.headline)}</h2>
       ${s.body ? `<p class="bridge-body">${s.body}</p>` : ''}
       ${audio}
@@ -472,7 +472,11 @@
     return `
     <div class="screen profile-summary with-progress" id="profile-screen">
       <h2 class="question-title" style="text-align:center">${s.headline}</h2>
-      <div class="profile-avatar">${icon('user-round')}</div>
+      <div class="profile-avatar">
+        <img src="/images/profile-avatar.jpg" alt=""
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+        <div class="profile-avatar-fallback" style="display:none">${icon('user-round')}</div>
+      </div>
       <div class="profile-data-card" id="profile-data">
         <!-- filled by renderProfile() -->
       </div>
