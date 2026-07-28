@@ -7,13 +7,31 @@ import { json, err } from '../_lib/http.js';
 import { randomId } from '../_lib/crypto.js';
 import { getFunnelById } from '../_lib/funnels.js';
 import { getAddon, isEnabled, chargeCredits, refundCredits, grantCredits, packCatalog, AI_PACKS, COSTS } from '../_lib/credits.js';
-import { briefFromFunnel, generateStrategy, generateCreativeCopy, generateImage, analyzeCompetitors, scoreCreative, PLATFORMS } from '../_lib/ai.js';
+import { briefFromFunnel, generateStrategy, generateCreativeCopy, generateImage, analyzeCompetitors, scoreCreative, generateQuizCopy, PLATFORMS } from '../_lib/ai.js';
 import { searchAdLibrary, isConfigured as metaConfigured } from '../_lib/meta_ads.js';
 import { createCheckoutSession } from '../_lib/stripe.js';
 import { getBrandKit, upsertBrandKit, setBrandLogo, brandKitText } from '../_lib/brandkit.js';
 import { zipSync } from 'fflate';
 
 const EXPORT_MAX_IDS = 24;
+
+// Screen types the quiz-copy generator is allowed to touch, and which of their JSON
+// fields are real copy (mirrors the builder's SCHEMA in public/admin/index.html).
+// `offer`/`imc`/`success` are deliberately excluded — their copy is hardcoded in
+// public/js/app.js, not read from screen JSON, so there is nowhere safe to write into.
+const QUIZ_SCREEN_FIELDS = {
+  landing: ['headline', 'headlineAccent', 'sub', 'alertTitle', 'alertBody', 'cta'],
+  single: ['question', 'sub', 'options'],
+  multi: ['question', 'sub', 'options'],
+  grid: ['question', 'options'],
+  slider: ['question', 'sub', 'infoTitle', 'infoBody'],
+  text: ['question', 'sub', 'cta'],
+  bridge: ['headline', 'body', 'bodyExtra', 'cta'],
+  video: ['headline', 'sub', 'body', 'cta'],
+  loading: ['headline', 'steps'],
+  profile: ['headline', 'cta'],
+};
+const QUIZ_FRAMEWORKS = ['pas', 'paso', 'aida', 'generic'];
 
 const nowISO = () => new Date().toISOString();
 
@@ -152,6 +170,68 @@ export async function handleAi(db, env, request, path, url, acc) {
        ORDER BY c.created_at DESC`
     ).bind(acc, funnelId, funnelId).all();
     return json({ results: (rows.results || []).map(creativePublic) });
+  }
+
+  // ── Quiz-copy generation: rewrite headlines/bullets/quiz-flow copy for a funnel's
+  // in-scope screens in one pass (PAS/PASO/AIDA/generic). Never writes to the funnel —
+  // the client applies the result into the builder's in-memory state for review. ──
+  const qcm = path.match(/^\/api\/ai\/funnels\/([^/]+)\/quiz-copy$/);
+  if (qcm && request.method === 'POST') {
+    const funnel = await getFunnelById(db, acc, qcm[1]);
+    if (!funnel) return err('Funnel not found', 404);
+    const b = await request.json().catch(() => ({}));
+    const framework = QUIZ_FRAMEWORKS.includes(b.framework) ? b.framework : 'generic';
+
+    let parsed = {};
+    try { parsed = JSON.parse(funnel.config || '{}'); } catch (e) {}
+    const allScreens = parsed.screens || [];
+    const inScope = allScreens.filter((s) => QUIZ_SCREEN_FIELDS[s.type]);
+    if (!inScope.length) return err('This funnel has no screens this generator supports yet', 400);
+
+    const charge = await chargeCredits(db, acc, COSTS.quiz_copy, 'quiz_copy', funnel.id);
+    if (!charge.ok) return err(charge.enabled ? 'Not enough credits' : 'AI Ads add-on is not active', 402);
+    try {
+      const brief = briefFromFunnel(funnel);
+      brief.brandText = brandKitText(await getBrandKit(db, acc));
+      const input = inScope.map((s) => {
+        const fields = { id: s.id, type: s.type };
+        for (const k of QUIZ_SCREEN_FIELDS[s.type]) {
+          if (s[k] == null) continue;
+          fields[k] = k === 'options' ? (s.options || []).map((o) => ({ label: o.label })) : s[k];
+        }
+        return fields;
+      });
+      const generated = await generateQuizCopy(env, { brief, framework, screens: input });
+
+      // Merge the model's output back onto each ORIGINAL screen (never trust it to only
+      // return valid keys) so options[] keeps its value/icon, only label changes.
+      const byId = new Map(allScreens.map((s) => [s.id, s]));
+      const screens = [];
+      for (const g of generated) {
+        const orig = byId.get(g.id);
+        const allow = orig && QUIZ_SCREEN_FIELDS[orig.type];
+        if (!allow) continue;
+        const fields = {};
+        for (const k of allow) {
+          if (g[k] == null) continue;
+          if (k === 'options') {
+            if (!Array.isArray(g.options) || !Array.isArray(orig.options)) continue;
+            fields.options = orig.options.map((o, i) => (typeof g.options[i]?.label === 'string' && g.options[i].label ? { ...o, label: g.options[i].label } : o));
+          } else if (k === 'steps') {
+            if (!Array.isArray(g.steps) || !Array.isArray(orig.steps) || g.steps.length !== orig.steps.length) continue;
+            if (!g.steps.every((x) => typeof x === 'string' && x)) continue;
+            fields.steps = g.steps;
+          } else if (typeof g[k] === 'string') {
+            fields[k] = g[k];
+          }
+        }
+        if (Object.keys(fields).length) screens.push({ id: g.id, fields });
+      }
+      return json({ screens, credits: charge.balance });
+    } catch (e) {
+      const credits = await refundCredits(db, acc, COSTS.quiz_copy, funnel.id);
+      return json({ error: `Copy generation failed: ${e.message}`, credits }, 502);
+    }
   }
 
   // ── Generate strategy ──

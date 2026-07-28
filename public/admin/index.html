@@ -389,6 +389,7 @@
     <div style="flex:1"></div>
     <button class="btn ghost bld-preview-toggle" id="bld-preview-toggle" onclick="App.toggleBuilderPreview()"><i data-lucide="eye"></i> <span data-i18n="b_preview">Preview</span></button>
     <a class="btn ghost" id="bld-open" target="_blank">↗ <span data-i18n="open">Open</span></a>
+    <button class="btn ghost" id="bld-qc" onclick="App.bQuizCopy()"><i data-lucide="sparkles"></i> <span data-i18n="qc_button">Generate copy (AI)</span></button>
     <button class="btn" id="bld-save" onclick="App.saveBuilder()" data-i18n="save">Save</button>
   </div>
   <div class="bld-body" id="bld-body">
@@ -456,6 +457,9 @@ const I18N={
    ai_library:'Creative Library',ai_lib_pick:'Pick a funnel',ai_lib_none:'No funnel (free-standing campaigns)',ai_lib_choose:'Choose a funnel above to see its creative library.',
    ai_count:'Number of variations',ai_confirm_big:'Use {n} credits — confirm',
    ai_export:'Export selected',ai_export_cap:'You can export at most {n} creatives at once',
+   qc_button:'Generate copy (AI)',qc_title:'Generate quiz copy',qc_help:'Rewrites headlines, questions, options, and bullets for this funnel\'s screens in one pass. Nothing is saved until you review it and click Save.',
+   qc_framework:'Copywriting structure',qc_generic:'Generic (strong direct-response)',qc_pas:'PAS — Problem, Agitate, Solution',qc_paso:'PASO — Problem, Agitate, Solution, Outcome',qc_aida:'AIDA — Attention, Interest, Desire, Action',
+   qc_generate:'Generate',qc_locked:'Unlock AI Ads to use this',qc_done:'Updated {n} screens — review below and Save',qc_none:'No supported screens to update',
    dl_enable:'Email the deliverable on opt-in',dl_help:'When a lead submits their email, automatically send them the asset below.',
    dl_from:'From name',dl_subject:'Subject',dl_subject_ph:'Your free guide is here',
    dl_intro:'Message',dl_intro_ph:'Thanks! Here is the material you requested…',
@@ -507,6 +511,9 @@ const I18N={
    ai_library:'Biblioteca de criativos',ai_lib_pick:'Escolha um funil',ai_lib_none:'Sem funil (campanhas avulsas)',ai_lib_choose:'Escolha um funil acima para ver sua biblioteca de criativos.',
    ai_count:'Número de variações',ai_confirm_big:'Usar {n} créditos — confirmar',
    ai_export:'Exportar selecionados',ai_export_cap:'Você pode exportar no máximo {n} criativos por vez',
+   qc_button:'Gerar textos (IA)',qc_title:'Gerar textos do quiz',qc_help:'Reescreve títulos, perguntas, opções e listas deste funil em uma só vez. Nada é salvo até você revisar e clicar em Salvar.',
+   qc_framework:'Estrutura de copywriting',qc_generic:'Genérico (direct-response forte)',qc_pas:'PAS — Problema, Agitação, Solução',qc_paso:'PASO — Problema, Agitação, Solução, Resultado',qc_aida:'AIDA — Atenção, Interesse, Desejo, Ação',
+   qc_generate:'Gerar',qc_locked:'Ative os Anúncios IA para usar isso',qc_done:'{n} telas atualizadas — revise abaixo e Salve',qc_none:'Nenhuma tela compatível para atualizar',
    dl_enable:'Enviar o material por email no opt-in',dl_help:'Quando um lead enviar o email, mande automaticamente o material abaixo.',
    dl_from:'Nome do remetente',dl_subject:'Assunto',dl_subject_ph:'Seu material chegou',
    dl_intro:'Mensagem',dl_intro_ph:'Obrigado! Aqui está o material que você pediu…',
@@ -934,6 +941,43 @@ const App=(()=>{
    try{await api('funnels/'+_b.id,{method:'PATCH',body:JSON.stringify({name:$('bld-name').value.trim(),status:'published',config:{config:_b.config,screens:_b.screens}})});
      _b.dirty=false;toast(t('b_built'),'ok');}catch(e){toast(String(e.message),'bad');}
    btn.classList.remove('busy');btn.textContent=o;
+ }
+
+ // ── Quiz-copy generation (headlines/bullets/quiz-flow) — never auto-saves; it only
+ // fills the builder's in-memory screens so the user reviews in the live preview and
+ // property panel, then Saves (or discards) via the existing flow. ──
+ async function bQuizCopy(){
+   let addon;
+   try{addon=await aiApi('addon');}catch(e){toast(String(e.message),'bad');return;}
+   if(!addon.enabled){toast(t('qc_locked'),'bad');return;}
+   _aiAddon=addon;
+   const cost=addon.costs.quiz_copy;
+   $('drawer').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:start">
+       <h3>${t('qc_title')}</h3><button class="btn ghost icon" onclick="App.closeDrawer()">✕</button></div>
+     <p style="color:var(--muted);font-size:13px">${t('qc_help')}</p>
+     <label>${t('qc_framework')}</label>
+     <select id="qc-fw">
+       <option value="generic">${t('qc_generic')}</option>
+       <option value="pas">${t('qc_pas')}</option>
+       <option value="paso">${t('qc_paso')}</option>
+       <option value="aida">${t('qc_aida')}</option>
+     </select>
+     <div style="margin-top:14px">${aiActionBtn(cost,`${icon('sparkles')} ${t('qc_generate')}`,'bQuizCopyRun')}</div>`;
+   $('overlay').classList.add('show');$('drawer').classList.add('show');refreshIcons();
+ }
+ async function bQuizCopyRun(){
+   const framework=$('qc-fw')?$('qc-fw').value:'generic';
+   $('drawer').innerHTML=`<p style="color:var(--muted)">${icon('loader')} ${t('ai_working')}</p>`;refreshIcons();
+   try{
+     const r=await aiApi('funnels/'+_b.id+'/quiz-copy',{method:'POST',body:JSON.stringify({framework})});
+     if(_aiAddon)_aiAddon.credits=r.credits;
+     const byId={};_b.screens.forEach(s=>{byId[s.id]=s;});
+     let applied=0;
+     (r.screens||[]).forEach(g=>{const s=byId[g.id];if(s){Object.assign(s,g.fields);applied++;}});
+     closeDrawer();
+     if(applied){_b.dirty=true;renderScreens();renderProps();pushPreview();toast(t('qc_done').replace('{n}',applied),'ok');}
+     else toast(t('qc_none'),'');
+   }catch(e){toast(String(e.message),'bad');closeDrawer();}
  }
 
  // ── Stats ──
@@ -1512,6 +1556,7 @@ const App=(()=>{
    onFunnelChange,scopeFunnel,openFunnelEditor,saveFunnel,deleteFunnel,setLang,copyText,copyEl,pickTemplate,
    openBuilder,closeBuilder,toggleBuilderPreview,builderSelect,builderAdd,builderDelete,bset,boptSet,boptAdd,boptDel,
    bfSet,bfAdd,bfDel,bstepSet,bstepAdd,bstepDel,bcfg,bdel,testDelivery,saveBuilder,loadDomains,addDomain,delDomain,
+   bQuizCopy,bQuizCopyRun,
    aiNewProject,aiCreateProject,aiOpenProject,aiDeleteProject,aiBack,aiUnlock,aiBuy,aiBuyMore,aiRenderList,
    aiGenStrategy,aiFindAds,aiGenCreatives,aiFav,aiCopyCreative,aiCopyStr,aiCopyPlatform,aiDelCreative,
    aiOpenBrandKit,aiUploadBrandLogo,aiSaveBrandKit,aiScoreCreative,

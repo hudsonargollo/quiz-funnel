@@ -123,7 +123,11 @@ export function briefFromFunnel(funnel) {
   const cfg = parsed.config || {};
   const screens = parsed.screens || [];
   const offer = screens.find((s) => s.type === 'offer') || {};
-  const questions = screens.filter((s) => s.key).map((s) => s.title).filter(Boolean).slice(0, 12);
+  const questions = screens
+    .filter((s) => ['single', 'multi', 'grid', 'slider'].includes(s.type))
+    .map((s) => (s.options?.length ? `${s.question} (${s.options.map((o) => o.label).filter(Boolean).join(' / ')})` : s.question))
+    .filter(Boolean)
+    .slice(0, 12);
   return {
     name: funnel.name || cfg.productName || funnel.slug,
     productName: cfg.productName || funnel.name || '',
@@ -241,6 +245,49 @@ export async function analyzeCompetitors(env, { brief, query }) {
       + `\n\n--- BUSINESS BRIEF ---\n${ctx}`,
   });
   return out.ads || [];
+}
+
+// ── Quiz-copy generation (headlines/bullets/quiz-flow, for the Visual Builder) ──
+// Framework structures inspired by the PAS/PASO/AIDA generator pattern in
+// CopywriterProAI's sales.contents.js (few-shot labeled templates) — reimplemented
+// here as sequence-level guidance rather than lifted code, since screens (not single
+// ad blocks) are what gets restructured.
+const QUIZ_FRAMEWORK_NOTES = {
+  pas: 'Structure the flow using PAS (Problem-Agitate-Solution): the earliest screens name the reader\'s problem in their own words, the middle screens agitate it — make the cost of inaction vivid and specific — and the screens nearer the end position what\'s coming as the solution.',
+  paso: 'Structure the flow using PASO (Problem-Agitate-Solution-Outcome): early screens name the problem, middle screens agitate it, later screens introduce the solution, and the final screens paint the concrete outcome/transformation the reader gets.',
+  aida: 'Structure the flow using AIDA (Attention-Interest-Desire-Action): the first screens grab attention with a bold, specific hook, the next build interest with relevant detail, the middle screens build desire by making the benefit vivid and personal, and the final screens drive action with clear urgency.',
+  generic: 'Use strong direct-response copywriting throughout: a compelling hook, concrete specific language over vague claims, and a confident, low-friction call to action. No named framework required.',
+};
+
+const QUIZ_SCREEN_SCHEMA = obj({
+  id: str, headline: str, headlineAccent: str, sub: str, alertTitle: str, alertBody: str, cta: str,
+  question: str, options: { type: 'array', items: obj({ label: str }, ['label']) },
+  infoTitle: str, infoBody: str, body: str, bodyExtra: str, steps: strArr,
+}, ['id']);
+const QUIZ_COPY_SCHEMA = obj({ screens: { type: 'array', items: QUIZ_SCREEN_SCHEMA } });
+
+const QUIZ_COPY_SYSTEM = 'You are a senior direct-response copywriter rewriting an existing quiz funnel\'s copy. '
+  + 'Be specific and concrete, never generic filler. Output only the requested JSON.';
+
+/**
+ * Rewrite copy for a filtered, in-scope list of quiz-funnel screens in one pass, applying
+ * the chosen framework's structure across the SEQUENCE of screens (not per-screen in
+ * isolation). Each input screen is `{ id, type, ...only its existing copy fields }`; the
+ * model must preserve `id` and the item count of any `options`/`steps` array, and must
+ * only return fields that were present on that screen.
+ */
+export async function generateQuizCopy(env, { brief, framework, screens }) {
+  const ctx = briefText(brief);
+  const note = QUIZ_FRAMEWORK_NOTES[framework] || QUIZ_FRAMEWORK_NOTES.generic;
+  const out = await callClaude(env, {
+    model: MODELS.copy, system: QUIZ_COPY_SYSTEM, schema: QUIZ_COPY_SCHEMA, maxTokens: 4096,
+    user: `${note}\n\nRewrite the copy for this quiz funnel's screens, in the same order, applying that structure `
+      + `across the sequence. Preserve each screen's "id" exactly. Only include fields that were present on the `
+      + `input screen with that id — never invent new fields. If a screen has an "options" or "steps" array, your `
+      + `output must have exactly the same number of items, in the same order — just better copy.`
+      + `\n\n--- BUSINESS BRIEF ---\n${ctx}\n\n--- SCREENS (JSON) ---\n${JSON.stringify(screens)}`,
+  });
+  return out.screens || [];
 }
 
 // ── Creative scoring ───────────────────────────────

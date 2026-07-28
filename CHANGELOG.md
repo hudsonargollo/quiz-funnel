@@ -2,6 +2,16 @@
 
 Notable changes to the Tektone Funnels platform. Format is loosely chronological, most recent first.
 
+## 2026-07-28 — Quiz-copy generator: Milestone 2 complete (6/6)
+
+Closed the final two Milestone 2 tasks — no more "Alisson's framework" (never documented, and the user explicitly ruled it out). Instead, researched three external repos the user pointed at for inspiration: `CopywriterPro-ai/copywriterproai-backend` turned out to be the only one with real substance — its `sales.contents.js` implements PAS/PASO/AIDA as named, few-shot-templated generator functions. Re-implemented that *pattern* (not the code — different stack) as sequence-level guidance across a quiz funnel's screens rather than a single ad block. **Milestone 2 — Automação com IA: 4/6 → 6/6 (complete).**
+
+- **`generateQuizCopy()`** (`src/_lib/ai.js`): one Claude call rewrites copy for a funnel's screens in place, selectable framework (`pas`/`paso`/`aida`/`generic`), applied across the screen *sequence* (early = Attention/Problem, middle = Interest/Agitate, bridge/video = Desire/Solution, final CTA screens = Action). New `POST /api/ai/funnels/:funnelId/quiz-copy` (`src/api/ai.js`), gated behind the same AI Ads credit wallet (`COSTS.quiz_copy = 10`) rather than a second billing system.
+- **Scope boundary, stated explicitly rather than silently skipped**: only screen types whose copy actually lives in the funnel's JSON config are supported (`landing`, `single`/`multi`/`grid`, `slider`, `text`, `bridge`, `video`, `loading`, `profile`). The `offer` and `imc` screens' sales copy (hero, guarantee, benefit bullets) is hardcoded in `public/js/app.js`, not read from JSON at all — generating into them would require extending both the builder schema and the live checkout-page renderer first, which is materially riskier than this task, so they're excluded rather than force-fitted.
+- The server never trusts the model's output directly: every returned field is checked against a per-screen-type allow-list, `options[]`/`steps[]` are merged back onto the *original* arrays (preserving `value`/`icon`, only ever changing `label`, and rejecting any length mismatch) before being sent to the client.
+- **Nothing is auto-saved.** The Visual Builder gets a "Generate copy (AI)" button; results are written into the builder's in-memory screen state and pushed to the live preview immediately, but persist only through the existing Save button — same safety property as reviewing before publishing any other builder edit.
+- Fixed a latent bug found while building this: `briefFromFunnel()` was reading `s.key`/`s.title` off quiz screens, neither of which exist (screens use `s.question`) — so every ad-copy/strategy prompt's `quizThemes` context has been silently empty since that function was written. Now reads `question` + option labels correctly, which should also quietly improve AI Ads copy quality going forward.
+
 ## 2026-07-28 — AI Ads add-on: 10x creative batches, Creative Library, ZIP export
 
 Closed out the remaining Milestone 2 gap by extending the shipped AI Ads add-on rather than building the abandoned original quiz-copy scope (see the 2026-07-09 entry below). **Milestone 2 — Automação com IA: 1/6 → 4/6.**

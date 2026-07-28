@@ -13,6 +13,7 @@ export const COSTS = {
   find_ads: 1,    // one ad-discovery search
   creative: 5,    // one copy + AI image variant
   score: 1,       // AI score + feedback for one creative
+  quiz_copy: 10,  // one whole-funnel quiz-copy rewrite (all in-scope screens, one call)
 };
 
 // Purchasable credit packs (platform billing). Prices are charged on the PLATFORM's
