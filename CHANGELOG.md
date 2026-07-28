@@ -2,6 +2,17 @@
 
 Notable changes to the Tektone Funnels platform. Format is loosely chronological, most recent first.
 
+## 2026-07-28 — AI Ads add-on: 10x creative batches, Creative Library, ZIP export
+
+Closed out the remaining Milestone 2 gap by extending the shipped AI Ads add-on rather than building the abandoned original quiz-copy scope (see the 2026-07-09 entry below). **Milestone 2 — Automação com IA: 1/6 → 4/6.**
+
+- **Batch generation**: the creative-generation cap was raised from 4 to 10 variants per call (`src/api/ai.js`); the dashboard's Generate control now has a count selector (3/5/10) with the credit cost shown live, plus an explicit confirm step before firing a 10x (50-credit) batch.
+- **Creative Library** (`GET /api/ai/funnels/:funnelId/creatives`): a new funnel-scoped view aggregating creatives across every ad project linked to that funnel (`ad_creatives` joined through `ad_projects.funnel_id`). Free-standing projects with no funnel show under a synthetic "No funnel" option — deliberate, not a gap: a project can exist without ever being attached to a funnel.
+- **Inline edit**: headline/primary text/CTA are now editable directly on a creative card. The `PATCH /api/ai/creatives/:id` endpoint already supported this from the original build — only the UI was missing.
+- **Export** (`GET /api/ai/creatives/export?ids=…`): bundles selected creatives into a ZIP (images + a `copy.csv`) for handoff to video editors/designers, using the new `fflate` dependency. Capped at 24 creatives per export by deliberate choice (in-memory ZIP construction against the Workers isolate memory limit, given ~1-2MB per generated image) — not a silent truncation, the UI rejects further selection past the cap with an explanation.
+
+No DB migration was needed — everything rides on existing columns and the existing edit endpoint.
+
 ## 2026-07-09 — Milestones tracker reconciled with shipped work
 
 The internal roadmap tracker (`/milestones`, D1 tables `milestones`/`milestone_tasks`) was seeded on 2026-07-02 with 25 tasks across 4 milestones, all unchecked except 3. A full review of git history and live code against the tracker found substantial shipped work that was never reflected back into it. Reconciled via direct D1 update (no schema/code change) — **3/25 → 10/25 tasks done (12% → 40%)**.

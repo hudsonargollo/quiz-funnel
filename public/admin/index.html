@@ -421,7 +421,7 @@ const I18N={
    col_lead:'Email / Name',col_state:'State',col_imc:'BMI',col_goal:'Goal',col_source:'Source',col_created:'Created',col_updated:'Updated',
    no_results:'No results',anon:'anonymous',direct:'(direct)',of:'of',timeline:'Timeline',no_events:'No events',no_data:'No data',no_answers:'No answers yet',
    leads:'leads',sales:'sales',your_funnels:'Your funnels',new_funnel:'+ New funnel',no_funnels:'No funnels yet — create your first one.',
-   edit:'Edit',del:'Delete',open:'Open',copy:'Copy',save:'Save',cancel:'Cancel',create:'Create',
+   edit:'Edit',del:'Delete',delete:'Delete',open:'Open',copy:'Copy',save:'Save',cancel:'Cancel',create:'Create',
    copied:'Copied',saved:'Saved',created:'Funnel created',deleted:'Funnel deleted',saving:'Saving…',
    pick_template:'Choose a template',onb_title:'Create your first funnel',onb_text:'Pick a template and go live in minutes.',
    tpl_quiz_t:'Quiz',tpl_quiz_d:'Multi-step quiz that captures leads and sells.',
@@ -453,6 +453,9 @@ const I18N={
    ai_brand_fonts:'Fonts / style notes',ai_brand_fonts_ph:'e.g. bold sans-serif headlines',ai_brand_dos:'Lean into',ai_brand_dos_ph:'Angles, phrases, proof points to favor',
    ai_brand_donts:'Avoid',ai_brand_donts_ph:'Words, claims, angles to avoid',ai_brand_logo:'Logo',ai_brand_upload:'Upload logo',ai_brand_save:'Save brand kit',ai_brand_saved:'Brand kit saved',
    ai_score:'Score',ai_rescore:'Re-score',ai_scoring:'Scoring…',ai_score_of:'Improve',
+   ai_library:'Creative Library',ai_lib_pick:'Pick a funnel',ai_lib_none:'No funnel (free-standing campaigns)',ai_lib_choose:'Choose a funnel above to see its creative library.',
+   ai_count:'Number of variations',ai_confirm_big:'Use {n} credits — confirm',
+   ai_export:'Export selected',ai_export_cap:'You can export at most {n} creatives at once',
    dl_enable:'Email the deliverable on opt-in',dl_help:'When a lead submits their email, automatically send them the asset below.',
    dl_from:'From name',dl_subject:'Subject',dl_subject_ph:'Your free guide is here',
    dl_intro:'Message',dl_intro_ph:'Thanks! Here is the material you requested…',
@@ -469,7 +472,7 @@ const I18N={
    col_lead:'Email / Nome',col_state:'Estado',col_imc:'IMC',col_goal:'Objetivo',col_source:'Origem',col_created:'Criado',col_updated:'Atualizado',
    no_results:'Sem resultados',anon:'anónimo',direct:'(direto)',of:'de',timeline:'Linha do tempo',no_events:'Sem eventos',no_data:'Sem dados',no_answers:'Sem respostas ainda',
    leads:'leads',sales:'vendas',your_funnels:'Os seus funis',new_funnel:'+ Novo funil',no_funnels:'Ainda sem funis — crie o primeiro.',
-   edit:'Editar',del:'Eliminar',open:'Abrir',copy:'Copiar',save:'Guardar',cancel:'Cancelar',create:'Criar',
+   edit:'Editar',del:'Eliminar',delete:'Excluir',open:'Abrir',copy:'Copiar',save:'Guardar',cancel:'Cancelar',create:'Criar',
    copied:'Copiado',saved:'Guardado',created:'Funil criado',deleted:'Funil eliminado',saving:'A guardar…',
    pick_template:'Escolha um modelo',onb_title:'Crie o seu primeiro funil',onb_text:'Escolha um modelo e publique em minutos.',
    tpl_quiz_t:'Quiz',tpl_quiz_d:'Quiz de vários passos que capta leads e vende.',
@@ -501,6 +504,9 @@ const I18N={
    ai_brand_fonts:'Fontes / estilo',ai_brand_fonts_ph:'ex: títulos em sans-serif bold',ai_brand_dos:'Priorize',ai_brand_dos_ph:'Ângulos, frases, provas a favorecer',
    ai_brand_donts:'Evite',ai_brand_donts_ph:'Palavras, promessas, ângulos a evitar',ai_brand_logo:'Logo',ai_brand_upload:'Enviar logo',ai_brand_save:'Guardar identidade',ai_brand_saved:'Identidade guardada',
    ai_score:'Pontuar',ai_rescore:'Repontuar',ai_scoring:'Pontuando…',ai_score_of:'Melhorar',
+   ai_library:'Biblioteca de criativos',ai_lib_pick:'Escolha um funil',ai_lib_none:'Sem funil (campanhas avulsas)',ai_lib_choose:'Escolha um funil acima para ver sua biblioteca de criativos.',
+   ai_count:'Número de variações',ai_confirm_big:'Usar {n} créditos — confirmar',
+   ai_export:'Exportar selecionados',ai_export_cap:'Você pode exportar no máximo {n} criativos por vez',
    dl_enable:'Enviar o material por email no opt-in',dl_help:'Quando um lead enviar o email, mande automaticamente o material abaixo.',
    dl_from:'Nome do remetente',dl_subject:'Assunto',dl_subject_ph:'Seu material chegou',
    dl_intro:'Mensagem',dl_intro_ph:'Obrigado! Aqui está o material que você pediu…',
@@ -1009,7 +1015,9 @@ const App=(()=>{
 
  // ── AI Ads ──
  let _aiAddon=null,_aiProjects=[],_aiProject=null,_aiPacks=null,_aiLastPlat=null,_aiLastPersona='',_aiBrand=null;
+ let _aiLastCount=3,_aiPendingBigGen=false,_aiCreativeCtx='project',_aiEditing=null,_aiLibraryFunnel='',_aiLibraryCreatives=[];
  const PLAT=['meta','google','tiktok','linkedin','youtube','pinterest'];
+ const EXPORT_MAX=24;
  async function aiApi(p,opts){return api('ai/'+p,opts);}
  function fmtMoney(minor,cur){try{return new Intl.NumberFormat(lang==='pt'?'pt-BR':'en-US',{style:'currency',currency:(cur||'eur').toUpperCase()}).format((minor||0)/100);}catch(e){return ((minor||0)/100).toFixed(2)+' '+(cur||'').toUpperCase();}}
  // Shared button for credit-costing actions: once the balance can't cover `cost`,
@@ -1160,8 +1168,16 @@ const App=(()=>{
    catch(e){toast(t('ai_unlock_soon'),'');}
  }
 
+ // Shared "Campaigns / Creative Library" segmented toggle atop the AI Ads home views.
+ function aiTabsHtml(active){
+   return `<div style="display:flex;gap:6px">
+     <button class="btn ${active==='campaigns'?'':'ghost'}" onclick="App.aiRenderList()">${t('ai_back')}</button>
+     <button class="btn ${active==='library'?'':'ghost'}" onclick="App.aiRenderLibraryHome()">${t('ai_library')}</button>
+   </div>`;
+ }
+
  function aiRenderList(){
-   _aiProject=null;
+   _aiProject=null;_aiCreativeCtx='project';_aiEditing=null;
    const cards=_aiProjects.map(p=>`<div class="fcard">
      <div class="ftype">${icon('megaphone')}</div>
      <div class="fmeta"><div class="fn">${esc(p.name)} ${p.has_strategy?`<span class="pill s-published" style="margin-left:6px">${t('ai_ready')}</span>`:''}</div>
@@ -1171,13 +1187,119 @@ const App=(()=>{
        <button class="btn ghost icon" onclick="App.aiDeleteProject('${p.id}')" title="${t('delete')}">${icon('trash-2')}</button>
      </div></div>`).join('');
    $('ai-body').innerHTML=`<div class="toolbar" style="margin-top:18px">
-       <h2 style="font-size:16px;color:var(--text)">${t('ai_campaigns')}</h2>
+       ${aiTabsHtml('campaigns')}
        <div class="spacer"></div>${aiCreditPill()}${aiBuyBtn()}
        <button class="btn ghost" onclick="App.aiOpenBrandKit()">${icon('palette')} ${t('ai_brand_kit')}</button>
        <button class="btn" onclick="App.aiNewProject()">${icon('plus')} ${t('ai_new')}</button>
      </div>
+     <h2 style="font-size:16px;color:var(--text);margin:14px 0 0">${t('ai_campaigns')}</h2>
      ${_aiProjects.length?cards:`<div class="onb"><div class="big">${icon('megaphone')}</div><h3>${t('ai_empty_t')}</h3><p>${t('ai_empty_d')}</p><button class="btn" onclick="App.aiNewProject()">${t('ai_new')}</button></div>`}`;
    refreshIcons();
+ }
+
+ // ── Creative Library: creatives aggregated across every ad project linked to one funnel ──
+ function aiRenderLibraryHome(){
+   _aiProject=null;_aiCreativeCtx='library';_aiEditing=null;
+   const fopts=_funnels.map(f=>`<option value="${f.id}"${f.id===_aiLibraryFunnel?' selected':''}>${esc(f.name||f.slug)}</option>`).join('');
+   $('ai-body').innerHTML=`<div class="toolbar" style="margin-top:18px">
+       ${aiTabsHtml('library')}
+       <div class="spacer"></div>
+       <select id="ai-lib-fn" style="width:auto" onchange="App.aiLoadLibrary(this.value)">
+         <option value="">— ${t('ai_lib_pick')} —</option>
+         <option value="none"${_aiLibraryFunnel==='none'?' selected':''}>${t('ai_lib_none')}</option>
+         ${fopts}
+       </select>
+     </div>
+     <h2 style="font-size:16px;color:var(--text);margin:14px 0 0">${t('ai_library')}</h2>
+     <div id="ai-lib-body" style="margin-top:10px"></div>`;
+   refreshIcons();
+   if(_aiLibraryFunnel)aiLoadLibrary(_aiLibraryFunnel);
+   else $('ai-lib-body').innerHTML=`<div class="onb"><p style="color:var(--muted)">${t('ai_lib_choose')}</p></div>`;
+ }
+ async function aiLoadLibrary(funnelId){
+   _aiLibraryFunnel=funnelId;
+   if(!funnelId){$('ai-lib-body').innerHTML=`<div class="onb"><p style="color:var(--muted)">${t('ai_lib_choose')}</p></div>`;return;}
+   $('ai-lib-body').innerHTML=`<p style="color:var(--muted)">${icon('loader')} ${t('loading')||'Loading…'}</p>`;refreshIcons();
+   try{const r=await aiApi('funnels/'+encodeURIComponent(funnelId)+'/creatives');_aiLibraryCreatives=r.results||[];aiRenderLibraryBody();}
+   catch(e){$('ai-lib-body').innerHTML=`<p style="color:var(--red)">${esc(e.message)}</p>`;}
+ }
+ function aiRenderLibraryBody(){
+   const cr=_aiLibraryCreatives;
+   const cards=cr.map(c=>aiCreativeCard(c,{selectable:true,showProject:true})).join('');
+   $('ai-lib-body').innerHTML=`<div class="toolbar">
+       <span style="font-size:13px;color:var(--muted)">${cr.length} ${t('ai_creatives').toLowerCase()}</span>
+       <div class="spacer"></div>${aiExportBtn()}
+     </div>
+     <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:10px">${cards||`<p style="color:var(--muted);font-size:13px">${t('ai_no_creatives')}</p>`}</div>`;
+   refreshIcons();
+ }
+
+ // Reload+re-render whichever creatives view is currently active (project detail or
+ // the funnel-scoped Creative Library) — shared by fav/delete/score/edit mutations.
+ async function aiRefreshCreatives(){
+   if(_aiCreativeCtx==='library')await aiLoadLibrary(_aiLibraryFunnel);
+   else{_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();}
+ }
+ function aiRerenderCreatives(){
+   if(_aiCreativeCtx==='library')aiRenderLibraryBody();else aiRenderProject();
+ }
+
+ // ── Export: checkbox selection lives on the DOM (no JS state to keep in sync) ──
+ function aiExportBtn(){return `<button class="btn ghost" id="ai-export-btn" onclick="App.aiExportSelected()" disabled>${icon('download')} ${t('ai_export')} (0)</button>`;}
+ function aiUpdateExportCount(el){
+   let checked=document.querySelectorAll('.ai-sel:checked');
+   if(checked.length>EXPORT_MAX){if(el)el.checked=false;toast(t('ai_export_cap').replace('{n}',EXPORT_MAX),'bad');checked=document.querySelectorAll('.ai-sel:checked');}
+   const btn=document.getElementById('ai-export-btn');
+   if(btn){btn.disabled=checked.length===0;btn.innerHTML=`${icon('download')} ${t('ai_export')} (${checked.length})`;refreshIcons();}
+ }
+ function aiExportSelected(){
+   const ids=Array.from(document.querySelectorAll('.ai-sel:checked')).map(el=>el.getAttribute('data-id'));
+   if(!ids.length)return;
+   window.open('/api/ai/creatives/export?ids='+ids.map(encodeURIComponent).join(','),'_blank');
+ }
+
+ // ── Inline edit (headline/primary_text/cta) — reuses the existing PATCH endpoint ──
+ function aiStartEdit(id){_aiEditing=id;aiRerenderCreatives();}
+ function aiCancelEdit(){_aiEditing=null;aiRerenderCreatives();}
+ async function aiSaveEdit(id){
+   const headline=document.querySelector('.ai-edit-h').value,primary_text=document.querySelector('.ai-edit-p').value,cta=document.querySelector('.ai-edit-c').value;
+   try{await aiApi('creatives/'+id,{method:'PATCH',body:JSON.stringify({headline,primary_text,cta})});_aiEditing=null;await aiRefreshCreatives();}
+   catch(e){toast(String(e.message),'bad');}
+ }
+
+ // Shared creative-card renderer — used by both the per-project grid and the
+ // funnel-scoped Creative Library so future card changes don't need duplicating.
+ function aiCreativeCard(c,opts){
+   opts=opts||{};
+   const sel=opts.selectable?`<input type="checkbox" class="ai-sel" data-id="${c.id}" onchange="App.aiUpdateExportCount(this)" style="position:absolute;top:8px;left:8px;width:18px;height:18px;z-index:2;accent-color:var(--brand)">`:'';
+   const proj=opts.showProject&&c.project_name?`<div style="font-size:10px;color:var(--faint);margin-bottom:4px">${esc(c.project_name)}</div>`:'';
+   const body=(_aiEditing===c.id)?`
+       <input class="ai-edit-h" value="${esc(c.headline||'')}" style="width:100%;margin-top:8px;font-weight:700;font-size:13px">
+       <textarea class="ai-edit-p" rows="2" style="width:100%;margin-top:4px;font-size:12px">${esc(c.primary_text||'')}</textarea>
+       <input class="ai-edit-c" value="${esc(c.cta||'')}" style="width:100%;margin-top:4px;font-size:11px">
+       <div class="factions" style="margin-top:8px">
+         <button class="btn" onclick="App.aiSaveEdit('${c.id}')">${icon('check')} ${t('save')}</button>
+         <button class="btn ghost" onclick="App.aiCancelEdit()">${t('cancel')}</button>
+       </div>`
+     :`${proj}
+       <div style="font-weight:700;margin-top:8px;font-size:13px">${esc(c.headline||'')}</div>
+       <div style="font-size:12px;color:var(--muted);margin:4px 0">${esc(c.primary_text||'')}</div>
+       <div style="font-size:11px;color:var(--brand2)">${esc(c.cta||'')}</div>
+       ${aiScoreFeedback(c)}
+       <div class="factions" style="margin-top:8px">
+         <button class="btn ghost icon" onclick="App.aiFav('${c.id}',${c.favorite?0:1})" title="${t('ai_fav')}" style="color:${c.favorite?'var(--amber)':'inherit'}">${icon('star')}</button>
+         ${aiScoreBtn(c)}
+         <button class="btn ghost icon" onclick="App.aiStartEdit('${c.id}')" title="${t('edit')}">${icon('edit-2')}</button>
+         <button class="btn ghost icon" onclick="App.aiCopyCreative('${c.id}')" title="${t('ai_copy')}">${icon('copy')}</button>
+         ${c.image_key?`<a class="btn ghost icon" href="/api/ai/creatives/${c.id}/image" download title="${t('ai_download')}">${icon('download')}</a>`:''}
+         <button class="btn ghost icon" onclick="App.aiDelCreative('${c.id}')" title="${t('delete')}">${icon('trash-2')}</button>
+       </div>`;
+   return `<div class="card" style="padding:10px;position:relative">
+       ${sel}
+       ${c.image_key?`<img src="/api/ai/creatives/${c.id}/image" style="width:100%;border-radius:8px;aspect-ratio:1;object-fit:cover" loading="lazy">`:`<div style="aspect-ratio:1;background:var(--panel2);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--faint)">${icon('image')}</div>`}
+       ${aiScoreBadge(c)}
+       ${body}
+     </div>`;
  }
 
  function aiNewProject(){
@@ -1206,6 +1328,7 @@ const App=(()=>{
  }
 
  async function aiOpenProject(id){
+   _aiCreativeCtx='project';_aiEditing=null;
    try{_aiProject=await aiApi('projects/'+id);aiRenderProject();}
    catch(e){toast(String(e.message),'bad');aiRenderList();}
  }
@@ -1307,43 +1430,44 @@ const App=(()=>{
  function aiCreativesHtml(p){
    const cost=_aiAddon.costs.creative,cr=p.creatives||[];
    const popts=PLAT.map(x=>`<option value="${x}"${x===(_aiLastPlat||PLAT[0])?' selected':''}>${x}</option>`).join('');
-   const cards=cr.map(c=>`<div class="card" style="padding:10px">
-       ${c.image_key?`<img src="/api/ai/creatives/${c.id}/image" style="width:100%;border-radius:8px;aspect-ratio:1;object-fit:cover" loading="lazy">`:`<div style="aspect-ratio:1;background:var(--panel2);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--faint)">${icon('image')}</div>`}
-       ${aiScoreBadge(c)}
-       <div style="font-weight:700;margin-top:8px;font-size:13px">${esc(c.headline||'')}</div>
-       <div style="font-size:12px;color:var(--muted);margin:4px 0">${esc(c.primary_text||'')}</div>
-       <div style="font-size:11px;color:var(--brand2)">${esc(c.cta||'')}</div>
-       ${aiScoreFeedback(c)}
-       <div class="factions" style="margin-top:8px">
-         <button class="btn ghost icon" onclick="App.aiFav('${c.id}',${c.favorite?0:1})" title="${t('ai_fav')}" style="color:${c.favorite?'var(--amber)':'inherit'}">${icon('star')}</button>
-         ${aiScoreBtn(c)}
-         <button class="btn ghost icon" onclick="App.aiCopyCreative('${c.id}')" title="${t('ai_copy')}">${icon('copy')}</button>
-         ${c.image_key?`<a class="btn ghost icon" href="/api/ai/creatives/${c.id}/image" download title="${t('ai_download')}">${icon('download')}</a>`:''}
-         <button class="btn ghost icon" onclick="App.aiDelCreative('${c.id}')" title="${t('delete')}">${icon('trash-2')}</button>
-       </div></div>`).join('');
+   const count=_aiLastCount||3;
+   const copts=[3,5,10].map(n=>`<option value="${n}"${n===count?' selected':''}>${n}</option>`).join('');
+   const cards=cr.map(c=>aiCreativeCard(c,{selectable:true})).join('');
+   const genBtn=(_aiPendingBigGen&&count>=10)
+     ?`<button class="btn" style="background:var(--red,#c0392b)" onclick="App.aiGenCreatives()">${icon('alert-triangle')} ${t('ai_confirm_big').replace('{n}',String(cost*count))}</button>
+       <button class="btn ghost" onclick="App.aiCancelBigGen()">${t('cancel')}</button>`
+     :aiActionBtn(cost*count,`${icon('sparkles')} ${t('ai_generate')}`,'aiGenCreatives');
    return `<div class="toolbar"><h2>${icon('image')} ${t('ai_creatives')}</h2><div class="spacer"></div>
-       <select id="ai-plat" style="width:auto">${popts}</select>
-       <input id="ai-persona" placeholder="${t('ai_persona_ph')}" style="width:auto;min-width:140px" value="${esc(_aiLastPersona||'')}">
-       ${aiActionBtn(cost*3,`${icon('sparkles')} ${t('ai_generate')}`,'aiGenCreatives')}
+       <select id="ai-plat" style="width:auto" onchange="App.aiResetBigGen()">${popts}</select>
+       <input id="ai-persona" placeholder="${t('ai_persona_ph')}" style="width:auto;min-width:140px" value="${esc(_aiLastPersona||'')}" onchange="App.aiResetBigGen()">
+       <select id="ai-count" title="${t('ai_count')}" style="width:auto" onchange="App.aiCountChanged()">${copts}</select>
+       ${genBtn}
      </div>
+     <div class="toolbar" style="margin-top:8px">${aiExportBtn()}</div>
      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:10px">${cards||`<p style="color:var(--muted);font-size:13px">${t('ai_no_creatives')}</p>`}</div>`;
  }
+ function aiCountChanged(){_aiLastCount=parseInt($('ai-count').value,10)||3;_aiPendingBigGen=false;aiRenderProject();}
+ function aiResetBigGen(){if(_aiPendingBigGen){_aiPendingBigGen=false;aiRenderProject();}}
+ function aiCancelBigGen(){_aiPendingBigGen=false;aiRenderProject();}
  async function aiGenCreatives(){
-   const platform=$('ai-plat').value,persona=$('ai-persona').value.trim();
-   _aiLastPlat=platform;_aiLastPersona=persona;
+   const platform=$('ai-plat').value,persona=$('ai-persona').value.trim(),count=parseInt($('ai-count').value,10)||3;
+   _aiLastPlat=platform;_aiLastPersona=persona;_aiLastCount=count;
+   if(count>=10&&!_aiPendingBigGen){_aiPendingBigGen=true;aiRenderProject();return;}
+   _aiPendingBigGen=false;
    $('ai-creatives').querySelector('.grid').innerHTML=`<p style="color:var(--muted)">${icon('loader')} ${t('ai_working_img')}</p>`;refreshIcons();
-   try{const r=await aiApi('projects/'+_aiProject.id+'/creatives',{method:'POST',body:JSON.stringify({platform,persona,count:3})});
+   try{const r=await aiApi('projects/'+_aiProject.id+'/creatives',{method:'POST',body:JSON.stringify({platform,persona,count})});
      _aiAddon.credits=r.credits;_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();
      if(r.imageError)toast(t('ai_img_failed')+': '+r.imageError,'bad');else toast(t('ai_done'),'ok');}
    catch(e){toast(String(e.message),'bad');aiRenderProject();}
  }
  function aiCopyCreative(id){
-   const c=(_aiProject&&_aiProject.creatives||[]).find(x=>x.id===id);
+   const list=_aiCreativeCtx==='library'?_aiLibraryCreatives:((_aiProject&&_aiProject.creatives)||[]);
+   const c=list.find(x=>x.id===id);
    if(!c)return;
    copyText([c.headline,c.primary_text,c.cta].filter(Boolean).join('\n\n'));
  }
- async function aiFav(id,v){try{await aiApi('creatives/'+id,{method:'PATCH',body:JSON.stringify({favorite:v})});_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();}catch(e){toast(String(e.message),'bad');}}
- async function aiDelCreative(id){try{await aiApi('creatives/'+id,{method:'DELETE'});_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();}catch(e){toast(String(e.message),'bad');}}
+ async function aiFav(id,v){try{await aiApi('creatives/'+id,{method:'PATCH',body:JSON.stringify({favorite:v})});await aiRefreshCreatives();}catch(e){toast(String(e.message),'bad');}}
+ async function aiDelCreative(id){try{await aiApi('creatives/'+id,{method:'DELETE'});await aiRefreshCreatives();}catch(e){toast(String(e.message),'bad');}}
 
  // AI creative scoring: a 0-100 score + strengths/improvements, re-runnable on demand.
  function aiScoreBadge(c){
@@ -1362,7 +1486,7 @@ const App=(()=>{
    return `<button class="btn ghost icon" onclick="App.aiScoreCreative('${c.id}')" title="${label} · ${cost} ${t('ai_credits')}">${icon('gauge')}</button>`;
  }
  async function aiScoreCreative(id){
-   try{const r=await aiApi('creatives/'+id+'/score',{method:'POST'});_aiAddon.credits=r.credits;_aiProject=await aiApi('projects/'+_aiProject.id);aiRenderProject();toast(t('ai_done'),'ok');}
+   try{const r=await aiApi('creatives/'+id+'/score',{method:'POST'});_aiAddon.credits=r.credits;await aiRefreshCreatives();toast(t('ai_done'),'ok');}
    catch(e){toast(String(e.message),'bad');}
  }
 
@@ -1388,9 +1512,11 @@ const App=(()=>{
    onFunnelChange,scopeFunnel,openFunnelEditor,saveFunnel,deleteFunnel,setLang,copyText,copyEl,pickTemplate,
    openBuilder,closeBuilder,toggleBuilderPreview,builderSelect,builderAdd,builderDelete,bset,boptSet,boptAdd,boptDel,
    bfSet,bfAdd,bfDel,bstepSet,bstepAdd,bstepDel,bcfg,bdel,testDelivery,saveBuilder,loadDomains,addDomain,delDomain,
-   aiNewProject,aiCreateProject,aiOpenProject,aiDeleteProject,aiBack,aiUnlock,aiBuy,aiBuyMore,
+   aiNewProject,aiCreateProject,aiOpenProject,aiDeleteProject,aiBack,aiUnlock,aiBuy,aiBuyMore,aiRenderList,
    aiGenStrategy,aiFindAds,aiGenCreatives,aiFav,aiCopyCreative,aiCopyStr,aiCopyPlatform,aiDelCreative,
-   aiOpenBrandKit,aiUploadBrandLogo,aiSaveBrandKit,aiScoreCreative};
+   aiOpenBrandKit,aiUploadBrandLogo,aiSaveBrandKit,aiScoreCreative,
+   aiRenderLibraryHome,aiLoadLibrary,aiExportSelected,aiUpdateExportCount,
+   aiStartEdit,aiSaveEdit,aiCancelEdit,aiCountChanged,aiResetBigGen,aiCancelBigGen};
 })();
 </script>
 </body>

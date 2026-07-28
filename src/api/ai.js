@@ -11,6 +11,9 @@ import { briefFromFunnel, generateStrategy, generateCreativeCopy, generateImage,
 import { searchAdLibrary, isConfigured as metaConfigured } from '../_lib/meta_ads.js';
 import { createCheckoutSession } from '../_lib/stripe.js';
 import { getBrandKit, upsertBrandKit, setBrandLogo, brandKitText } from '../_lib/brandkit.js';
+import { zipSync } from 'fflate';
+
+const EXPORT_MAX_IDS = 24;
 
 const nowISO = () => new Date().toISOString();
 
@@ -133,6 +136,24 @@ export async function handleAi(db, env, request, path, url, acc) {
     }
   }
 
+  // ── Creative Library: all creatives for one funnel, across every ad project
+  // linked to it (funnelId 'none' = free-standing projects with no funnel_id) ──
+  const flm = path.match(/^\/api\/ai\/funnels\/([^/]+)\/creatives$/);
+  if (flm && request.method === 'GET') {
+    const funnelId = flm[1];
+    if (funnelId !== 'none') {
+      const f = await getFunnelById(db, acc, funnelId);
+      if (!f) return err('Funnel not found', 404);
+    }
+    const rows = await db.prepare(
+      `SELECT c.*, p.name AS project_name FROM ad_creatives c
+       JOIN ad_projects p ON p.id = c.project_id
+       WHERE p.account_id = ? AND (p.funnel_id = ? OR (? = 'none' AND p.funnel_id IS NULL))
+       ORDER BY c.created_at DESC`
+    ).bind(acc, funnelId, funnelId).all();
+    return json({ results: (rows.results || []).map(creativePublic) });
+  }
+
   // ── Generate strategy ──
   const sm = path.match(/^\/api\/ai\/projects\/([^/]+)\/strategy$/);
   if (sm && request.method === 'POST') {
@@ -197,7 +218,7 @@ export async function handleAi(db, env, request, path, url, acc) {
     const platform = (b.platform || 'meta').toLowerCase();
     if (!PLATFORMS.includes(platform)) return err('Unknown platform', 400);
     const persona = (b.persona || '').trim().slice(0, 300);
-    const count = Math.min(Math.max(parseInt(b.count || 3, 10), 1), 4);
+    const count = Math.min(Math.max(parseInt(b.count || 3, 10), 1), 10);
     const withImages = b.images !== false;
 
     const cost = COSTS.creative * count;
@@ -236,6 +257,48 @@ export async function handleAi(db, env, request, path, url, acc) {
       const credits = await refundCredits(db, acc, cost, project.id);
       return json({ error: `Creative generation failed: ${e.message}`, credits }, 502);
     }
+  }
+
+  // ── Export selected creatives as a ZIP (images + a copy.csv) for editors/designers.
+  // Matched before the generic /creatives/:id route below so the literal segment
+  // "export" is never treated as a creative id. ──
+  if (path === '/api/ai/creatives/export' && request.method === 'GET') {
+    const ids = (url.searchParams.get('ids') || '').split(',').map((s) => s.trim()).filter(Boolean);
+    if (!ids.length) return err('No creatives selected', 400);
+    if (ids.length > EXPORT_MAX_IDS) return err(`Select at most ${EXPORT_MAX_IDS} creatives per export`, 400);
+    const placeholders = ids.map(() => '?').join(',');
+    const rows = await db.prepare(
+      `SELECT c.*, p.name AS project_name FROM ad_creatives c JOIN ad_projects p ON p.id = c.project_id
+       WHERE c.account_id = ? AND c.id IN (${placeholders})`
+    ).bind(acc, ...ids).all();
+    const creatives = rows.results || [];
+    if (!creatives.length) return err('No creatives found', 404);
+
+    const files = {};
+    let n = 0;
+    for (const c of creatives) {
+      n++;
+      if (c.image_key) {
+        try {
+          const obj = await env.AD_ASSETS.get(c.image_key);
+          if (obj) {
+            const bytes = new Uint8Array(await obj.arrayBuffer());
+            const slug = slugify(c.headline || c.id);
+            files[`${String(n).padStart(2, '0')}-${c.platform || 'ad'}-${slug}.png`] = bytes;
+          }
+        } catch (e) { console.error('export: failed to read image', c.id, e.message); }
+      }
+    }
+    files['copy.csv'] = new TextEncoder().encode(creativesCsv(creatives));
+
+    const zipped = zipSync(files, { level: 6 });
+    const date = nowISO().slice(0, 10);
+    return new Response(zipped, {
+      headers: {
+        'Content-Type': 'application/zip',
+        'Content-Disposition': `attachment; filename="creatives-export-${date}.zip"`,
+      },
+    });
   }
 
   // ── Creative: edit / favorite / delete ──
@@ -323,6 +386,32 @@ export async function handleAi(db, env, request, path, url, acc) {
   }
 
   return err('Not found', 404);
+}
+
+/** Filesystem-safe slug for a ZIP entry name, e.g. "Meu Headline!" -> "meu-headline". */
+function slugify(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60) || 'creative';
+}
+
+/** RFC 4180-style CSV field quoting — headline/primary_text are free-form LLM/user text. */
+function csvField(v) {
+  const s = v == null ? '' : String(v);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function creativesCsv(creatives) {
+  const header = ['id', 'project_name', 'platform', 'persona', 'headline', 'primary_text', 'cta', 'score'];
+  const lines = [header.join(',')];
+  for (const c of creatives) {
+    lines.push([c.id, c.project_name, c.platform, c.persona, c.headline, c.primary_text, c.cta, c.score]
+      .map(csvField).join(','));
+  }
+  return lines.join('\r\n');
 }
 
 function creativePublic(c) {
