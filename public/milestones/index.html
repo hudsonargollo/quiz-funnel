@@ -149,6 +149,14 @@ header.nav{position:sticky;top:0;z-index:50}
 @media(max-width:460px){.band{flex-wrap:wrap;padding:20px}.band .bandbar{flex:1 1 100%;order:1}}
 .pbar{height:8px;border-radius:var(--r-pill);background:var(--surface-2);overflow:hidden;border:1px solid var(--line)}
 .pbar>div{height:100%;background:var(--grad-brand);border-radius:var(--r-pill);transition:width .6s var(--ease)}
+.pbar.done>div{background:var(--success)}
+
+/* ── Stat tiles (overview) ── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:14px}
+.stat-tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px}
+.stat-tile .ico{width:34px;height:34px;border-radius:10px;background:rgba(54,196,255,.1);border:1px solid rgba(54,196,255,.22);display:grid;place-items:center;color:var(--brand-2);margin-bottom:10px}
+.stat-tile .num{font-family:var(--font-display);font-size:1.6rem;font-weight:700}
+.stat-tile .lbl{font-size:.78rem;color:var(--text-2);margin-top:2px}
 
 /* ── Milestone cards ── */
 .cards{display:grid;grid-template-columns:1fr;gap:16px;margin-top:var(--s-6)}
@@ -157,6 +165,11 @@ header.nav{position:sticky;top:0;z-index:50}
 .card-link:hover{transform:translateY(-4px);border-color:rgba(54,196,255,.4)}
 .card-link::after{content:'';position:absolute;inset:0;background:radial-gradient(360px 200px at 50% -20%,rgba(54,196,255,.12),transparent 70%);opacity:0;transition:opacity .3s}
 .card-link:hover::after{opacity:1}
+.card-link.done{border-color:rgba(34,197,94,.3)}
+.card-link.done:hover{border-color:rgba(34,197,94,.55)}
+.card-link.done::after{background:radial-gradient(360px 200px at 50% -20%,rgba(34,197,94,.14),transparent 70%)}
+.card-link.done .card-ico{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3);color:var(--success)}
+.done-ribbon{position:absolute;top:14px;right:14px;z-index:1;display:flex;align-items:center;gap:5px;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--success);background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.28);padding:4px 9px;border-radius:var(--r-pill)}
 .card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .card-num{font-family:var(--font-display);font-size:1.7rem;font-weight:700;background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .card-ico{width:38px;height:38px;border-radius:11px;background:rgba(54,196,255,.1);border:1px solid rgba(54,196,255,.22);display:grid;place-items:center;color:var(--brand-2)}
@@ -193,8 +206,10 @@ header.nav{position:sticky;top:0;z-index:50}
 .infobox{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px}
 .infobox .lbl{display:flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--brand-2);margin-bottom:5px}
 .infobox .val{font-size:.88rem;color:var(--text-2);line-height:1.5}
+.hero.done{border-color:rgba(34,197,94,.22)}
 .hero-progress{padding:20px 30px;border-top:1px solid var(--line);display:flex;align-items:center;gap:18px}
 .ring-pct{font-family:var(--font-display);font-size:1.9rem;font-weight:700;background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;min-width:66px}
+.ring-pct.done{background:none;-webkit-text-fill-color:var(--success);color:var(--success)}
 .hero-progress .pbar{flex:1}
 .hero-progress .count{font-size:.8rem;color:var(--text-3);white-space:nowrap}
 
@@ -421,13 +436,28 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
     var totalAll = data.results.reduce(function(s,m){ return s + m.totalTasks; }, 0);
     var doneAll = data.results.reduce(function(s,m){ return s + m.doneTasks; }, 0);
     var pctAll = totalAll ? Math.round(doneAll/totalAll*100) : 0;
+    var milestonesDone = data.results.filter(function(m){ return m.progress === 100; }).length;
+    var kickoff = new Date(2026, 5, 28); // Sunday, June 28 2026 — see SCHEDULE below
+    var daysIn = Math.max(0, Math.floor((Date.now() - kickoff.getTime()) / 86400000));
+
+    function statTile(iconName, num, label){
+      return '<div class="stat-tile reveal"><div class="ico">'+icon(iconName, ' width="17" height="17"')+'</div>'
+        + '<div class="num">'+esc(String(num))+'</div><div class="lbl">'+esc(label)+'</div></div>';
+    }
+    var statsRow = '<div class="stats-row">'
+      + statTile('flag', milestonesDone+'/4', 'Marcos concluídos')
+      + statTile('check-circle-2', doneAll+'/'+totalAll, 'Tarefas concluídas')
+      + statTile('calendar-days', daysIn, 'Dias desde o início')
+      + '</div>';
 
     var cards = data.results.map(function(m, i){
-      return '<a class="card-link reveal" href="/milestones/'+esc(m.slug)+'">'
+      var done = m.progress === 100;
+      return '<a class="card-link reveal'+(done?' done':'')+'" href="/milestones/'+esc(m.slug)+'">'
+        + (done ? '<div class="done-ribbon">'+icon('check-circle-2', ' width="13" height="13"')+' Completo</div>' : '')
         + '<div class="card-top"><span class="card-num">0'+(i+1)+'</span><span class="card-ico">'+icon(m.icon||'flag')+'</span></div>'
         + '<div class="card-title">'+esc(m.title)+'</div>'
         + '<div class="card-timeline">'+icon('calendar')+esc(m.timeline||'')+'</div>'
-        + '<div class="pbar"><div style="width:'+m.progress+'%"></div></div>'
+        + '<div class="pbar'+(done?' done':'')+'"><div style="width:'+m.progress+'%"></div></div>'
         + '<div class="pmeta"><span>'+m.doneTasks+'/'+m.totalTasks+' tarefas</span><span class="ppct">'+m.progress+'%</span></div>'
         + '</a>';
     }).join('');
@@ -451,8 +481,9 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
       + '<h1>Tektone Funnels — <span class="gradient-text">Progresso do produto</span></h1>'
       + '<p>Progresso geral do desenvolvimento em 8 semanas.</p></div>'
       + '<div class="band reveal"><div class="bignum gradient-text">'+pctAll+'%</div>'
-      + '<div class="bandbar"><div class="pbar"><div style="width:'+pctAll+'%"></div></div></div>'
+      + '<div class="bandbar"><div class="pbar'+(pctAll===100?' done':'')+'"><div style="width:'+pctAll+'%"></div></div></div>'
       + '<div class="bandmeta">'+doneAll+' / '+totalAll+' tarefas</div></div>'
+      + statsRow
       + '<div class="cards">'+cards+'</div>'
       + '</section>'
       + '<section class="sec" id="cronograma">'
@@ -501,15 +532,16 @@ footer.foot p{text-align:center;color:var(--text-3);font-size:.82rem}
       + (nextSlug ? '<a class="next" href="/milestones/'+nextSlug+'"><small>Próximo</small>Fase 0'+(idx+1)+'</a>' : '<span></span>')
       + '</div>';
 
+    var isDone = data.progress === 100;
     document.getElementById('content').innerHTML =
       '<section class="sec" style="padding-top:var(--s-6)">'
-      + '<div class="hero reveal">'
+      + '<div class="hero reveal'+(isDone?' done':'')+'">'
       + '<div class="hero-grad">'
-      + '<span class="badge eyebrow">Fase 0'+idx+' de 04</span>'
+      + '<span class="badge eyebrow">Fase 0'+idx+' de 04'+(isDone?' · Concluída':'')+'</span>'
       + '<h1>'+esc(m.title)+'</h1>'
       + infogrid
       + '</div>'
-      + '<div class="hero-progress"><div class="ring-pct">'+data.progress+'%</div><div class="pbar"><div style="width:'+data.progress+'%"></div></div><div class="count">'+data.doneTasks+'/'+data.totalTasks+'</div></div>'
+      + '<div class="hero-progress"><div class="ring-pct'+(isDone?' done':'')+'">'+data.progress+'%</div><div class="pbar'+(isDone?' done':'')+'"><div style="width:'+data.progress+'%"></div></div><div class="count">'+data.doneTasks+'/'+data.totalTasks+'</div></div>'
       + '</div>'
       + catsHtml
       + '<div class="deliverable reveal">'+icon('award', ' width="26" height="26"')+'<div><h5>Entregável</h5><p>'+esc(m.deliverable||'')+'</p></div></div>'
