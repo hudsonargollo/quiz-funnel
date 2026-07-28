@@ -8,6 +8,7 @@ import { isConfigured, cnameTarget, createCustomHostname, getCustomHostname, del
 import { handleAi } from './ai.js';
 import { handleMessaging } from './messaging.js';
 import { handleMilestones } from './milestones.js';
+import { handleMining } from './mining.js';
 
 export async function handleAdmin(request, env, path, url) {
   const db = env.DB;
@@ -28,6 +29,9 @@ export async function handleAdmin(request, env, path, url) {
 
   // ── AI Ads add-on (/api/ai/*) — reuses this session + account scope ──
   if (path.startsWith('/api/ai/')) return handleAi(db, env, request, path, url, acc);
+
+  // ── Product Mining (/api/mining/*) — free platform feature, no credit gating ──
+  if (path.startsWith('/api/mining/')) return handleMining(db, env, request, path, url, acc);
 
   // ── Messaging (/api/messaging/*) — deliverable status, test send, log ──
   if (path.startsWith('/api/messaging/')) return handleMessaging(db, env, request, path, url, acc);

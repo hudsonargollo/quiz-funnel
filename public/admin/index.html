@@ -303,6 +303,7 @@
       <button id="tab-analytics" class="active" onclick="App.showView('analytics')" data-i18n="nav_analytics">Analytics</button>
       <button id="tab-funnels" onclick="App.showView('funnels')" data-i18n="nav_funnels">Funnels</button>
       <button id="tab-ai" onclick="App.showView('ai')" data-i18n="nav_ai">AI Ads</button>
+      <button id="tab-mining" onclick="App.showView('mining')" data-i18n="nav_mining">Mining</button>
       <button onclick="location.href='/milestones'" data-i18n="nav_milestones">Milestones</button>
     </div>
     <div class="seg" id="seg-app"><button data-lang="en">EN</button><button data-lang="pt">PT</button></div>
@@ -374,6 +375,11 @@
   <div id="view-ai" class="wrap hidden">
     <div id="ai-body"></div>
   </div>
+
+  <!-- PRODUCT MINING VIEW -->
+  <div id="view-mining" class="wrap hidden">
+    <div id="mining-body"></div>
+  </div>
 </div>
 
 <!-- LEAD DRAWER -->
@@ -439,7 +445,7 @@ const I18N={
    cv_lead:'Lead rate',cv_offer:'Offer rate',cv_checkout:'Checkout rate',cv_purchase:'Purchase rate',
    d_email:'Email',d_name:'Name',d_state:'State',d_uid:'User ID',d_imc:'BMI',d_goal:'Goal',d_cur:'Current weight',d_target:'Target weight',d_height:'Height',
    d_src:'UTM source',d_med:'UTM medium',d_camp:'UTM campaign',d_country:'Country',d_ref:'Referrer',d_created:'Created',d_lead_at:'Lead at',d_checkout_at:'Checkout at',d_purchase_at:'Purchase at',
-   nav_ai:'AI Ads',nav_milestones:'Milestones',ai_credits:'credits',ai_gate_title:'Unlock AI Ads',ai_gate_text:'Find competitor ads, get an AI ad strategy, and generate ad copy + images — all tied to your funnels.',
+   nav_ai:'AI Ads',nav_mining:'Mining',nav_milestones:'Milestones',ai_credits:'credits',ai_gate_title:'Unlock AI Ads',ai_gate_text:'Find competitor ads, get an AI ad strategy, and generate ad copy + images — all tied to your funnels.',
    ai_feat_find:'Find live competitor ads (Meta Ad Library + AI analysis)',ai_feat_strategy:'AI ad strategy, personas, funnel & budget',ai_feat_creatives:'Generate ad copy + AI image creatives',
    ai_unlock:'Unlock AI Ads',ai_gate_note:'Billed as an add-on. Credits are consumed per generation.',ai_unlocked:'AI Ads unlocked',ai_unlock_soon:'Checkout coming soon — contact support to enable.',
    ai_choose_pack:'Choose a credit pack',ai_buy:'Buy',ai_buy_credits:'Buy credits',ai_credits_suffix:'credits',ai_redirecting:'Redirecting to checkout…',ai_purchase_ok:'Credits added — thank you!',ai_purchase_cancelled:'Checkout cancelled.',ai_dev_unlock:'Dev unlock (test credits)',ai_most_popular:'Most popular',
@@ -460,6 +466,10 @@ const I18N={
    qc_button:'Generate copy (AI)',qc_title:'Generate quiz copy',qc_help:'Rewrites headlines, questions, options, and bullets for this funnel\'s screens in one pass. Nothing is saved until you review it and click Save.',
    qc_framework:'Copywriting structure',qc_generic:'Generic (strong direct-response)',qc_pas:'PAS — Problem, Agitate, Solution',qc_paso:'PASO — Problem, Agitate, Solution, Outcome',qc_aida:'AIDA — Attention, Interest, Desire, Action',
    qc_generate:'Generate',qc_locked:'Unlock AI Ads to use this',qc_done:'Updated {n} screens — review below and Save',qc_none:'No supported screens to update',
+   min_search_tab:'Search',min_swipe_tab:'Swipe file',min_search_title:'Find potential products',min_search_help:'Live search of the Meta Ad Library — save anything worth keeping to your swipe file.',
+   min_search_ph:'Product, niche, or brand',min_no_results:'No results yet — run a search.',min_save:'Save',min_saved:'Saved to swipe file',
+   min_swipe_title:'Swipe file',min_all_categories:'All categories',min_category_ph:'Category (optional)',min_converted:'Converted to a funnel',min_convert:'Turn into funnel',min_convert_ok:'Funnel created — opening the builder…',
+   min_empty_t:'Your swipe file is empty',min_empty_d:'Search for products and save the ones worth building on.',
    dl_enable:'Email the deliverable on opt-in',dl_help:'When a lead submits their email, automatically send them the asset below.',
    dl_from:'From name',dl_subject:'Subject',dl_subject_ph:'Your free guide is here',
    dl_intro:'Message',dl_intro_ph:'Thanks! Here is the material you requested…',
@@ -493,7 +503,7 @@ const I18N={
    cv_lead:'Taxa de leads',cv_offer:'Taxa de oferta',cv_checkout:'Taxa de checkout',cv_purchase:'Taxa de compra',
    d_email:'Email',d_name:'Nome',d_state:'Estado',d_uid:'User ID',d_imc:'IMC',d_goal:'Objetivo',d_cur:'Peso atual',d_target:'Peso objetivo',d_height:'Altura',
    d_src:'UTM source',d_med:'UTM medium',d_camp:'UTM campaign',d_country:'País',d_ref:'Referrer',d_created:'Criado',d_lead_at:'Lead em',d_checkout_at:'Checkout em',d_purchase_at:'Compra em',
-   nav_ai:'Anúncios IA',nav_milestones:'Milestones',ai_credits:'créditos',ai_gate_title:'Ative os Anúncios IA',ai_gate_text:'Encontre anúncios de concorrentes, gere uma estratégia de anúncios com IA e crie textos + imagens — ligados aos seus funis.',
+   nav_ai:'Anúncios IA',nav_mining:'Mineração',nav_milestones:'Milestones',ai_credits:'créditos',ai_gate_title:'Ative os Anúncios IA',ai_gate_text:'Encontre anúncios de concorrentes, gere uma estratégia de anúncios com IA e crie textos + imagens — ligados aos seus funis.',
    ai_feat_find:'Encontre anúncios de concorrentes (Meta Ad Library + IA)',ai_feat_strategy:'Estratégia de anúncios, personas, funil e orçamento',ai_feat_creatives:'Gere textos + criativos de imagem com IA',
    ai_unlock:'Ativar Anúncios IA',ai_gate_note:'Cobrado como complemento. Créditos são consumidos por geração.',ai_unlocked:'Anúncios IA ativados',ai_unlock_soon:'Checkout em breve — contate o suporte para ativar.',
    ai_choose_pack:'Escolha um pacote de créditos',ai_buy:'Comprar',ai_buy_credits:'Comprar créditos',ai_credits_suffix:'créditos',ai_redirecting:'Redirecionando para o checkout…',ai_purchase_ok:'Créditos adicionados — obrigado!',ai_purchase_cancelled:'Checkout cancelado.',ai_dev_unlock:'Ativação dev (créditos de teste)',ai_most_popular:'Mais popular',
@@ -514,6 +524,10 @@ const I18N={
    qc_button:'Gerar textos (IA)',qc_title:'Gerar textos do quiz',qc_help:'Reescreve títulos, perguntas, opções e listas deste funil em uma só vez. Nada é salvo até você revisar e clicar em Salvar.',
    qc_framework:'Estrutura de copywriting',qc_generic:'Genérico (direct-response forte)',qc_pas:'PAS — Problema, Agitação, Solução',qc_paso:'PASO — Problema, Agitação, Solução, Resultado',qc_aida:'AIDA — Atenção, Interesse, Desejo, Ação',
    qc_generate:'Gerar',qc_locked:'Ative os Anúncios IA para usar isso',qc_done:'{n} telas atualizadas — revise abaixo e Salve',qc_none:'Nenhuma tela compatível para atualizar',
+   min_search_tab:'Buscar',min_swipe_tab:'Swipe file',min_search_title:'Encontrar produtos em potencial',min_search_help:'Busca ao vivo na Biblioteca de Anúncios da Meta — salve o que valer a pena no seu swipe file.',
+   min_search_ph:'Produto, nicho ou marca',min_no_results:'Nenhum resultado ainda — faça uma busca.',min_save:'Salvar',min_saved:'Salvo no swipe file',
+   min_swipe_title:'Swipe file',min_all_categories:'Todas as categorias',min_category_ph:'Categoria (opcional)',min_converted:'Convertido em funil',min_convert:'Transformar em funil',min_convert_ok:'Funil criado — abrindo o editor…',
+   min_empty_t:'Seu swipe file está vazio',min_empty_d:'Busque produtos e salve os que valem a pena construir.',
    dl_enable:'Enviar o material por email no opt-in',dl_help:'Quando um lead enviar o email, mande automaticamente o material abaixo.',
    dl_from:'Nome do remetente',dl_subject:'Assunto',dl_subject_ph:'Seu material chegou',
    dl_intro:'Mensagem',dl_intro_ph:'Obrigado! Aqui está o material que você pediu…',
@@ -588,11 +602,14 @@ const App=(()=>{
    $('view-analytics').classList.toggle('hidden',v!=='analytics');
    $('view-funnels').classList.toggle('hidden',v!=='funnels');
    $('view-ai').classList.toggle('hidden',v!=='ai');
+   $('view-mining').classList.toggle('hidden',v!=='mining');
    $('tab-analytics').classList.toggle('active',v==='analytics');
    $('tab-funnels').classList.toggle('active',v==='funnels');
    $('tab-ai').classList.toggle('active',v==='ai');
+   $('tab-mining').classList.toggle('active',v==='mining');
    if(v==='funnels')loadFunnels();
    if(v==='ai')aiLoad();
+   if(v==='mining')miningLoad();
  }
 
  // ── Funnels ──
@@ -1534,6 +1551,117 @@ const App=(()=>{
    catch(e){toast(String(e.message),'bad');}
  }
 
+ // ── Product Mining — live Meta Ad Library search; saved items double as the
+ // favorites system AND the visual swipe file/moodboard (same collection, one view). ──
+ let _miningTab='search',_miningResults=[],_miningNote=null,_miningAllItems=[],_miningCategory='';
+ async function miningApi(p,opts){return api('mining/'+p,opts);}
+ function miningLoad(){_miningTab==='swipe'?miningShowSwipe():miningShowSearch();}
+ function miningTabsHtml(){
+   return `<div class="toolbar" style="margin-top:18px">
+     <div style="display:flex;gap:6px">
+       <button class="btn ${_miningTab==='search'?'':'ghost'}" onclick="App.miningShowSearch()">${icon('search')} ${t('min_search_tab')}</button>
+       <button class="btn ${_miningTab==='swipe'?'':'ghost'}" onclick="App.miningShowSwipe()">${icon('image')} ${t('min_swipe_tab')}</button>
+     </div>
+   </div>`;
+ }
+
+ function miningShowSearch(){
+   _miningTab='search';
+   $('mining-body').innerHTML=`${miningTabsHtml()}
+     <h2 style="font-size:16px;color:var(--text);margin:14px 0 0">${t('min_search_title')}</h2>
+     <p style="color:var(--muted);font-size:13px">${t('min_search_help')}</p>
+     <div class="toolbar" style="gap:6px;margin-top:8px">
+       <input id="min-q" placeholder="${t('min_search_ph')}" style="flex:1;min-width:140px">
+       <input id="min-cc" value="US" maxlength="2" style="width:54px;text-transform:uppercase" title="${t('ai_country')}">
+       <button class="btn" onclick="App.miningSearch()">${icon('search')} ${t('ai_search')}</button>
+     </div>
+     <div id="min-results" style="margin-top:14px">${miningResultsHtml()}</div>`;
+   refreshIcons();
+ }
+ function miningResultsHtml(){
+   if(!_miningResults.length)return `<p style="color:var(--muted);font-size:13px">${_miningNote?esc(_miningNote):t('min_no_results')}</p>`;
+   const noteHtml=_miningNote?`<p style="color:var(--faint);font-size:11px;margin-bottom:8px">${esc(_miningNote)}</p>`:'';
+   const cards=_miningResults.map((a,i)=>`<div class="card" style="padding:10px">
+       ${a.media_url?`<a href="${esc(a.media_url)}" target="_blank" style="display:flex;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--panel2);align-items:center;justify-content:center;color:var(--faint)">${icon('external-link')}</a>`:`<div style="aspect-ratio:1;background:var(--panel2);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--faint)">${icon('image')}</div>`}
+       <div style="font-weight:700;margin-top:8px;font-size:13px">${esc(a.page_name||'—')}</div>
+       <div style="font-size:12px;color:var(--muted);margin:4px 0">${esc((a.ad_text||'').slice(0,140))}</div>
+       ${a.cta?`<div style="font-size:11px;color:var(--brand2)">${esc(a.cta)}</div>`:''}
+       <div class="factions" style="margin-top:8px">
+         <button class="btn" onclick="App.miningSave(${i})">${icon('star')} ${t('min_save')}</button>
+       </div></div>`).join('');
+   return `${noteHtml}<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">${cards}</div>`;
+ }
+ async function miningSearch(){
+   const query=$('min-q').value.trim(),country=($('min-cc').value||'US').trim().toUpperCase();
+   if(!query){toast(t('ai_enter_term'),'bad');return;}
+   if(!/^[A-Z]{2}$/.test(country)){toast(t('ai_bad_country'),'bad');return;}
+   $('min-results').innerHTML=`<p style="color:var(--muted)">${icon('loader')} ${t('ai_working')}</p>`;refreshIcons();
+   try{const r=await miningApi('search?query='+encodeURIComponent(query)+'&country='+country);
+     _miningResults=r.ads||[];_miningNote=r.note||null;
+     $('min-results').innerHTML=miningResultsHtml();refreshIcons();}
+   catch(e){toast(String(e.message),'bad');$('min-results').innerHTML='';}
+ }
+ async function miningSave(i){
+   const a=_miningResults[i];if(!a)return;
+   try{await miningApi('products',{method:'POST',body:JSON.stringify({page_name:a.page_name,ad_text:a.ad_text,cta:a.cta,media_url:a.media_url,raw:a.raw})});
+     toast(t('min_saved'),'ok');}
+   catch(e){toast(String(e.message),'bad');}
+ }
+
+ function miningShowSwipe(){
+   _miningTab='swipe';
+   $('mining-body').innerHTML=`${miningTabsHtml()}
+     <div class="toolbar" style="margin-top:14px">
+       <h2 style="font-size:16px;color:var(--text)">${t('min_swipe_title')}</h2>
+       <div class="spacer"></div>
+       <select id="min-cat-filter" onchange="App.miningFilterCategory(this.value)" style="width:auto"><option value="">${t('min_all_categories')}</option></select>
+     </div>
+     <div id="min-swipe-grid" style="margin-top:10px"><p style="color:var(--muted)">${icon('loader')} ${t('loading')||'Loading…'}</p></div>`;
+   refreshIcons();
+   miningLoadItems();
+ }
+ async function miningLoadItems(){
+   try{const r=await miningApi('products');_miningAllItems=r.results||[];miningRenderSwipe();}
+   catch(e){$('min-swipe-grid').innerHTML=`<p style="color:var(--red)">${esc(e.message)}</p>`;}
+ }
+ function miningFilterCategory(cat){_miningCategory=cat;miningRenderSwipe();}
+ function miningRenderSwipe(){
+   const cats=[...new Set(_miningAllItems.map(i=>i.category).filter(Boolean))].sort();
+   const sel=$('min-cat-filter');
+   if(sel)sel.innerHTML=`<option value="">${t('min_all_categories')}</option>`+cats.map(c=>`<option value="${esc(c)}"${c===_miningCategory?' selected':''}>${esc(c)}</option>`).join('');
+   const items=_miningCategory?_miningAllItems.filter(i=>i.category===_miningCategory):_miningAllItems;
+   const cards=items.map(p=>`<div class="card" style="padding:10px">
+       ${p.media_url?`<a href="${esc(p.media_url)}" target="_blank" style="display:flex;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--panel2);align-items:center;justify-content:center;color:var(--faint)">${icon('external-link')}</a>`:`<div style="aspect-ratio:1;background:var(--panel2);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--faint)">${icon('image')}</div>`}
+       <div style="font-weight:700;margin-top:8px;font-size:13px">${esc(p.page_name||'—')}</div>
+       <div style="font-size:12px;color:var(--muted);margin:4px 0">${esc((p.ad_text||'').slice(0,140))}</div>
+       ${p.cta?`<div style="font-size:11px;color:var(--brand2)">${esc(p.cta)}</div>`:''}
+       <input value="${esc(p.category||'')}" placeholder="${t('min_category_ph')}" style="margin-top:8px;font-size:12px;width:100%" onchange="App.miningSetCategory('${p.id}',this.value)">
+       ${p.funnel_id?`<div style="font-size:11px;color:var(--green);margin-top:6px">${icon('check-circle-2')} ${t('min_converted')}</div>`:''}
+       <div class="factions" style="margin-top:8px">
+         ${p.funnel_id?`<button class="btn ghost" onclick="App.openBuilder('${p.funnel_id}')">${icon('layout-template')} ${t('b_builder')}</button>`
+                      :`<button class="btn" onclick="App.miningConvert('${p.id}')">${icon('zap')} ${t('min_convert')}</button>`}
+         <button class="btn ghost icon" onclick="App.miningDelete('${p.id}')" title="${t('delete')}">${icon('trash-2')}</button>
+       </div></div>`).join('');
+   $('min-swipe-grid').innerHTML=items.length?`<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">${cards}</div>`:`<div class="onb"><div class="big">${icon('image')}</div><h3>${t('min_empty_t')}</h3><p>${t('min_empty_d')}</p></div>`;
+   refreshIcons();
+ }
+ async function miningSetCategory(id,cat){
+   try{await miningApi('products/'+id,{method:'PATCH',body:JSON.stringify({category:cat.trim()})});
+     const p=_miningAllItems.find(x=>x.id===id);if(p)p.category=cat.trim();
+     miningRenderSwipe();toast(t('saved'),'ok');}
+   catch(e){toast(String(e.message),'bad');}
+ }
+ async function miningDelete(id){
+   try{await miningApi('products/'+id,{method:'DELETE'});await miningLoadItems();}
+   catch(e){toast(String(e.message),'bad');}
+ }
+ async function miningConvert(id){
+   try{const r=await miningApi('products/'+id+'/convert',{method:'POST',body:JSON.stringify({})});
+     toast(t('min_convert_ok'),'ok');
+     openBuilder(r.funnelId);}
+   catch(e){toast(String(e.message),'bad');}
+ }
+
  // boot
  (function(){
    const stored=localStorage.getItem(LANG_KEY);lang=stored||'pt';  // default to Portuguese; EN toggle persists once chosen
@@ -1561,7 +1689,8 @@ const App=(()=>{
    aiGenStrategy,aiFindAds,aiGenCreatives,aiFav,aiCopyCreative,aiCopyStr,aiCopyPlatform,aiDelCreative,
    aiOpenBrandKit,aiUploadBrandLogo,aiSaveBrandKit,aiScoreCreative,
    aiRenderLibraryHome,aiLoadLibrary,aiExportSelected,aiUpdateExportCount,
-   aiStartEdit,aiSaveEdit,aiCancelEdit,aiCountChanged,aiResetBigGen,aiCancelBigGen};
+   aiStartEdit,aiSaveEdit,aiCancelEdit,aiCountChanged,aiResetBigGen,aiCancelBigGen,
+   miningShowSearch,miningShowSwipe,miningSearch,miningSave,miningFilterCategory,miningSetCategory,miningDelete,miningConvert};
 })();
 </script>
 </body>

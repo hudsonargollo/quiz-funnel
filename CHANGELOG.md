@@ -2,6 +2,15 @@
 
 Notable changes to the Tektone Funnels platform. Format is loosely chronological, most recent first.
 
+## 2026-07-28 — Product Mining module: Milestone 3 complete (5/5)
+
+Built the standalone "product mining" module from scratch — search, filter/categorize, favorites, and 1-click funnel creation. **Milestone 3 — Mineração de Produtos: 1/5 → 5/5 (complete).**
+
+- **v1 ships on Meta Ad Library only.** The user also asked for TikTok, ClickBank, and general dropshipping-trend data — checked each: TikTok has no public ad API for commercial ads (only an EU political/issue-ads transparency library, same legal scope as Meta's); ClickBank's marketplace has no public API (only scrapeable, a ToS gray area not worth building without explicit sign-off); generic "trending product" tools (EcomHunt, Minea, PiPiADS, etc.) are paid SaaS with no third-party API. Researched real alternatives for a later decision: **Foreplay's public API** (~100M Meta+TikTok ad creatives, genuine documented API), **CJ Affiliate's Product Search API** (real catalog/search, self-serve), and **TikTok's Commercial Content API** (official but EU-only today) are the legitimate options worth pursuing next, once credentials are sorted — not built yet.
+- **Design simplification**: search stays live/stateless against the Meta Ad Library (`GET /api/mining/search`, thin wrapper over the existing `searchAdLibrary()`) — nothing is persisted until the user explicitly saves an item. That saved collection (`mined_products` table, migration `0008_product_mining.sql`) *is* both the favorites system and the visual swipe file/moodboard — the roadmap listed those as two separate tasks, but they're naturally the same UI.
+- **1-click "turn into funnel"** (`POST /api/mining/products/:id/convert`) generates a slug from the saved item's page name (retrying with a short suffix on collision), creates the funnel via the existing `createFunnel()`, and prefills `config.productName` via the existing `updateFunnel()` config-patch path — no new funnel-creation plumbing, just composing what already existed.
+- Free platform feature, not gated behind the paid AI Ads credit wallet — a raw Ad Library search has no LLM cost, matching the original roadmap's framing of product mining as core value, not an upsell.
+
 ## 2026-07-28 — Quiz-copy generator: Milestone 2 complete (6/6)
 
 Closed the final two Milestone 2 tasks — no more "Alisson's framework" (never documented, and the user explicitly ruled it out). Instead, researched three external repos the user pointed at for inspiration: `CopywriterPro-ai/copywriterproai-backend` turned out to be the only one with real substance — its `sales.contents.js` implements PAS/PASO/AIDA as named, few-shot-templated generator functions. Re-implemented that *pattern* (not the code — different stack) as sequence-level guidance across a quiz funnel's screens rather than a single ad block. **Milestone 2 — Automação com IA: 4/6 → 6/6 (complete).**
