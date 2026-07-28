@@ -776,7 +776,7 @@ const App=(()=>{
 
  // ── Visual builder ──
  let _b={id:null,slug:'',type:'quiz',screens:[],config:{},sel:0,ready:false,dirty:false};
- const SCR_ICON={landing:'flag',single:'circle-dot',multi:'list-checks',grid:'layout-grid',slider:'sliders-horizontal',text:'type',bridge:'image',video:'play',loading:'loader',profile:'user',imc:'activity',offer:'tag',success:'party-popper'};
+ const SCR_ICON={landing:'flag',single:'circle-dot',multi:'list-checks',grid:'layout-grid',slider:'sliders-horizontal',text:'type',bridge:'image',video:'play',loading:'loader',loading_social:'users',profile:'user',imc:'activity',offer:'tag',success:'party-popper'};
  const SCHEMA={
    landing:[['headline','Headline'],['headlineAccent','Accent'],['sub','Subtitle','ta'],['image','Image URL'],['alertTitle','Alert title'],['alertBody','Alert body','ta'],['cta','Button']],
    single:[['question','Question'],['sub','Subtitle'],['__options']],
@@ -787,12 +787,13 @@ const App=(()=>{
    bridge:[['headline','Headline'],['body','Body','ta'],['bodyExtra','Extra body','ta'],['image','Image URL'],['cta','Button']],
    video:[['headline','Headline'],['sub','Subtitle'],['videoUrl','Video URL'],['body','Body','ta'],['cta','Button']],
    loading:[['headline','Headline'],['__steps']],
+   loading_social:[['headline','Headline'],['body','Body','ta'],['duration','Duration (ms)','n'],['__testimonials']],
    profile:[['headline','Heading'],['cta','Button']],
    imc:[['cta','Button']],
    offer:[['__config']],
    success:[],
  };
- const PALETTE=['single','multi','grid','slider','text','bridge','video','landing','loading','offer','imc','profile'];
+ const PALETTE=['single','multi','grid','slider','text','bridge','video','landing','loading','loading_social','offer','imc','profile'];
  function newScreen(type){
    const k='q'+Math.random().toString(36).slice(2,7);
    const o=(l)=>({value:l.toLowerCase().replace(/\s+/g,'_'),label:l,icon:'circle'});
@@ -806,6 +807,7 @@ const App=(()=>{
      bridge:{type,headline:'Headline',body:'Body text',cta:'Continue'},
      video:{type,key:'vsl',headline:'Watch this',videoUrl:'',cta:'Continue'},
      loading:{type,headline:'Loading...',steps:['Analyzing','Preparing'],duration:2500},
+     loading_social:{type,headline:'Quase pronto...',body:'Estamos a concluir a análise do seu perfil e a preparar a recomendação personalizada.',duration:5000,testimonials:[{image:'',name:'Nome Sobrenome',detail:'Cidade'}]},
      profile:{type,headline:'Your profile',cta:'Continue'},
      imc:{type,cta:'Continue'},offer:{type},success:{type},
    };
@@ -871,6 +873,7 @@ const App=(()=>{
      if(key==='__options'){h+=optionsEditor(s);return;}
      if(key==='__fields'){h+=fieldsEditor(s);return;}
      if(key==='__steps'){h+=stepsEditor(s);return;}
+     if(key==='__testimonials'){h+=testimonialsEditor(s);return;}
      if(key==='__config'){h+=configEditor();return;}
      const val=s[key]==null?'':s[key];
      h+=kind==='ta'
@@ -922,10 +925,24 @@ const App=(()=>{
  function bstepAdd(){const s=_b.screens[_b.sel];(s.steps=s.steps||[]).push('Step');_b.dirty=true;renderProps();pushPreview();}
  function bstepDel(i){_b.screens[_b.sel].steps.splice(i,1);_b.dirty=true;renderProps();pushPreview();}
 
+ function testimonialsEditor(s){
+   const ts=s.testimonials||(s.testimonials=[]);let h=`<label>Testimonials</label>`;
+   ts.forEach((x,i)=>{h+=`<div class="opt-ed"><div class="oh"><span class="ol">#${i+1}</span><span class="sx" onclick="App.btestDel(${i})">${icon('x')}</span></div>
+     <input placeholder="Image URL" value="${esc(x.image||'')}" oninput="App.btestSet(${i},'image',this.value)">
+     <input placeholder="Name" value="${esc(x.name||'')}" oninput="App.btestSet(${i},'name',this.value)">
+     <input placeholder="Detail (city)" value="${esc(x.detail||'')}" oninput="App.btestSet(${i},'detail',this.value)"></div>`;});
+   return h+`<button class="btn ghost addbtn" onclick="App.btestAdd()">+ Testimonial</button>`;
+ }
+ function btestSet(i,k,v){_b.screens[_b.sel].testimonials[i][k]=v;_b.dirty=true;pushPreview();}
+ function btestAdd(){const s=_b.screens[_b.sel];(s.testimonials=s.testimonials||[]).push({image:'',name:'',detail:''});_b.dirty=true;renderProps();pushPreview();}
+ function btestDel(i){_b.screens[_b.sel].testimonials.splice(i,1);_b.dirty=true;renderProps();pushPreview();}
+
  function configEditor(){const c=_b.config;const d=c.delivery||{};
    return `<label>Product name</label><input value="${esc(c.productName||'')}" oninput="App.bcfg('productName',this.value)">
      <label>Price</label><input type="number" value="${esc(c.productPrice||'')}" oninput="App.bcfg('productPrice',this.value,1)">
      <label>Currency</label><input value="${esc(c.currency||'')}" oninput="App.bcfg('currency',this.value)">
+     <label>Checkout URL (external, e.g. Cakto — leave blank to use built-in Stripe checkout)</label>
+     <input value="${esc(c.checkoutUrl||'')}" placeholder="https://pay.cakto.com.br/…" oninput="App.bcfg('checkoutUrl',this.value)">
      <div style="border-top:1px solid var(--line);margin:16px 0 6px;padding-top:14px">
        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
          <input type="checkbox" ${d.enabled?'checked':''} onchange="App.bdel('enabled',this.checked,1)" style="width:auto">
@@ -1683,7 +1700,7 @@ const App=(()=>{
  return {submitAuth,toggleAuthMode,logout,showView,refresh,loadStats,loadLeads,page,openLead,closeDrawer,exportCsv,
    onFunnelChange,scopeFunnel,openFunnelEditor,saveFunnel,deleteFunnel,setLang,copyText,copyEl,pickTemplate,
    openBuilder,closeBuilder,toggleBuilderPreview,builderSelect,builderAdd,builderDelete,bset,boptSet,boptAdd,boptDel,
-   bfSet,bfAdd,bfDel,bstepSet,bstepAdd,bstepDel,bcfg,bdel,testDelivery,saveBuilder,loadDomains,addDomain,delDomain,
+   bfSet,bfAdd,bfDel,bstepSet,bstepAdd,bstepDel,btestSet,btestAdd,btestDel,bcfg,bdel,testDelivery,saveBuilder,loadDomains,addDomain,delDomain,
    bQuizCopy,bQuizCopyRun,
    aiNewProject,aiCreateProject,aiOpenProject,aiDeleteProject,aiBack,aiUnlock,aiBuy,aiBuyMore,aiRenderList,
    aiGenStrategy,aiFindAds,aiGenCreatives,aiFav,aiCopyCreative,aiCopyStr,aiCopyPlatform,aiDelCreative,
