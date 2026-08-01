@@ -97,15 +97,21 @@ async function serveAsset(env, assetPath, request) {
 async function serveFunnel(env, url, slug, request) {
   const preview = url.searchParams.has('preview');
   const f = await getFunnelBySlug(env.DB, slug);
-  if (!f || f.status !== 'published') {
+  if (!f) {
     // In preview the builder pushes config via postMessage, so serve the bare shell.
     if (preview) return serveAsset(env, '/index.html', request);
-    // Otherwise an unknown/unpublished slug is a genuine 404.
     return new Response('Funnel not found', { status: 404 });
   }
-  const res = await serveAsset(env, '/index.html', request);
-  let html = await res.text();
   const pf = publicFunnel(f);
+  // A funnel can point at its own HTML shell + JS bundle (e.g. a fully
+  // translated clone) via config.shellPath, instead of the shared default.
+  const shellPath = typeof pf.config.shellPath === 'string' && pf.config.shellPath ? pf.config.shellPath : '/index.html';
+  if (f.status !== 'published' && !preview) {
+    // An unpublished slug is a genuine 404 outside preview mode.
+    return new Response('Funnel not found', { status: 404 });
+  }
+  const res = await serveAsset(env, shellPath, request);
+  let html = await res.text();
   const boot = `<script>
 window.SCREENS=${JSON.stringify(pf.screens)};
 window.QUIZ_CONFIG=${JSON.stringify(pf.config)};
