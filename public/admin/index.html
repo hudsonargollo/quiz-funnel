@@ -109,8 +109,14 @@
   .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
   .chip{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;flex:1;min-width:110px}
   .chip .cv{font-size:18px;font-weight:700}.chip .cl{font-size:11px;color:var(--muted)}
+  .spark-legend{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);margin-bottom:2px}
+  .spark-legend .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-left:8px}
+  .spark-legend .dot:first-child{margin-left:0}
+  .spark-legend .dot.leads{background:var(--brand2)}
+  .spark-legend .dot.purchases{background:#34d399}
   .spark{display:flex;align-items:flex-end;gap:4px;height:64px;margin-top:4px}
-  .spark .b{flex:1;background:linear-gradient(180deg,var(--brand2),rgba(0,174,239,.22));border-radius:4px 4px 0 0;min-height:3px;box-shadow:0 0 10px -4px rgba(0,174,239,.5);transition:height var(--dur-4) var(--ease-decelerate)}
+  .spark .b{position:relative;flex:1;background:linear-gradient(180deg,var(--brand2),rgba(0,174,239,.22));border-radius:4px 4px 0 0;min-height:3px;box-shadow:0 0 10px -4px rgba(0,174,239,.5);transition:height var(--dur-4) var(--ease-decelerate)}
+  .spark .b2{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,#34d399,#a3e635);border-radius:0 0 4px 4px;min-height:0}
   .liner{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}.liner:last-child{border-bottom:none}.liner .muted{color:var(--muted)}
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}.toolbar .spacer{flex:1}
   .tablewrap{overflow-x:auto;border-radius:10px;border:1px solid var(--line)}
@@ -333,8 +339,15 @@
     <section class="grid kpis" id="kpis"></section>
     <section class="grid cols">
       <div class="card"><h2 data-i18n="funnel_title">Conversion funnel</h2><div id="funnel"></div><div class="chips" id="chips"></div></div>
-      <div class="card"><h2 data-i18n="daily_title">New leads · 14 days</h2><div class="spark" id="spark"></div>
+      <div class="card"><h2 data-i18n="daily_title">New leads · 14 days</h2>
+        <div class="spark-legend"><span class="dot leads"></span><span data-i18n="spark_leads">Leads</span><span class="dot purchases"></span><span data-i18n="spark_purchases">Purchases</span></div>
+        <div class="spark" id="spark"></div>
         <h2 style="margin-top:18px" data-i18n="utm_title">Source (UTM)</h2><div id="utm"></div></div>
+    </section>
+    <section class="card hidden" id="leaderboard-card"><h2 data-i18n="leaderboard_title">Funnel performance</h2>
+      <div class="tablewrap"><table><thead><tr>
+        <th data-i18n="lb_funnel">Funnel</th><th data-i18n="lb_leads">Leads</th><th data-i18n="lb_purchases">Purchases</th><th data-i18n="lb_cvr">CVR</th><th data-i18n="lb_revenue">Revenue</th>
+      </tr></thead><tbody id="leaderboard-rows"></tbody></table></div>
     </section>
     <section class="card" id="dropoff-card"><h2 data-i18n="dropoff_title">Reach per question (drop-off)</h2><div id="dropoff"></div></section>
     <section class="card">
@@ -422,8 +435,10 @@ const I18N={
    email:'Email',password:'Password',f_name:'Name',logout:'Sign out',updated:'Updated',auto:'Auto-refresh',
    nav_analytics:'Dashboard',nav_funnels:'Funnels',range_all:'All time',range_7:'Last 7 days',range_30:'Last 30 days',range_90:'Last 90 days',
    perf_title:'Performance',dash_hint:'Tap a funnel to filter the dashboard',conv_short:'Conv.',manage:'Manage',
-   all_funnels:'All funnels',kpi_total:'Total leads',kpi_captured:'Captured',kpi_purchases:'Purchases',kpi_checkouts:'Checkouts',of_total:'of total',
+   all_funnels:'All funnels',kpi_total:'Total leads',kpi_captured:'Captured',kpi_purchases:'Purchases',kpi_checkouts:'Checkouts',kpi_revenue:'Revenue',of_total:'of total',aov:'avg. order',
    funnel_title:'Conversion funnel',utm_title:'Source (UTM)',daily_title:'New leads · 14 days',dropoff_title:'Reach per question (drop-off)',
+   leaderboard_title:'Funnel performance',lb_funnel:'Funnel',lb_leads:'Leads',lb_purchases:'Purchases',lb_cvr:'CVR',lb_revenue:'Revenue',lb_empty:'No funnels with data yet',
+   spark_leads:'Leads',spark_purchases:'Purchases',
    all_states:'All states',search_btn:'Search',search_ph:'Search email or name…',export_csv:'Export CSV',
    col_lead:'Email / Name',col_state:'State',col_imc:'BMI',col_goal:'Goal',col_source:'Source',col_created:'Created',col_updated:'Updated',
    no_results:'No results',anon:'anonymous',direct:'(direct)',of:'of',timeline:'Timeline',no_events:'No events',no_data:'No data',no_answers:'No answers yet',
@@ -480,8 +495,10 @@ const I18N={
    email:'Email',password:'Palavra-passe',f_name:'Nome',logout:'Sair',updated:'Atualizado',auto:'Atualização automática',
    nav_analytics:'Painel',nav_funnels:'Funis',range_all:'Todo o período',range_7:'Últimos 7 dias',range_30:'Últimos 30 dias',range_90:'Últimos 90 dias',
    perf_title:'Desempenho',dash_hint:'Toque num funil para filtrar o painel',conv_short:'Conv.',manage:'Gerir',
-   all_funnels:'Todos os funis',kpi_total:'Leads totais',kpi_captured:'Capturados',kpi_purchases:'Compras',kpi_checkouts:'Checkouts',of_total:'do total',
+   all_funnels:'Todos os funis',kpi_total:'Leads totais',kpi_captured:'Capturados',kpi_purchases:'Compras',kpi_checkouts:'Checkouts',kpi_revenue:'Receita',of_total:'do total',aov:'ticket médio',
    funnel_title:'Funil de conversão',utm_title:'Origem (UTM)',daily_title:'Novos leads · 14 dias',dropoff_title:'Alcance por pergunta (drop-off)',
+   leaderboard_title:'Desempenho por funil',lb_funnel:'Funil',lb_leads:'Leads',lb_purchases:'Compras',lb_cvr:'CVR',lb_revenue:'Receita',lb_empty:'Ainda sem funis com dados',
+   spark_leads:'Leads',spark_purchases:'Compras',
    all_states:'Todos os estados',search_btn:'Procurar',search_ph:'Procurar email ou nome…',export_csv:'Exportar CSV',
    col_lead:'Email / Nome',col_state:'Estado',col_imc:'IMC',col_goal:'Objetivo',col_source:'Origem',col_created:'Criado',col_updated:'Atualizado',
    no_results:'Sem resultados',anon:'anónimo',direct:'(direto)',of:'de',timeline:'Linha do tempo',no_events:'Sem eventos',no_data:'Sem dados',no_answers:'Sem respostas ainda',
@@ -1019,17 +1036,29 @@ const App=(()=>{
    let p='crm/stats?days='+$('range').value;if(funnelId)p+='&funnelId='+funnelId;
    api(p).then(s=>{_stats=s;renderStats(s);$('updated').textContent=`${t('auto')} · ${t('updated')} ${new Date().toLocaleTimeString(lang==='pt'?'pt-PT':'en-GB')}`;}).catch(()=>{});
  }
- function renderStats(s){renderKpis(s);renderFunnel(s);renderUtm(s);renderDropoff(s);renderSpark(s);
+ function renderStats(s){renderKpis(s);renderFunnel(s);renderUtm(s);renderDropoff(s);renderSpark(s);renderLeaderboard(s);
    $('dropoff-card').classList.toggle('hidden',!s.scopedToFunnel&&!s.questions.length);}
  function renderKpis(s){
    const captured=(s.funnel.find(f=>f.key==='lead')||{}).count||0,purchased=s.byState.purchase_completed||0;
    const checkouts=(s.byState.checkout_initiated||0)+(s.byState.checkout_abandoned||0);
    const cards=[{v:s.total,l:t('kpi_total'),ic:'users'},{v:captured,l:t('kpi_captured'),ic:'mail',d:`<b>${s.conversion.lead_rate}%</b> ${t('of_total')}`},
      {v:purchased,l:t('kpi_purchases'),ic:'credit-card',d:`<b>${s.conversion.purchase_rate}%</b> ${t('of_total')}`},{v:checkouts,l:t('kpi_checkouts'),ic:'shopping-cart'}];
-   $('kpis').innerHTML=cards.map(k=>`<div class="card kpi"><div class="ico">${icon(k.ic)}</div><div class="v" data-count="${Number(k.v)||0}">${fmtN(k.v)}</div><div class="l">${k.l}</div>${k.d?`<div class="d">${k.d}</div>`:''}</div>`).join('');
+   const rev=(s.revenue||[])[0];
+   if(rev&&rev.total){const aov=rev.n?Math.round(rev.total/rev.n):0;
+     cards.push({raw:fmtMoney(rev.total,rev.currency),l:t('kpi_revenue'),ic:'trending-up',d:`<b>${fmtMoney(aov,rev.currency)}</b> ${t('aov')}`});}
+   $('kpis').innerHTML=cards.map(k=>`<div class="card kpi"><div class="ico">${icon(k.ic)}</div><div class="v"${k.raw?'':` data-count="${Number(k.v)||0}"`}>${k.raw||fmtN(k.v)}</div><div class="l">${k.l}</div>${k.d?`<div class="d">${k.d}</div>`:''}</div>`).join('');
    refreshIcons();
    if(!_animKpi){_animKpi=true;const M=window.Motion;if(M){M.reveal('#kpis > *',{stagger:.05,y:16});
-     $('kpis').querySelectorAll('.kpi .v').forEach(el=>M.countUp(el,0,Number(el.dataset.count)||0,{format:n=>fmtN(Math.round(n))}));}}
+     $('kpis').querySelectorAll('.kpi .v[data-count]').forEach(el=>M.countUp(el,0,Number(el.dataset.count)||0,{format:n=>fmtN(Math.round(n))}));}}
+ }
+ function renderLeaderboard(s){
+   const rows=s.byFunnel||[];
+   $('leaderboard-card').classList.toggle('hidden',!rows.length);
+   if(!rows.length)return;
+   $('leaderboard-rows').innerHTML=rows.map(r=>`<tr>
+     <td><b>${esc(r.name||r.funnel_id)}</b></td><td>${fmtN(r.leads)}</td><td>${fmtN(r.purchases)}</td>
+     <td>${r.cvr}%</td><td>${r.revenue?fmtMoney(r.revenue,r.currency):'—'}</td></tr>`).join('')
+     ||`<tr><td colspan="5" class="empty">${t('lb_empty')}</td></tr>`;
  }
  function renderFunnel(s){
    const max=s.funnel[0].count||1;
@@ -1038,7 +1067,10 @@ const App=(()=>{
  }
  function renderUtm(s){$('utm').innerHTML=s.utm.length?s.utm.map(u=>`<div class="liner"><span>${esc(u.source)}</span><span class="muted">${fmtN(u.leads)} ${t('leads')} · ${fmtN(u.purchases)} ${t('sales')}</span></div>`).join(''):`<div class="empty">${t('no_data')}</div>`;}
  function renderDropoff(s){if(!s.questions.length){$('dropoff').innerHTML=`<div class="empty">${t('no_answers')}</div>`;return;}const max=s.questions[0]?.users||1;$('dropoff').innerHTML=s.questions.map(q=>`<div class="frow"><div class="top"><span>${esc((QLABELS[lang]&&QLABELS[lang][q.key])||q.key)}</span><span class="n">${fmtN(q.users)}</span></div><div class="barmini"><i style="width:${Math.max(2,(q.users/max)*100)}%"></i></div></div>`).join('');}
- function renderSpark(s){const days=s.daily||[];if(!days.length){$('spark').innerHTML=`<div class="empty" style="width:100%">${t('no_data')}</div>`;return;}const max=Math.max(...days.map(d=>d.n),1);$('spark').innerHTML=days.map(d=>`<div class="b" title="${d.day}: ${d.n}" style="height:${Math.max(4,(d.n/max)*100)}%"></div>`).join('');}
+ function renderSpark(s){const days=s.daily||[];if(!days.length){$('spark').innerHTML=`<div class="empty" style="width:100%">${t('no_data')}</div>`;return;}
+   const max=Math.max(...days.map(d=>d.n),1);
+   $('spark').innerHTML=days.map(d=>{const h=Math.max(4,(d.n/max)*100);const ph=d.n?Math.min(100,((d.purchases||0)/d.n)*100):0;
+     return `<div class="b" title="${d.day}: ${fmtN(d.n)} ${t('spark_leads').toLowerCase()}, ${fmtN(d.purchases||0)} ${t('spark_purchases').toLowerCase()}" style="height:${h}%"><div class="b2" style="height:${ph}%"></div></div>`;}).join('');}
 
  // ── Leads ──
  function loadLeads(off){if(off!=null)offset=off;

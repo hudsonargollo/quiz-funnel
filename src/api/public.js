@@ -162,6 +162,8 @@ export async function handlePublic(request, env, path, url, ctx) {
           stripe_customer_id: s.customer || null,
           stripe_session_id: s.id || null,
           stripe_payment_intent_id: s.payment_intent || null,
+          amount_total: s.amount_total ?? null,
+          currency: s.currency ? s.currency.toUpperCase() : null,
         });
       } else if (event.type === 'payment_intent.payment_failed') {
         const pi = event.data.object;

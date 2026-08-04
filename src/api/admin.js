@@ -226,6 +226,47 @@ async function statsHandler(db, acc, url) {
   const tsRows = await db.prepare(
     `SELECT substr(created_at,1,10) AS day, COUNT(*) AS n FROM leads ${scope} AND created_at >= ? GROUP BY day ORDER BY day ASC`
   ).bind(...dailyBinds).all();
+  const purchRows = await db.prepare(
+    `SELECT substr(purchased_at,1,10) AS day, COUNT(*) AS n, SUM(amount_total) AS revenue
+     FROM leads ${scope} AND purchased_at >= ? GROUP BY day ORDER BY day ASC`
+  ).bind(...dailyBinds).all();
+  const dayMap = {};
+  for (const r of tsRows.results || []) dayMap[r.day] = { day: r.day, n: r.n, purchases: 0, revenue: 0 };
+  for (const r of purchRows.results || []) {
+    dayMap[r.day] = dayMap[r.day] || { day: r.day, n: 0, purchases: 0, revenue: 0 };
+    dayMap[r.day].purchases = r.n;
+    dayMap[r.day].revenue = r.revenue || 0;
+  }
+  const daily = Object.values(dayMap).sort((a, b) => a.day.localeCompare(b.day));
+
+  // revenue totals — grouped by currency since a tenant can run funnels in more than one
+  const revRows = await db.prepare(
+    `SELECT COALESCE(currency,'?') AS currency, SUM(amount_total) AS total, COUNT(*) AS n
+     FROM leads ${scopeDate} AND funnel_state = 'purchase_completed' AND amount_total IS NOT NULL
+     GROUP BY currency ORDER BY total DESC`
+  ).bind(...dateBinds).all();
+  const revenue = revRows.results || [];
+
+  // per-funnel leaderboard — only meaningful in the account-wide (no funnelId) view
+  let byFunnel = [];
+  if (!funnelId) {
+    const bfWhere = since ? 'l.account_id = ? AND l.created_at >= ?' : 'l.account_id = ?';
+    const bfBinds = since ? [acc, since] : [acc];
+    const bfRows = await db.prepare(
+      `SELECT f.id AS funnel_id, f.name AS name,
+              COUNT(*) AS leads,
+              SUM(CASE WHEN l.funnel_state = 'purchase_completed' THEN 1 ELSE 0 END) AS purchases,
+              SUM(CASE WHEN l.funnel_state = 'purchase_completed' THEN l.amount_total ELSE 0 END) AS revenue,
+              MAX(l.currency) AS currency
+       FROM leads l JOIN funnels f ON f.id = l.funnel_id
+       WHERE ${bfWhere}
+       GROUP BY f.id, f.name
+       ORDER BY leads DESC`
+    ).bind(...bfBinds).all();
+    byFunnel = (bfRows.results || []).map(r => ({
+      ...r, cvr: r.leads ? r1((r.purchases / r.leads) * 100) : 0,
+    }));
+  }
 
   return json({
     total, byState, funnel,
@@ -235,7 +276,7 @@ async function statsHandler(db, acc, url) {
       checkout_rate: offerViewed ? r1((checkout / offerViewed) * 100) : 0,
       purchase_rate: total ? r1((purchased / total) * 100) : 0,
     },
-    questions, utm: utmRows.results || [], daily: tsRows.results || [],
+    questions, utm: utmRows.results || [], daily, revenue, byFunnel,
     scopedToFunnel: !!funnelId,
   });
 }
