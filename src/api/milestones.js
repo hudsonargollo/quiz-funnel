@@ -76,8 +76,8 @@ export async function handleMilestones(db, env, request, path, url, acc, userId)
     const b = await request.json().catch(() => ({}));
     const done = !!b.done;
     const ts = new Date().toISOString();
-    await db.prepare('UPDATE milestone_tasks SET done = ?, done_at = ?, updated_at = ? WHERE id = ?')
-      .bind(done ? 1 : 0, done ? ts : null, ts, taskId).run();
+    await db.prepare('UPDATE milestone_tasks SET done = ?, done_at = ?, updated_at = ? WHERE account_id = ? AND id = ?')
+      .bind(done ? 1 : 0, done ? ts : null, ts, acc, taskId).run();
     return json({ ok: true, done });
   }
 
@@ -106,7 +106,7 @@ export async function handleMilestones(db, env, request, path, url, acc, userId)
     const c = await db.prepare('SELECT id, user_id FROM milestone_comments WHERE account_id = ? AND id = ?').bind(acc, commentId).first();
     if (!c) return err('Not found', 404);
     if (!isAdmin && c.user_id !== me.id) return err('Forbidden', 403);
-    await db.prepare('DELETE FROM milestone_comments WHERE id = ?').bind(commentId).run();
+    await db.prepare('DELETE FROM milestone_comments WHERE account_id = ? AND id = ?').bind(acc, commentId).run();
     return json({ ok: true });
   }
 

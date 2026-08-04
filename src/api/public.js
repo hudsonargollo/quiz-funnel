@@ -26,26 +26,37 @@ function deliveryEnabled(f) {
  * slug isn't in the API path, so we use, in order: explicit body identifiers
  * (the funnel shell injects window.FUNNEL.slug), a custom-domain host mapping,
  * then the Referer page path / ?f= fallback.
+ *
+ * Body-supplied funnelId/funnelSlug are cross-checked against the host/referer
+ * this request actually arrived on — otherwise anyone could POST a different
+ * tenant's funnelId (visible in that tenant's public page source) and inject
+ * fake leads / checkout sessions into their CRM regardless of which page, if
+ * any, they were really on. A mismatch against a resolved custom domain or a
+ * present Referer is rejected; when neither signal is available we fall back
+ * to trusting the body, same as before — that residual gap is inherent to any
+ * public, unauthenticated lead-capture endpoint (a raw request can forge any
+ * header), not something a server-side check alone can close.
  */
 async function funnelForRequest(db, url, env, body, request) {
+  const host = (url.searchParams.get('host') || url.hostname).toLowerCase();
+  const platform = (env.PLATFORM_DOMAIN || '').toLowerCase();
+  const domSlug = (platform && host === platform) ? null : await getSlugByHostname(db, host);
+  let refSlug = '';
+  if (request) {
+    try { refSlug = slugFromPath(new URL(request.headers.get('Referer')).pathname); } catch (e) { /* no/invalid referer */ }
+  }
+  const matchesRequest = (f) => (domSlug ? f.slug === domSlug : (refSlug ? f.slug === refSlug : true));
+
   if (body?.funnelId) {
     const f = await db.prepare('SELECT * FROM funnels WHERE id = ?').bind(body.funnelId).first();
-    if (f) return f;
+    if (f && matchesRequest(f)) return f;
   }
   if (body?.funnelSlug) {
     const f = await getFunnelBySlug(db, body.funnelSlug);
-    if (f) return f;
+    if (f && matchesRequest(f)) return f;
   }
-  const host = (url.searchParams.get('host') || url.hostname).toLowerCase();
-  const platform = (env.PLATFORM_DOMAIN || '').toLowerCase();
-  if (!(platform && host === platform)) {
-    const domSlug = await getSlugByHostname(db, host);
-    if (domSlug) return getFunnelBySlug(db, domSlug);
-  }
-  let slug = url.searchParams.get('f') || '';
-  if (!slug && request) {
-    try { slug = slugFromPath(new URL(request.headers.get('Referer')).pathname); } catch (e) { /* no/invalid referer */ }
-  }
+  if (domSlug) return getFunnelBySlug(db, domSlug);
+  const slug = url.searchParams.get('f') || refSlug;
   return slug ? getFunnelBySlug(db, slug) : null;
 }
 
