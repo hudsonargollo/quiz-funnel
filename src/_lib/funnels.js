@@ -89,6 +89,9 @@ export async function updateFunnel(db, accountId, id, patch, secretsKey) {
   if (patch.stripe_publishable_key != null) set('stripe_publishable_key', patch.stripe_publishable_key);
   if (patch.stripe_secret_key) set('stripe_secret_enc', await encryptSecret(patch.stripe_secret_key, secretsKey));
   if (patch.stripe_webhook_secret) set('stripe_webhook_secret_enc', await encryptSecret(patch.stripe_webhook_secret, secretsKey));
+  // Meta Pixel / Conversions API (token encrypted at rest, same as Stripe secrets)
+  if (patch.fb_pixel_id != null) set('fb_pixel_id', patch.fb_pixel_id || null);
+  if (patch.fb_access_token) set('fb_access_token_enc', await encryptSecret(patch.fb_access_token, secretsKey));
 
   if (!sets.length) return { ok: true };
   set('updated_at', nowISO());
@@ -117,5 +120,6 @@ export function publicFunnel(f) {
     config: parsed.config || {}, screens: parsed.screens || [],
     stripePublishableKey: f.stripe_publishable_key || null,
     postPurchaseUrl: f.post_purchase_url || null,
+    fbPixelId: f.fb_pixel_id || null,
   };
 }

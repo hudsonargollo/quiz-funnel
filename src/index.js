@@ -112,10 +112,23 @@ async function serveFunnel(env, url, slug, request) {
   }
   const res = await serveAsset(env, shellPath, request);
   let html = await res.text();
-  const boot = `<script>
+  const pixelId = /^\d+$/.test(pf.fbPixelId || '') ? pf.fbPixelId : null;
+  const pixel = pixelId && !preview ? `<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '${pixelId}');
+fbq('track', 'PageView');
+</script>` : '';
+  const boot = `${pixel}<script>
 window.SCREENS=${JSON.stringify(pf.screens)};
 window.QUIZ_CONFIG=${JSON.stringify(pf.config)};
-window.FUNNEL=${JSON.stringify({ id: pf.funnelId, accountId: pf.accountId, type: pf.type, slug: pf.slug, stripePublishableKey: pf.stripePublishableKey, postPurchaseUrl: pf.postPurchaseUrl, preview })};
+window.FUNNEL=${JSON.stringify({ id: pf.funnelId, accountId: pf.accountId, type: pf.type, slug: pf.slug, stripePublishableKey: pf.stripePublishableKey, postPurchaseUrl: pf.postPurchaseUrl, fbPixelId: pixelId, preview })};
 </script>`;
   html = html.replace('<!--FUNNEL_BOOT-->', boot);
   // Per-funnel browser tab title (the shell ships a generic placeholder).

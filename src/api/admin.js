@@ -58,6 +58,7 @@ export async function handleAdmin(request, env, path, url) {
         config: cfg, post_purchase_url: f.post_purchase_url,
         stripe_price_id: f.stripe_price_id, stripe_publishable_key: f.stripe_publishable_key,
         has_stripe_secret: !!f.stripe_secret_enc, has_stripe_webhook: !!f.stripe_webhook_secret_enc,
+        fb_pixel_id: f.fb_pixel_id, has_fb_token: !!f.fb_access_token_enc,
         created_at: f.created_at, updated_at: f.updated_at,
       });
     }

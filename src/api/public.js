@@ -6,6 +6,7 @@ import { decryptSecret } from '../_lib/crypto.js';
 import { createCheckoutSession, verifyStripeSignature } from '../_lib/stripe.js';
 import { deliverLeadMagnet } from '../_lib/messaging/index.js';
 import { grantCredits, grantExists } from '../_lib/credits.js';
+import { sendCapiEvent } from '../_lib/meta_capi.js';
 
 // First path segment of a funnel-page URL (e.g. "/drapatricia/..." → "drapatricia").
 function slugFromPath(pathname) {
@@ -89,6 +90,13 @@ export async function handlePublic(request, env, path, url, ctx) {
     if (JSON.stringify(body.quizData || {}).length > 8000) return err('Payload too large', 413);
     const f = await funnelForRequest(db, url, env, body, request);
     if (!f) return err('Funnel not found', 404);
+    const email = (body.email || '').trim();
+    // Existence check ahead of the upsert so we can fire the CAPI Lead event
+    // once, on first capture, rather than on every quiz-progress sync.
+    const existing = body.userId
+      ? await db.prepare('SELECT user_id FROM leads WHERE account_id = ? AND user_id = ?').bind(f.account_id, body.userId).first()
+      : (email ? await db.prepare('SELECT user_id FROM leads WHERE account_id = ? AND email = ?').bind(f.account_id, email.toLowerCase()).first() : null);
+    const isNewLead = !existing;
     const meta = {
       ipCountry: request.headers.get('CF-IPCountry') || null,
       userAgent: request.headers.get('User-Agent') || null,
@@ -98,11 +106,20 @@ export async function handlePublic(request, env, path, url, ctx) {
 
     // Deliver the lead magnet on opt-in (fire-and-forget; idempotent per lead).
     // Runs only when the funnel has delivery.enabled and we captured an email.
-    const email = (body.email || '').trim();
     if (email && deliveryEnabled(f)) {
       const firstName = ((body.metadata?.nome || body.nome || '').trim().split(/\s+/)[0]) || '';
       const job = deliverLeadMagnet(env, db, { funnel: f, userId, email, firstName })
         .catch((e) => console.error('deliverLeadMagnet failed:', e));
+      if (ctx && ctx.waitUntil) ctx.waitUntil(job); else await job;
+    }
+    // Meta Conversions API — mirrors the browser Pixel's Lead event server-side.
+    if (email && isNewLead) {
+      const job = sendCapiEvent(env, f, {
+        eventName: 'Lead',
+        eventSourceUrl: request.headers.get('Referer') || undefined,
+        eventId: userId,
+        userData: { email, clientIp: request.headers.get('CF-Connecting-IP') || undefined, userAgent: meta.userAgent || undefined },
+      });
       if (ctx && ctx.waitUntil) ctx.waitUntil(job); else await job;
     }
     return json({ ok: true, userId });
@@ -166,9 +183,10 @@ export async function handlePublic(request, env, path, url, ctx) {
     try {
       if (event.type === 'checkout.session.completed') {
         const s = event.data.object;
+        const purchaseEmail = s.customer_email || s.customer_details?.email;
         await setLeadState(db, {
           accountId: f.account_id, funnelId: f.id,
-          userId: s.metadata?.userId, email: s.customer_email || s.customer_details?.email,
+          userId: s.metadata?.userId, email: purchaseEmail,
         }, 'purchase_completed', {
           stripe_customer_id: s.customer || null,
           stripe_session_id: s.id || null,
@@ -176,6 +194,17 @@ export async function handlePublic(request, env, path, url, ctx) {
           amount_total: s.amount_total ?? null,
           currency: s.currency ? s.currency.toUpperCase() : null,
         });
+        // Meta Conversions API — mirrors the browser Pixel's Purchase event server-side.
+        const job = sendCapiEvent(env, f, {
+          eventName: 'Purchase',
+          eventId: s.id,
+          userData: { email: purchaseEmail || undefined },
+          customData: {
+            value: typeof s.amount_total === 'number' ? s.amount_total / 100 : undefined,
+            currency: s.currency ? s.currency.toUpperCase() : undefined,
+          },
+        });
+        if (ctx && ctx.waitUntil) ctx.waitUntil(job); else await job;
       } else if (event.type === 'payment_intent.payment_failed') {
         const pi = event.data.object;
         const email = pi.last_payment_error?.payment_method?.billing_details?.email;
