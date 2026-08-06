@@ -677,8 +677,8 @@
               <p style="font-size:12px;color:var(--text-secondary);margin-top:2px">Accès immédiat</p>
             </div>
             <div class="offer-price-wrap">
-              <p class="offer-price-original">R$ 49,90</p>
-              <p class="offer-price">R$ ${cfg.productPrice.toFixed(2).replace('.',',')}</p>
+              <p class="offer-price-original">49,90 €</p>
+              <p class="offer-price">${cfg.productPrice.toFixed(2).replace('.',',')} €</p>
               <p class="offer-price-note">Paiement unique</p>
             </div>
           </div>
@@ -689,7 +689,7 @@
                 <p class="include-name">Application exclusive du protocole</p>
                 <p class="include-desc">Accès immédiat au protocole complet et au guide de recettes</p>
               </div>
-              <span class="include-value">R$ 27,90</span>
+              <span class="include-value">27,90 €</span>
             </div>
             <div class="offer-include-item">
               <div class="include-icon">${icon('clipboard-list')}</div>
@@ -728,7 +728,7 @@
         <!-- CTA -->
         <div class="btn-wrap" style="padding-bottom:120px">
           <button class="btn btn-success" id="checkout-btn" data-action="checkout">
-            ${icon('check')} JE VEUX MON PROTOCOLE — R$ ${cfg.productPrice.toFixed(2).replace('.',',')}
+            ${icon('check')} JE VEUX MON PROTOCOLE — ${cfg.productPrice.toFixed(2).replace('.',',')} €
           </button>
           <p class="btn-note">${icon('lock')} Paiement 100% sécurisé · Accès immédiat</p>
         </div>
@@ -740,7 +740,7 @@
         <div class="sticky-cta-inner">
           <div class="sticky-price-info">
             <p class="sticky-price-label">Prix spécial</p>
-            <p class="sticky-price-value">R$ ${cfg.productPrice.toFixed(2).replace('.',',')}</p>
+            <p class="sticky-price-value">${cfg.productPrice.toFixed(2).replace('.',',')} €</p>
           </div>
           <button class="btn btn-success sticky-cta-btn" data-action="checkout">
             Acheter maintenant →
