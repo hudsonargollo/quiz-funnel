@@ -140,7 +140,7 @@ export async function handleAi(db, env, request, path, url, acc) {
         'SELECT id, platform, persona, headline, primary_text, cta, image_key, favorite, score, score_feedback, created_at FROM ad_creatives WHERE account_id = ? AND project_id = ? ORDER BY created_at DESC'
       ).bind(acc, project.id).all();
       const comp = await db.prepare(
-        'SELECT id, source, page_name, ad_text, cta, media_url, angle, fetched_at FROM competitor_ads WHERE account_id = ? AND project_id = ? ORDER BY fetched_at DESC LIMIT 60'
+        'SELECT id, source, page_name, ad_text, cta, media_url, image_url, angle, fetched_at FROM competitor_ads WHERE account_id = ? AND project_id = ? ORDER BY fetched_at DESC LIMIT 60'
       ).bind(acc, project.id).all();
       return json({
         ...projectPublic(project),
@@ -283,12 +283,12 @@ export async function handleAi(db, env, request, path, url, acc) {
       ]);
       const ts = nowISO();
       const rows = [];
-      for (const a of meta.ads) rows.push(['meta', a.page_name, a.ad_text, a.cta, a.media_url, null, JSON.stringify(a.raw || {})]);
-      for (const a of ai) rows.push(['ai', a.page_name, a.ad_text, a.cta, null, a.angle || null, '{}']);
+      for (const a of meta.ads) rows.push(['meta', a.page_name, a.ad_text, a.cta, a.media_url, a.image_url || null, null, JSON.stringify(a.raw || {})]);
+      for (const a of ai) rows.push(['ai', a.page_name, a.ad_text, a.cta, null, null, a.angle || null, '{}']);
       if (rows.length) {
         await db.batch(rows.map((r) => db.prepare(
-          'INSERT INTO competitor_ads (id, account_id, project_id, source, page_name, ad_text, cta, media_url, angle, raw, fetched_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
-        ).bind(randomId('cad'), acc, project.id, r[0], r[1], r[2], r[3], r[4], r[5], r[6], ts)));
+          'INSERT INTO competitor_ads (id, account_id, project_id, source, page_name, ad_text, cta, media_url, image_url, angle, raw, fetched_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)'
+        ).bind(randomId('cad'), acc, project.id, r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], ts)));
       }
       return json({ added: rows.length, note: meta.note, credits: charge.balance });
     } catch (e) {
@@ -318,7 +318,7 @@ export async function handleAi(db, env, request, path, url, acc) {
       const variants = await generateCreativeCopy(env, { brief, platform, persona, count, lang });
       const ts = nowISO();
       const saved = [];
-      let imageError = null;  // first non-fatal image failure (copy still saved)
+      const imageErrors = [];  // every non-fatal image failure in this batch (copy still saved)
       for (const v of variants) {
         const id = randomId('crv');
         let imageKey = null;
@@ -329,19 +329,19 @@ export async function handleAi(db, env, request, path, url, acc) {
             await env.AD_ASSETS.put(imageKey, img.bytes, { httpMetadata: { contentType: img.contentType } });
           } catch (e) {
             imageKey = null; /* keep copy even if image fails */
-            if (!imageError) imageError = e.message;
+            imageErrors.push({ id, headline: v.headline, error: e.message });
             console.error('creative image generation failed:', e.message);
           }
-        } else if (withImages && !env.OPENAI_API_KEY && !imageError) {
-          imageError = 'OPENAI_API_KEY not configured';
+        } else if (withImages && !env.OPENAI_API_KEY) {
+          imageErrors.push({ id, headline: v.headline, error: 'OPENAI_API_KEY not configured' });
         }
         await db.prepare(
-          'INSERT INTO ad_creatives (id, account_id, project_id, platform, persona, headline, primary_text, cta, image_key, favorite, created_at) VALUES (?,?,?,?,?,?,?,?,?,0,?)'
-        ).bind(id, acc, project.id, platform, persona || null, v.headline || '', v.primary_text || '', v.cta || '', imageKey, ts).run();
+          'INSERT INTO ad_creatives (id, account_id, project_id, platform, persona, headline, primary_text, cta, image_key, image_prompt, favorite, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,0,?)'
+        ).bind(id, acc, project.id, platform, persona || null, v.headline || '', v.primary_text || '', v.cta || '', imageKey, v.image_prompt || null, ts).run();
         saved.push({ id, platform, persona, headline: v.headline, primary_text: v.primary_text, cta: v.cta, image_key: imageKey, favorite: 0, created_at: ts });
       }
       await db.prepare('UPDATE ad_projects SET updated_at = ? WHERE account_id = ? AND id = ?').bind(ts, acc, project.id).run();
-      return json({ creatives: saved, credits: charge.balance, imageError });
+      return json({ creatives: saved, credits: charge.balance, imageError: imageErrors[0]?.error || null, imageErrors });
     } catch (e) {
       const credits = await refundCredits(db, acc, cost, project.id);
       return json({ error: `Creative generation failed: ${e.message}`, credits }, 502);
@@ -422,6 +422,26 @@ export async function handleAi(db, env, request, path, url, acc) {
     return new Response(obj.body, {
       headers: { 'Content-Type': obj.httpMetadata?.contentType || 'image/png', 'Cache-Control': 'private, max-age=86400' },
     });
+  }
+
+  // ── Retry a creative's image generation (no extra credit charge — the batch
+  // that produced this creative already paid for it; this just recovers from a
+  // transient OpenAI failure or a missing key at the time of original generation) ──
+  const rim = path.match(/^\/api\/ai\/creatives\/([^/]+)\/retry-image$/);
+  if (rim && request.method === 'POST') {
+    const cr = await db.prepare('SELECT id, image_prompt, image_key FROM ad_creatives WHERE account_id = ? AND id = ?').bind(acc, rim[1]).first();
+    if (!cr) return err('Not found', 404);
+    if (!cr.image_prompt) return err('No image prompt was saved for this creative — it predates image retry support', 400);
+    if (!env.OPENAI_API_KEY) return err('OPENAI_API_KEY not configured', 502);
+    try {
+      const img = await generateImage(env, { prompt: cr.image_prompt });
+      const imageKey = cr.image_key || `creatives/${acc}/${cr.id}.png`;
+      await env.AD_ASSETS.put(imageKey, img.bytes, { httpMetadata: { contentType: img.contentType } });
+      await db.prepare('UPDATE ad_creatives SET image_key = ? WHERE account_id = ? AND id = ?').bind(imageKey, acc, cr.id).run();
+      return json({ id: cr.id, image_key: imageKey });
+    } catch (e) {
+      return err(`Image generation failed: ${e.message}`, 502);
+    }
   }
 
   // ── AI-score a creative (re-runnable; independent of generation) ──

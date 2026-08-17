@@ -63,7 +63,9 @@ export async function searchAdLibrary(env, { query, country = 'US', limit = 12, 
   const note = EU.has(cc)
     ? null
     : `${cc} is outside the EU — Meta's API only returns political/issue ads here. For full commercial coverage, search an EU country.`;
-  return { ads: normalize(raw.slice(0, limit)), note };
+  const ads = normalize(raw.slice(0, limit));
+  await attachSnapshotImages(ads);
+  return { ads, note };
 }
 
 function normalize(list) {
@@ -72,6 +74,48 @@ function normalize(list) {
     ad_text: (a.ad_creative_bodies || [])[0] || (a.ad_creative_link_titles || [])[0] || '',
     cta: (a.ad_creative_link_captions || [])[0] || '',
     media_url: a.ad_snapshot_url || '',
+    image_url: null,
     raw: a,
+  }));
+}
+
+class OgImageCollector {
+  constructor(target) { this.target = target; }
+  element(el) {
+    const property = el.getAttribute('property') || el.getAttribute('name');
+    if (property === 'og:image' && !this.target.imageUrl) {
+      this.target.imageUrl = el.getAttribute('content') || null;
+    }
+  }
+}
+
+/**
+ * The Ad Library API never returns a hotlinkable image — only `ad_snapshot_url`,
+ * a link to Meta's own interactive preview page for that ad. This fetches each
+ * snapshot page server-side and pulls its `og:image` (the same unfurl technique
+ * `src/_lib/offers/clickbank.js` uses for sales pages) so callers get a real,
+ * renderable thumbnail. Best-effort: one ad's fetch failing (timeout, blocked,
+ * video-only ad with no static og:image) never fails the whole search — it just
+ * leaves that ad's `image_url` null, same as today's behavior.
+ */
+async function attachSnapshotImages(ads) {
+  await Promise.all(ads.map(async (a) => {
+    if (!a.media_url) return;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    try {
+      const r = await fetch(a.media_url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TektoneAdPreview/1.0)' },
+        signal: controller.signal,
+      });
+      if (!r.ok) return;
+      const meta = { imageUrl: null };
+      await new HTMLRewriter().on('meta', new OgImageCollector(meta)).transform(r).arrayBuffer();
+      a.image_url = meta.imageUrl;
+    } catch (e) {
+      // network error, timeout, or blocked fetch — leave image_url null
+    } finally {
+      clearTimeout(timeout);
+    }
   }));
 }

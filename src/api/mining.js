@@ -44,11 +44,12 @@ export async function handleMining(db, env, request, path, url, acc) {
       const id = randomId('min');
       const ts = nowISO();
       await db.prepare(
-        `INSERT INTO mined_products (id, account_id, source, page_name, ad_text, cta, media_url, category, raw, created_at, updated_at)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+        `INSERT INTO mined_products (id, account_id, source, page_name, ad_text, cta, media_url, image_url, category, raw, created_at, updated_at)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`
       ).bind(
         id, acc, 'meta',
         (b.page_name || '').slice(0, 200), (b.ad_text || '').slice(0, 2000), (b.cta || '').slice(0, 100), (b.media_url || '').slice(0, 1000),
+        (b.image_url || '').slice(0, 1000) || null,
         (b.category || '').trim().slice(0, 60) || null,
         b.raw ? JSON.stringify(b.raw).slice(0, 20000) : null,
         ts, ts,
