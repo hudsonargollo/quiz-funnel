@@ -157,6 +157,10 @@
   .auth .switch{text-align:center;margin-top:14px;font-size:13px;color:var(--muted)}
   .auth .switch a{cursor:pointer}
   .err{color:var(--red);font-size:13px;margin-top:10px;min-height:18px;text-align:center}
+  .err.ok{color:var(--green)}
+  .fp-link{text-align:right;margin-top:6px;font-size:12.5px}
+  .fp-link a{cursor:pointer;color:var(--muted)}
+  .fp-link a:hover{color:var(--brand)}
   .empty{padding:28px;text-align:center;color:var(--muted)}
   .mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;word-break:break-all}
   .lang-mini{position:fixed;top:16px;right:18px}
@@ -286,17 +290,21 @@
   <h1 id="auth-title">Sign in</h1>
   <p class="sub" id="auth-sub">Welcome back to Tektone Funnels</p>
   <div id="signup-name-wrap" class="hidden"><label data-i18n="f_name">Name</label><input id="au-name" type="text"></div>
-  <label data-i18n="email">Email</label><input id="au-email" type="email" autocomplete="username">
-  <label data-i18n="password">Password</label>
-  <div class="pwfield">
-    <input id="au-pass" type="password" autocomplete="current-password" style="padding-right:42px">
-    <button type="button" class="pw-toggle" id="au-pw-toggle" tabindex="-1" aria-label="Show password">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-    </button>
+  <div id="au-email-wrap"><label data-i18n="email">Email</label><input id="au-email" type="email" autocomplete="username"></div>
+  <div id="au-pass-wrap">
+    <label id="au-pass-label" data-i18n="password">Password</label>
+    <div class="pwfield">
+      <input id="au-pass" type="password" autocomplete="current-password" style="padding-right:42px">
+      <button type="button" class="pw-toggle" id="au-pw-toggle" tabindex="-1" aria-label="Show password">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <div class="fp-link" id="fp-link"><a onclick="App.setAuthMode('forgot')" data-i18n="forgot_link">Forgot password?</a></div>
   </div>
+  <div id="au-pass2-wrap" class="hidden"><label data-i18n="password_confirm">Confirm new password</label><input id="au-pass2" type="password" autocomplete="new-password"></div>
   <button class="btn" id="auth-btn" onclick="App.submitAuth()">Sign in</button>
   <div class="err" id="auth-err"></div>
-  <div class="switch"><span id="switch-text">No account?</span> <a id="switch-link" onclick="App.toggleAuthMode()">Create one</a></div>
+  <div class="switch" id="switch-wrap"><span id="switch-text">No account?</span> <a id="switch-link" onclick="App.toggleAuthMode()">Create one</a></div>
 </div>
 
 <!-- APP -->
@@ -432,6 +440,12 @@
 const I18N={
  en:{login:'Sign in',signup:'Create account',welcome_back:'Welcome back to Tektone Funnels',create_sub:'Start building funnels in minutes',
    no_account:'No account?',have_account:'Have an account?',create_one:'Create one',sign_in_link:'Sign in',
+   forgot_link:'Forgot password?',password_new:'New password',password_confirm:'Confirm new password',
+   forgot_title:'Reset password',forgot_sub:'We’ll email you a link to choose a new one',forgot_btn:'Send reset link',
+   forgot_sent:'If that email has an account, we’ve sent a reset link.',back_to_login:'Back to sign in',
+   reset_title:'Choose a new password',reset_sub:'Enter a new password for your account',reset_btn:'Save new password',
+   reset_success:'Password updated — sign in with your new password.',reset_invalid:'This reset link is invalid or has expired.',
+   password_mismatch:'Passwords don’t match.',
    email:'Email',password:'Password',f_name:'Name',logout:'Sign out',updated:'Updated',auto:'Auto-refresh',
    nav_analytics:'Dashboard',nav_funnels:'Funnels',range_all:'All time',range_7:'Last 7 days',range_30:'Last 30 days',range_90:'Last 90 days',
    perf_title:'Performance',dash_hint:'Tap a funnel to filter the dashboard',conv_short:'Conv.',manage:'Manage',
@@ -492,6 +506,12 @@ const I18N={
    dl_test:'Send a test to me',dl_test_prompt:'Send a test deliverable to which email?',dl_test_ok:'Test sent — check your inbox.'},
  pt:{login:'Entrar',signup:'Criar conta',welcome_back:'Bem-vindo de volta à Tektone Funnels',create_sub:'Crie funis em minutos',
    no_account:'Sem conta?',have_account:'Já tem conta?',create_one:'Criar uma',sign_in_link:'Entrar',
+   forgot_link:'Esqueceu a password?',password_new:'Nova password',password_confirm:'Confirme a nova password',
+   forgot_title:'Redefinir password',forgot_sub:'Vamos enviar-lhe um link para escolher uma nova',forgot_btn:'Enviar link',
+   forgot_sent:'Se esse email tiver conta, enviámos um link de redefinição.',back_to_login:'Voltar a entrar',
+   reset_title:'Escolha uma nova password',reset_sub:'Introduza uma nova password para a sua conta',reset_btn:'Guardar nova password',
+   reset_success:'Password atualizada — entre com a nova password.',reset_invalid:'Este link é inválido ou expirou.',
+   password_mismatch:'As passwords não coincidem.',
    email:'Email',password:'Palavra-passe',f_name:'Nome',logout:'Sair',updated:'Atualizado',auto:'Atualização automática',
    nav_analytics:'Painel',nav_funnels:'Funis',range_all:'Todo o período',range_7:'Últimos 7 dias',range_30:'Últimos 30 dias',range_90:'Últimos 90 dias',
    perf_title:'Desempenho',dash_hint:'Toque num funil para filtrar o painel',conv_short:'Conv.',manage:'Gerir',
@@ -558,7 +578,7 @@ const STATE_LABEL={en:{quiz_started:'Started',lead_captured:'Lead',offer_viewed:
 
 const App=(()=>{
  const LANG_KEY='qf_admin_lang';const AUTO_MS=30000;
- let lang='pt',view='analytics',authMode='login';
+ let lang='pt',view='analytics',authMode='login',resetToken=null;
  let funnelId='',offset=0,limit=50,total=0,_stats=null,_leads=null,_funnels=[],_timer=null;
  // One-time entrance flags — animations fire on first paint only, so the ~15s
  // auto-refresh re-render doesn't re-roll numbers or re-stagger cards.
@@ -588,17 +608,47 @@ const App=(()=>{
  // ── Auth ──
  function showAuth(){stopAuto();$('app').classList.add('hidden');$('auth').classList.remove('hidden');}
  function renderAuthMode(){
-   const isLogin=authMode==='login';
-   $('auth-title').textContent=isLogin?t('login'):t('signup');
-   $('auth-sub').textContent=isLogin?t('welcome_back'):t('create_sub');
-   $('auth-btn').textContent=isLogin?t('login'):t('signup');
-   $('switch-text').textContent=isLogin?t('no_account'):t('have_account');
-   $('switch-link').textContent=isLogin?t('create_one'):t('sign_in_link');
-   $('signup-name-wrap').classList.toggle('hidden',isLogin);
+   const m=authMode;
+   $('auth-title').textContent=m==='login'?t('login'):m==='signup'?t('signup'):m==='forgot'?t('forgot_title'):t('reset_title');
+   $('auth-sub').textContent=m==='login'?t('welcome_back'):m==='signup'?t('create_sub'):m==='forgot'?t('forgot_sub'):t('reset_sub');
+   $('auth-btn').textContent=m==='login'?t('login'):m==='signup'?t('signup'):m==='forgot'?t('forgot_btn'):t('reset_btn');
+   $('signup-name-wrap').classList.toggle('hidden',m!=='signup');
+   $('au-email-wrap').classList.toggle('hidden',m==='reset');
+   $('au-pass-wrap').classList.toggle('hidden',m==='forgot');
+   $('au-pass2-wrap').classList.toggle('hidden',m!=='reset');
+   $('au-pass-label').textContent=m==='reset'?t('password_new'):t('password');
+   $('au-pass').autocomplete=m==='reset'?'new-password':m==='signup'?'new-password':'current-password';
+   $('fp-link').classList.toggle('hidden',m!=='login');
+   $('switch-wrap').classList.toggle('hidden',m==='reset');
+   $('switch-text').textContent=m==='login'?t('no_account'):m==='signup'?t('have_account'):'';
+   $('switch-link').textContent=m==='login'?t('create_one'):m==='signup'?t('sign_in_link'):t('back_to_login');
  }
- function toggleAuthMode(){authMode=authMode==='login'?'signup':'login';$('auth-err').textContent='';renderAuthMode();}
+ function setAuthMode(mode){authMode=mode;$('auth-err').textContent='';$('auth-err').classList.remove('ok');renderAuthMode();}
+ function toggleAuthMode(){
+   if(authMode==='forgot'||authMode==='reset'){setAuthMode('login');return;}
+   setAuthMode(authMode==='login'?'signup':'login');
+ }
  async function submitAuth(){
-   $('auth-err').textContent='';
+   $('auth-err').textContent='';$('auth-err').classList.remove('ok');
+   if(authMode==='forgot'){
+     const email=$('au-email').value.trim();
+     try{
+       await api('auth/forgot-password',{method:'POST',body:JSON.stringify({email})});
+       $('auth-err').classList.add('ok');$('auth-err').textContent=t('forgot_sent');
+     }catch(e){$('auth-err').textContent=e.message==='unauth'?'':String(e.message);}
+     return;
+   }
+   if(authMode==='reset'){
+     const password=$('au-pass').value,password2=$('au-pass2').value;
+     if(password!==password2){$('auth-err').textContent=t('password_mismatch');return;}
+     try{
+       await api('auth/reset-password',{method:'POST',body:JSON.stringify({token:resetToken,password})});
+       history.replaceState(null,'','/admin/');
+       setAuthMode('login');
+       $('auth-err').classList.add('ok');$('auth-err').textContent=t('reset_success');
+     }catch(e){$('auth-err').textContent=e.message==='unauth'?'':String(e.message);}
+     return;
+   }
    const email=$('au-email').value.trim(),password=$('au-pass').value,name=$('au-name').value.trim();
    const path=authMode==='login'?'auth/login':'auth/signup';
    try{
@@ -1718,19 +1768,27 @@ const App=(()=>{
    applyI18n();
    document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));
    $('au-pass').addEventListener('keydown',e=>{if(e.key==='Enter')submitAuth();});
+   $('au-email').addEventListener('keydown',e=>{if(e.key==='Enter')submitAuth();});
+   $('au-pass2').addEventListener('keydown',e=>{if(e.key==='Enter')submitAuth();});
    $('au-pw-toggle').addEventListener('click',function(){
      const pw=$('au-pass');
      pw.type=pw.type==='password'?'text':'password';
      this.setAttribute('aria-label',pw.type==='password'?'Show password':'Hide password');
    });
    document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('app').classList.contains('hidden')&&view==='analytics')refresh();});
-   api('auth/me').then((me)=>{
-     if(me&&me.role&&me.role!=='owner'){location.href='/milestones';return;}
-     $('auth').classList.add('hidden');$('app').classList.remove('hidden');boot();aiHandleReturn();
-   }).catch(()=>showAuth());
+   const resetParam=new URLSearchParams(location.search).get('reset');
+   if(resetParam){
+     resetToken=resetParam;
+     showAuth();setAuthMode('reset');
+   }else{
+     api('auth/me').then((me)=>{
+       if(me&&me.role&&me.role!=='owner'){location.href='/milestones';return;}
+       $('auth').classList.add('hidden');$('app').classList.remove('hidden');boot();aiHandleReturn();
+     }).catch(()=>showAuth());
+   }
  })();
 
- return {submitAuth,toggleAuthMode,logout,showView,refresh,loadStats,loadLeads,page,openLead,closeDrawer,exportCsv,
+ return {submitAuth,toggleAuthMode,setAuthMode,logout,showView,refresh,loadStats,loadLeads,page,openLead,closeDrawer,exportCsv,
    onFunnelChange,scopeFunnel,openFunnelEditor,saveFunnel,deleteFunnel,setLang,copyText,copyEl,pickTemplate,
    openBuilder,closeBuilder,toggleBuilderPreview,builderSelect,builderAdd,builderDelete,bset,boptSet,boptAdd,boptDel,
    bfSet,bfAdd,bfDel,bstepSet,bstepAdd,bstepDel,btestSet,btestAdd,btestDel,bcfg,bdel,testDelivery,saveBuilder,loadDomains,addDomain,delDomain,

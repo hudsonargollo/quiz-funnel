@@ -1,6 +1,6 @@
 /** Auth endpoints: signup / login / logout / me */
 import { json, err } from '../_lib/http.js';
-import { signup, login, destroySession, getSession, sessionCookie, getCookieToken } from '../_lib/auth.js';
+import { signup, login, destroySession, getSession, sessionCookie, getCookieToken, requestPasswordReset, resetPassword } from '../_lib/auth.js';
 
 export async function handleAuth(request, env, path) {
   const db = env.DB;
@@ -17,6 +17,17 @@ export async function handleAuth(request, env, path) {
     const r = await login(db, b.email, b.password);
     if (r.error) return err(r.error, r.status);
     return json({ ok: true, accountId: r.accountId }, 200, { 'Set-Cookie': sessionCookie(r.session) });
+  }
+
+  if (path === '/api/auth/forgot-password' && request.method === 'POST') {
+    const b = await request.json().catch(() => ({}));
+    return json(await requestPasswordReset(db, env, b.email));
+  }
+
+  if (path === '/api/auth/reset-password' && request.method === 'POST') {
+    const b = await request.json().catch(() => ({}));
+    const r = await resetPassword(db, b.token, b.password);
+    return r.error ? err(r.error, r.status) : json(r);
   }
 
   if (path === '/api/auth/logout' && request.method === 'POST') {

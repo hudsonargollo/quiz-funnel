@@ -3,12 +3,16 @@
  * Sessions live in D1 (revocable); the cookie holds only an opaque token.
  */
 import { hashPassword, verifyPassword, randomId } from './crypto.js';
+import { sendEmail, defaultFrom } from './messaging/email.js';
+import { renderPasswordReset } from './messaging/templates.js';
 
 const SESSION_TTL_DAYS = 30;
+const RESET_TTL_MINUTES = 60;
 const COOKIE = 'qf_sid';
 
 function nowISO() { return new Date().toISOString(); }
 function plusDaysISO(d) { return new Date(Date.now() + d * 86400000).toISOString(); }
+function plusMinutesISO(m) { return new Date(Date.now() + m * 60000).toISOString(); }
 
 export function parseCookies(request) {
   const out = {};
@@ -59,6 +63,49 @@ export async function login(db, email, password) {
   if (!ok) return { error: 'Invalid email or password', status: 401 };
   const session = await createSession(db, user.id, user.account_id);
   return { accountId: user.account_id, userId: user.id, session };
+}
+
+// ── Forgot / reset password ──────────────────
+// Always resolves { ok: true } regardless of whether the email exists, so the
+// UI can't be used to enumerate accounts — only an existing user gets an email.
+export async function requestPasswordReset(db, env, email) {
+  email = (email || '').trim().toLowerCase();
+  const user = await db.prepare('SELECT id FROM users WHERE lower(email) = ?').bind(email).first();
+  if (user) {
+    const token = randomId('', 32);
+    await db.prepare('DELETE FROM password_resets WHERE user_id = ?').bind(user.id).run();
+    await db.prepare('INSERT INTO password_resets (token, user_id, expires_at, created_at) VALUES (?,?,?,?)')
+      .bind(token, user.id, plusMinutesISO(RESET_TTL_MINUTES), nowISO()).run();
+
+    const platformHost = env.PLATFORM_DOMAIN || 'offers.clubemkt.digital';
+    const resetUrl = `https://${platformHost}/admin/?reset=${token}`;
+    const { subject, html, text } = renderPasswordReset({ resetUrl, expiresInMinutes: RESET_TTL_MINUTES });
+    try {
+      await sendEmail(env, { to: email, from: defaultFrom(env), subject, html, text });
+    } catch (e) {
+      // Swallow: caller still returns ok:true (no enumeration signal), but log for ops.
+      console.error('password reset email failed', e.message);
+    }
+  }
+  return { ok: true };
+}
+
+export async function resetPassword(db, token, newPassword) {
+  if (!newPassword || newPassword.length < 8) {
+    return { error: 'A password of 8+ characters is required', status: 400 };
+  }
+  const row = await db.prepare('SELECT user_id, expires_at FROM password_resets WHERE token = ?').bind(token).first();
+  if (!row || row.expires_at < nowISO()) {
+    if (row) await db.prepare('DELETE FROM password_resets WHERE token = ?').bind(token).run();
+    return { error: 'This reset link is invalid or has expired', status: 400 };
+  }
+
+  const pwHash = await hashPassword(newPassword);
+  await db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(pwHash, row.user_id).run();
+  await db.prepare('DELETE FROM password_resets WHERE token = ?').bind(token).run();
+  // Force re-login everywhere — a reset should invalidate any session an attacker held too.
+  await db.prepare('DELETE FROM sessions WHERE user_id = ?').bind(row.user_id).run();
+  return { ok: true };
 }
 
 export async function createSession(db, userId, accountId) {
