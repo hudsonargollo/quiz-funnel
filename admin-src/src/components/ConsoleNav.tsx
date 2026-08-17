@@ -22,9 +22,9 @@ export default function ConsoleNav() {
           className="grid h-[30px] w-[30px] place-items-center rounded-[10px] font-display text-[15px] font-bold text-primary-foreground"
           style={{ background: 'var(--brand-grad, linear-gradient(135deg,var(--brand-500),var(--brand-soft)))', boxShadow: 'var(--glow-brand)' }}
         >
-          T
+          F
         </div>
-        <div className="font-display text-[15px] font-semibold">Tektone Funnels</div>
+        <div className="font-display text-[15px] font-semibold">FunnelTone</div>
       </div>
 
       <div className="flex min-w-0 flex-1 items-center gap-0.5">

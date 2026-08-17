@@ -49,7 +49,7 @@ AI_ALLOW_SELF_GRANT = "0"                       # lets the "Unlock AI Ads" butto
 AI_BILLING_CURRENCY = "eur"                     # currency for AI Ads credit-pack checkout (minor units in credits.js AI_PACKS)
 
 # Messaging / deliverables (lead-magnet mailer)
-MAIL_FROM_DEFAULT = "Tektone Funnels <noreply@mail.clubemkt.digital>"  # verified Resend sender
+MAIL_FROM_DEFAULT = "FunnelTone <noreply@mail.clubemkt.digital>"  # verified Resend sender
 
 # Attach the Worker to the platform host as a Custom Domain (wrangler creates the
 # proxied DNS record + edge cert for this single hostname automatically).

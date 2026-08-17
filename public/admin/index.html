@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>Tektone Funnels</title>
+<title>FunnelTone</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
@@ -286,9 +286,9 @@
 <!-- AUTH -->
 <div id="auth" class="auth hidden">
   <div class="lang-mini"><div class="seg" id="seg-auth"><button data-lang="en">EN</button><button data-lang="pt">PT</button></div></div>
-  <div class="logo">T</div>
+  <div class="logo">F</div>
   <h1 id="auth-title">Sign in</h1>
-  <p class="sub" id="auth-sub">Welcome back to Tektone Funnels</p>
+  <p class="sub" id="auth-sub">Welcome back to FunnelTone</p>
   <div id="signup-name-wrap" class="hidden"><label data-i18n="f_name">Name</label><input id="au-name" type="text"></div>
   <div id="au-email-wrap"><label data-i18n="email">Email</label><input id="au-email" type="email" autocomplete="username"></div>
   <div id="au-pass-wrap">
@@ -310,7 +310,7 @@
 <!-- APP -->
 <div id="app" class="hidden">
   <div class="topbar"><div class="inner">
-    <div class="brand"><span class="logo">T</span><span>Tektone Funnels</span></div>
+    <div class="brand"><span class="logo">F</span><span>FunnelTone</span></div>
     <div class="live"><span class="dot"></span><span id="updated"></span></div>
     <div class="spacer"></div>
     <div class="navtabs">
@@ -438,7 +438,7 @@
 
 <script>
 const I18N={
- en:{login:'Sign in',signup:'Create account',welcome_back:'Welcome back to Tektone Funnels',create_sub:'Start building funnels in minutes',
+ en:{login:'Sign in',signup:'Create account',welcome_back:'Welcome back to FunnelTone',create_sub:'Start building funnels in minutes',
    no_account:'No account?',have_account:'Have an account?',create_one:'Create one',sign_in_link:'Sign in',
    forgot_link:'Forgot password?',password_new:'New password',password_confirm:'Confirm new password',
    forgot_title:'Reset password',forgot_sub:'We’ll email you a link to choose a new one',forgot_btn:'Send reset link',
@@ -505,7 +505,7 @@ const I18N={
    dl_intro:'Message',dl_intro_ph:'Thanks! Here is the material you requested…',
    dl_url:'Deliverable link (asset URL)',dl_btn:'Button label',dl_btn_ph:'Access now',
    dl_test:'Send a test to me',dl_test_prompt:'Send a test deliverable to which email?',dl_test_ok:'Test sent — check your inbox.'},
- pt:{login:'Entrar',signup:'Criar conta',welcome_back:'Bem-vindo de volta à Tektone Funnels',create_sub:'Crie funis em minutos',
+ pt:{login:'Entrar',signup:'Criar conta',welcome_back:'Bem-vindo de volta à FunnelTone',create_sub:'Crie funis em minutos',
    no_account:'Sem conta?',have_account:'Já tem conta?',create_one:'Criar uma',sign_in_link:'Entrar',
    forgot_link:'Esqueceu a password?',password_new:'Nova password',password_confirm:'Confirme a nova password',
    forgot_title:'Redefinir password',forgot_sub:'Vamos enviar-lhe um link para escolher uma nova',forgot_btn:'Enviar link',
@@ -1021,7 +1021,7 @@ const App=(()=>{
        <p style="color:var(--faint);font-size:11px;margin:4px 0 0">${t('dl_help')}</p>
      </div>
      ${d.enabled?`
-     <label>${t('dl_from')}</label><input value="${esc(d.fromName||'')}" placeholder="${esc(c.productName||'Tektone')}" oninput="App.bdel('fromName',this.value)">
+     <label>${t('dl_from')}</label><input value="${esc(d.fromName||'')}" placeholder="${esc(c.productName||'FunnelTone')}" oninput="App.bdel('fromName',this.value)">
      <label>${t('dl_subject')}</label><input value="${esc(d.subject||'')}" placeholder="${t('dl_subject_ph')}" oninput="App.bdel('subject',this.value)">
      <label>${t('dl_intro')}</label><textarea rows="3" placeholder="${t('dl_intro_ph')}" oninput="App.bdel('intro',this.value)">${esc(d.intro||'')}</textarea>
      <label>${t('dl_url')}</label><input value="${esc(d.deliverableUrl||c.leadMagnetUrl||'')}" placeholder="https://…" oninput="App.bdel('deliverableUrl',this.value)">
