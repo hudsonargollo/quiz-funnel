@@ -24,7 +24,7 @@ export default function ConsoleNav() {
         >
           F
         </div>
-        <div className="font-display text-[15px] font-semibold">FunnelTone</div>
+        <div className="font-display text-[15px] font-semibold">FunnelsTone</div>
       </div>
 
       <div className="flex min-w-0 flex-1 items-center gap-0.5">

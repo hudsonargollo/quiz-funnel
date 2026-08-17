@@ -15,9 +15,9 @@ export function isConfigured(env) {
   return !!env.RESEND_API_KEY;
 }
 
-/** Platform default sender, e.g. "FunnelTone <noreply@mail.clubemkt.digital>". */
+/** Platform default sender, e.g. "FunnelsTone <noreply@mail.clubemkt.digital>". */
 export function defaultFrom(env) {
-  return env.MAIL_FROM_DEFAULT || 'FunnelTone <noreply@mail.clubemkt.digital>';
+  return env.MAIL_FROM_DEFAULT || 'FunnelsTone <noreply@mail.clubemkt.digital>';
 }
 
 /**

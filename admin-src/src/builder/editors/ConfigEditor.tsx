@@ -65,7 +65,7 @@ export default function ConfigEditor() {
         <div className="mt-3 space-y-3">
           <div>
             <Label>From name</Label>
-            <Input placeholder={config.productName || 'FunnelTone'} value={delivery.fromName || ''} onChange={(e) => updateDeliveryConfig({ fromName: e.target.value })} />
+            <Input placeholder={config.productName || 'FunnelsTone'} value={delivery.fromName || ''} onChange={(e) => updateDeliveryConfig({ fromName: e.target.value })} />
           </div>
           <div>
             <Label>Subject</Label>

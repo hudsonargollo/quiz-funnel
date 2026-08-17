@@ -26,7 +26,7 @@ export async function handleMessaging(db, env, request, path, url, acc) {
     let parsed = {}; try { parsed = JSON.parse(f.config || '{}'); } catch (e) {}
     const cfg = parsed.config || parsed;
     const d = cfg.delivery || {};
-    const brandName = d.fromName || f.name || cfg.productName || 'FunnelTone';
+    const brandName = d.fromName || f.name || cfg.productName || 'FunnelsTone';
     const { subject, html, text } = renderDeliverable({
       brandName,
       firstName: (b.firstName || '').trim(),

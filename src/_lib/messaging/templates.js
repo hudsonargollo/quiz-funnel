@@ -29,7 +29,7 @@ function paras(body) {
  * @returns {{subject:string|undefined, html:string, text:string}}
  */
 export function renderDeliverable(o = {}) {
-  const brandName = o.brandName || 'FunnelTone';
+  const brandName = o.brandName || 'FunnelsTone';
   const hi = o.firstName ? `Olá, ${esc(o.firstName)}!` : 'Olá!';
   const intro = o.intro || 'Obrigado! Aqui está o material que você pediu — é só clicar no botão abaixo para acessar.';
   const buttonLabel = o.buttonLabel || 'Acessar agora';
@@ -83,7 +83,7 @@ export function renderDeliverable(o = {}) {
  * @returns {{subject:string, html:string, text:string}}
  */
 export function renderPasswordReset(o = {}) {
-  const brandName = 'FunnelTone';
+  const brandName = 'FunnelsTone';
   const url = o.resetUrl || '';
   const mins = o.expiresInMinutes || 60;
   const expiryLine = mins % 60 === 0 ? `${mins / 60}h` : `${mins} min`;
@@ -133,5 +133,5 @@ export function renderPasswordReset(o = {}) {
     `— ${brandName}`,
   ].join('\n');
 
-  return { subject: 'Redefinir a sua password — FunnelTone', html, text };
+  return { subject: 'Redefinir a sua password — FunnelsTone', html, text };
 }

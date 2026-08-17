@@ -123,7 +123,7 @@ export async function deliverLeadMagnet(env, db, { funnel, userId, email, firstN
   try {
     if (channel !== 'email') throw new Error(`${channel} channel not configured yet`);
     const cfg = config.config || config;
-    const brandName = d.fromName || funnel.name || cfg.productName || 'FunnelTone';
+    const brandName = d.fromName || funnel.name || cfg.productName || 'FunnelsTone';
     const { subject, html, text } = renderDeliverable({
       brandName,
       firstName,
