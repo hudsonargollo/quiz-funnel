@@ -1,0 +1,35 @@
+@import 'tailwindcss';
+/* Tailwind v4 compat: keep driving theme/content/plugins from the existing
+   v3-style tailwind.config.ts (colors bridged to tokens.css) rather than
+   rewriting the palette as CSS `@theme` — see that file for the mapping. */
+@config '../../tailwind.config.ts';
+
+/* Bridges shadcn's expected --radius var onto the existing token scale.
+   Colors are consumed directly from tokens.css (see tailwind.config.ts) —
+   dark is the only theme this app ships (tokens.css already treats
+   admin/dark as the canonical admin surface). */
+:root {
+  --radius: var(--r-md);
+}
+
+body {
+  background: var(--bg);
+  background-image: var(--ambient);
+  color: var(--on-surface);
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+* {
+  border-color: var(--outline);
+}
+
+::selection {
+  background: var(--brand-500);
+  color: var(--on-primary);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--outline-strong); border-radius: var(--r-pill); }
+::-webkit-scrollbar-thumb:hover { background: var(--on-surface-faint); }
