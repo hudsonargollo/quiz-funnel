@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { useBuilderStore, SCHEMA } from '@/store/builderStore';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import SchemaField from '@/builder/SchemaField';
@@ -30,7 +31,13 @@ export default function PropertyInspector() {
   const defaultOpen = ['content', ...(specialSections[0] ? [specialSections[0][0]] : [])];
 
   return (
-    <div className="px-1">
+    <motion.div
+      key={selectedIndex}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+      className="px-1"
+    >
       <div className="mb-2 px-2 text-[11px] text-muted-foreground">
         {screen.type}
         {screen.key ? ` · ${screen.key}` : ''}
@@ -65,6 +72,6 @@ export default function PropertyInspector() {
           <p className="py-4 text-xs text-muted-foreground">This screen type has no configurable properties.</p>
         )}
       </Accordion>
-    </div>
+    </motion.div>
   );
 }

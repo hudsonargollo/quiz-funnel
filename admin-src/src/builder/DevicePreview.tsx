@@ -4,6 +4,11 @@ import { useBuilderStore } from '@/store/builderStore';
 // Owns the live-preview iframe and the exact same postMessage contract the
 // legacy builder uses (public/js/app.js:~1166-1207) — untouched on the funnel
 // runtime side, so this must keep sending/receiving the same message shapes.
+//
+// A single iframe instance — only its *container* styling is responsive
+// (full-bleed on mobile, phone-frame mockup on desktop). Two separate iframe
+// elements would double-load the funnel runtime on every resize; one element
+// reflowed by CSS costs nothing extra.
 export default function DevicePreview() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const slug = useBuilderStore((s) => s.slug);
@@ -15,7 +20,6 @@ export default function DevicePreview() {
   const config = useBuilderStore((s) => s.config);
   const selectedIndex = useBuilderStore((s) => s.selectedIndex);
 
-  // Set the iframe src once per funnel load (matches openBuilder's one-time src set).
   useEffect(() => {
     if (!loaded || !slug || !iframeRef.current) return;
     iframeRef.current.src = `${location.origin}/${slug}?preview=1&t=${previewNonce}`;
@@ -37,10 +41,10 @@ export default function DevicePreview() {
   }, [previewReady, screens, config, selectedIndex]);
 
   return (
-    <div className="flex h-full items-center justify-center bg-surface-3 p-6" style={{ background: 'var(--surface-3)' }}>
+    <div className="flex h-full items-center justify-center bg-surface-3 lg:p-6" style={{ background: 'var(--surface-3)' }}>
       <div
-        className="relative overflow-hidden rounded-[36px] border-[6px] shadow-e4"
-        style={{ width: 390, height: 780, borderColor: 'var(--outline-strong)', background: 'var(--bg)' }}
+        className="relative h-full w-full overflow-hidden lg:h-[780px] lg:w-[390px] lg:rounded-[36px] lg:border-[6px] lg:shadow-e4"
+        style={{ borderColor: 'var(--outline-strong)', background: 'var(--bg)' }}
       >
         <iframe ref={iframeRef} title="preview" className="h-full w-full border-0" />
       </div>

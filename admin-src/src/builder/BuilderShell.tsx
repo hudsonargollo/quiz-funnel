@@ -8,14 +8,17 @@ import DevicePreview from '@/builder/DevicePreview';
 import PropertyInspector from '@/builder/PropertyInspector';
 import CommandPalette from '@/builder/CommandPalette';
 import GenerateCopyDialog from '@/builder/GenerateCopyDialog';
+import MobileNav from '@/builder/MobileNav';
 
 export default function BuilderShell() {
   const [copyOpen, setCopyOpen] = useState(false);
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-screen flex-col overflow-hidden">
       <TopBar onGenerateCopy={() => setCopyOpen(true)} />
-      <div className="min-h-0 flex-1">
+
+      {/* Desktop (lg+): the original 3-pane resizable layout, edge-to-edge. */}
+      <div className="hidden min-h-0 flex-1 lg:block">
         <ResizablePanelGroup direction="horizontal">
           <ResizablePanel defaultSize={20} minSize={14} maxSize={32}>
             <ScrollArea className="h-full">
@@ -45,6 +48,14 @@ export default function BuilderShell() {
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
+
+      {/* Mobile (< lg): preview fills the screen; screens/properties live in
+          bottom sheets reached via the bottom tab bar (MobileNav). */}
+      <div className="min-h-0 flex-1 pb-14 lg:hidden">
+        <DevicePreview />
+      </div>
+      <MobileNav />
+
       <CommandPalette onGenerateCopy={() => setCopyOpen(true)} />
       <GenerateCopyDialog open={copyOpen} onOpenChange={setCopyOpen} />
     </div>
