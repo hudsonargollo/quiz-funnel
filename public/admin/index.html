@@ -770,6 +770,7 @@ const App=(()=>{
        <label>${t('f_url')}</label><div class="copyrow"><div class="mono" id="ed-urlv">${url}</div><button class="btn ghost" onclick="App.copyEl('ed-urlv')">${icon('copy')}</button></div>
        <label>${t('f_post')}</label><input id="ed-post" value="${esc(f.post_purchase_url||'')}">
        <button class="btn" style="width:100%;justify-content:center;margin-top:6px" onclick="App.openBuilder('${id}')">${icon('layout-template')} ${t('b_builder')}</button>
+       <a class="btn ghost" style="width:100%;justify-content:center;margin-top:6px" href="/app/builder/${id}" target="_blank">${icon('sparkles')} Edit in new builder</a>
        <details style="margin-top:10px"><summary style="cursor:pointer;color:var(--muted);font-size:12px">${t('f_config')} (JSON)</summary>
        <textarea id="ed-config" rows="10" style="margin-top:6px">${esc(cfg)}</textarea></details>
        <h2 style="margin:20px 0 0;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">${t('stripe')}</h2>
@@ -1179,7 +1180,18 @@ const App=(()=>{
  let _aiLastCount=3,_aiPendingBigGen=false,_aiCreativeCtx='project',_aiEditing=null,_aiLibraryFunnel='',_aiLibraryCreatives=[];
  const PLAT=['meta','google','tiktok','linkedin','youtube','pinterest'];
  const EXPORT_MAX=24;
- async function aiApi(p,opts){return api('ai/'+p,opts);}
+ // Every AI-generation call gets the admin's current PT/EN toggle so generated
+ // content (strategy, personas, copy, scores) matches the UI language instead of
+ // always coming back in English — see src/_lib/ai.js's langLine().
+ async function aiApi(p,opts){
+   opts=opts||{};
+   if(typeof opts.body==='string'){
+     try{const b=JSON.parse(opts.body);b.lang=lang;opts={...opts,body:JSON.stringify(b)};}catch(e){}
+   }else if(opts.method==='POST'&&!opts.body){
+     opts={...opts,body:JSON.stringify({lang})};
+   }
+   return api('ai/'+p,opts);
+ }
  function fmtMoney(minor,cur){try{return new Intl.NumberFormat(lang==='pt'?'pt-BR':'en-US',{style:'currency',currency:(cur||'eur').toUpperCase()}).format((minor||0)/100);}catch(e){return ((minor||0)/100).toFixed(2)+' '+(cur||'').toUpperCase();}}
  // Shared button for credit-costing actions: once the balance can't cover `cost`,
  // clicking routes straight to the buy-credits drawer instead of firing the action

@@ -13,6 +13,10 @@ import { createCheckoutSession } from '../_lib/stripe.js';
 import { getBrandKit, upsertBrandKit, setBrandLogo, brandKitText } from '../_lib/brandkit.js';
 import { zipSync } from 'fflate';
 
+// Admin UI's PT/EN toggle sends its current language on every AI generation call
+// (see admin/index.html's aiApi()) — normalize to just the two we support.
+const normLang = (v) => (v === 'pt' ? 'pt' : 'en');
+
 const EXPORT_MAX_IDS = 24;
 
 // Screen types the quiz-copy generator is allowed to touch, and which of their JSON
@@ -181,6 +185,7 @@ export async function handleAi(db, env, request, path, url, acc) {
     if (!funnel) return err('Funnel not found', 404);
     const b = await request.json().catch(() => ({}));
     const framework = QUIZ_FRAMEWORKS.includes(b.framework) ? b.framework : 'generic';
+    const lang = normLang(b.lang);
 
     let parsed = {};
     try { parsed = JSON.parse(funnel.config || '{}'); } catch (e) {}
@@ -201,7 +206,7 @@ export async function handleAi(db, env, request, path, url, acc) {
         }
         return fields;
       });
-      const generated = await generateQuizCopy(env, { brief, framework, screens: input });
+      const generated = await generateQuizCopy(env, { brief, framework, screens: input, lang });
 
       // Merge the model's output back onto each ORIGINAL screen (never trust it to only
       // return valid keys) so options[] keeps its value/icon, only label changes.
@@ -239,11 +244,13 @@ export async function handleAi(db, env, request, path, url, acc) {
   if (sm && request.method === 'POST') {
     const project = await db.prepare('SELECT * FROM ad_projects WHERE account_id = ? AND id = ?').bind(acc, sm[1]).first();
     if (!project) return err('Not found', 404);
+    const b = await request.json().catch(() => ({}));
+    const lang = normLang(b.lang);
     const charge = await chargeCredits(db, acc, COSTS.strategy, 'strategy', project.id);
     if (!charge.ok) return err(charge.enabled ? 'Not enough credits' : 'AI Ads add-on is not active', 402);
     try {
       const brief = await safeBrief(db, acc, project);
-      const strategy = await generateStrategy(env, brief);
+      const strategy = await generateStrategy(env, brief, lang);
       await db.prepare('UPDATE ad_projects SET strategy = ?, status = ?, updated_at = ? WHERE account_id = ? AND id = ?')
         .bind(JSON.stringify(strategy), 'ready', nowISO(), acc, project.id).run();
       return json({ strategy, credits: charge.balance });
@@ -263,6 +270,7 @@ export async function handleAi(db, env, request, path, url, acc) {
     if (!query) return err('Enter a search term', 400);
     const country = (b.country || 'US').trim().toUpperCase();
     if (!/^[A-Z]{2}$/.test(country)) return err('Invalid country code', 400);
+    const lang = normLang(b.lang);
     const charge = await chargeCredits(db, acc, COSTS.find_ads, 'find_ads', project.id);
     if (!charge.ok) return err(charge.enabled ? 'Not enough credits' : 'AI Ads add-on is not active', 402);
     try {
@@ -271,7 +279,7 @@ export async function handleAi(db, env, request, path, url, acc) {
       const wantAi = b.source !== 'meta';
       const [meta, ai] = await Promise.all([
         wantMeta ? searchAdLibrary(env, { query, country }) : Promise.resolve({ ads: [], note: null }),
-        wantAi ? analyzeCompetitors(env, { brief, query }).catch(() => []) : Promise.resolve([]),
+        wantAi ? analyzeCompetitors(env, { brief, query, lang }).catch(() => []) : Promise.resolve([]),
       ]);
       const ts = nowISO();
       const rows = [];
@@ -300,13 +308,14 @@ export async function handleAi(db, env, request, path, url, acc) {
     const persona = (b.persona || '').trim().slice(0, 300);
     const count = Math.min(Math.max(parseInt(b.count || 3, 10), 1), 10);
     const withImages = b.images !== false;
+    const lang = normLang(b.lang);
 
     const cost = COSTS.creative * count;
     const charge = await chargeCredits(db, acc, cost, 'creative', project.id);
     if (!charge.ok) return err(charge.enabled ? 'Not enough credits' : 'AI Ads add-on is not active', 402);
     try {
       const brief = await safeBrief(db, acc, project);
-      const variants = await generateCreativeCopy(env, { brief, platform, persona, count });
+      const variants = await generateCreativeCopy(env, { brief, platform, persona, count, lang });
       const ts = nowISO();
       const saved = [];
       let imageError = null;  // first non-fatal image failure (copy still saved)
@@ -422,11 +431,13 @@ export async function handleAi(db, env, request, path, url, acc) {
     if (!cr) return err('Not found', 404);
     const project = await db.prepare('SELECT * FROM ad_projects WHERE account_id = ? AND id = ?').bind(acc, cr.project_id).first();
     if (!project) return err('Not found', 404);
+    const b = await request.json().catch(() => ({}));
+    const lang = normLang(b.lang);
     const charge = await chargeCredits(db, acc, COSTS.score, 'score', cr.id);
     if (!charge.ok) return err(charge.enabled ? 'Not enough credits' : 'AI Ads add-on is not active', 402);
     try {
       const brief = await safeBrief(db, acc, project);
-      const result = await scoreCreative(env, { brief, creative: cr });
+      const result = await scoreCreative(env, { brief, creative: cr, lang });
       await db.prepare('UPDATE ad_creatives SET score = ?, score_feedback = ? WHERE account_id = ? AND id = ?')
         .bind(result.score, JSON.stringify({ summary: result.summary, strengths: result.strengths, improvements: result.improvements }), acc, cr.id).run();
       return json({ score: result.score, score_feedback: { summary: result.summary, strengths: result.strengths, improvements: result.improvements }, credits: charge.balance });

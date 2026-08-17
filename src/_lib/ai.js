@@ -185,14 +185,25 @@ const COPY_SCHEMA = obj({
 
 const SYSTEM = 'You are a senior performance-marketing strategist. Be specific, concrete, and actionable. Output only the requested JSON.';
 
+// The admin UI's PT/EN toggle only translates its own chrome — every generation call
+// below defaulted to English regardless, so a PT-selected admin still got English
+// strategy/copy back. Callers pass through the admin's current `lang` and this line
+// gets appended to the system prompt so every field in the response matches it.
+const LANG_NAMES = { pt: 'Brazilian Portuguese (pt-BR)', en: 'English' };
+function langLine(lang) {
+  const name = LANG_NAMES[lang] || LANG_NAMES.en;
+  return `Respond entirely in ${name} — every field (summaries, labels, personas, headlines, body copy, CTAs, rationale) must be written in ${name}, not just translated key names.`;
+}
+
 /**
  * Run the parallel strategy engine. Five dimensions fire concurrently (like the repo's
  * 5 agents); returns a single strategy object persisted as ad_projects.strategy.
  */
-export async function generateStrategy(env, brief) {
+export async function generateStrategy(env, brief, lang) {
   const ctx = briefText(brief);
+  const system = `${SYSTEM} ${langLine(lang)}`;
   const ask = (label, instruction, schema, model = MODELS.copy) => callClaude(env, {
-    model, system: SYSTEM, schema, maxTokens: 3000,
+    model, system, schema, maxTokens: 3000,
     user: `${instruction}\n\n--- BUSINESS BRIEF ---\n${ctx}`,
   }).then((r) => [label, r]).catch((e) => [label, { error: String(e.message) }]);
 
@@ -217,12 +228,13 @@ const CREATIVE_COPY_SCHEMA = obj({
 });
 
 /** Generate N ad-copy variants (each with an image prompt) for a platform + persona. */
-export async function generateCreativeCopy(env, { brief, platform, persona, count = 3 }) {
+export async function generateCreativeCopy(env, { brief, platform, persona, count = 3, lang }) {
   const ctx = briefText(brief);
   const out = await callClaude(env, {
-    model: MODELS.copy, system: SYSTEM, schema: CREATIVE_COPY_SCHEMA, maxTokens: 2500,
+    model: MODELS.copy, system: `${SYSTEM} ${langLine(lang)}`, schema: CREATIVE_COPY_SCHEMA, maxTokens: 2500,
     user: `Create ${count} distinct ${platform} ad variants${persona ? ` targeting this persona: ${persona}` : ''}. `
       + `Each variant: a scroll-stopping headline, primary text, a CTA, and an "image_prompt" — a vivid prompt for an image generator describing the ad creative (scene, style, mood, any short on-image text). `
+      + `"image_prompt" is an instruction for the image model, not customer-facing copy — write it in English regardless of the requested response language; only headline/primary_text/cta follow that language. `
       + `\n\n--- BUSINESS BRIEF ---\n${ctx}`,
   });
   return out.variants || [];
@@ -236,10 +248,10 @@ const COMPETITOR_SCHEMA = obj({
 });
 
 /** LLM-reasoned competitor ad concepts/angles (used alongside real Meta Ad Library results). */
-export async function analyzeCompetitors(env, { brief, query }) {
+export async function analyzeCompetitors(env, { brief, query, lang }) {
   const ctx = briefText(brief);
   const out = await callClaude(env, {
-    model: MODELS.copy, system: SYSTEM, schema: COMPETITOR_SCHEMA, maxTokens: 2500,
+    model: MODELS.copy, system: `${SYSTEM} ${langLine(lang)}`, schema: COMPETITOR_SCHEMA, maxTokens: 2500,
     user: `For the search "${query}", infer 5 likely competitor ad approaches in this market. `
       + `For each: a plausible advertiser/page name, representative ad text, a CTA, and the strategic angle it exploits. `
       + `\n\n--- BUSINESS BRIEF ---\n${ctx}`,
@@ -276,11 +288,11 @@ const QUIZ_COPY_SYSTEM = 'You are a senior direct-response copywriter rewriting 
  * model must preserve `id` and the item count of any `options`/`steps` array, and must
  * only return fields that were present on that screen.
  */
-export async function generateQuizCopy(env, { brief, framework, screens }) {
+export async function generateQuizCopy(env, { brief, framework, screens, lang }) {
   const ctx = briefText(brief);
   const note = QUIZ_FRAMEWORK_NOTES[framework] || QUIZ_FRAMEWORK_NOTES.generic;
   const out = await callClaude(env, {
-    model: MODELS.copy, system: QUIZ_COPY_SYSTEM, schema: QUIZ_COPY_SCHEMA, maxTokens: 4096,
+    model: MODELS.copy, system: `${QUIZ_COPY_SYSTEM} ${langLine(lang)}`, schema: QUIZ_COPY_SCHEMA, maxTokens: 4096,
     user: `${note}\n\nRewrite the copy for this quiz funnel's screens, in the same order, applying that structure `
       + `across the sequence. Preserve each screen's "id" exactly. Only include fields that were present on the `
       + `input screen with that id — never invent new fields. If a screen has an "options" or "steps" array, your `
@@ -303,7 +315,7 @@ const SCORE_SYSTEM = 'You are a blunt, expert performance-marketing creative dir
  * Score one generated creative 0-100 against the brief/brand, with a short summary and
  * concrete strengths/improvements. Independent of generation so it can be re-run on demand.
  */
-export async function scoreCreative(env, { brief, creative }) {
+export async function scoreCreative(env, { brief, creative, lang }) {
   const ctx = briefText(brief);
   const ad = [
     `Platform: ${creative.platform || ''}`,
@@ -313,7 +325,7 @@ export async function scoreCreative(env, { brief, creative }) {
     `CTA: ${creative.cta || ''}`,
   ].filter(Boolean).join('\n');
   const out = await callClaude(env, {
-    model: MODELS.copy, system: SCORE_SYSTEM, schema: SCORE_SCHEMA, maxTokens: 1200,
+    model: MODELS.copy, system: `${SCORE_SYSTEM} ${langLine(lang)}`, schema: SCORE_SCHEMA, maxTokens: 1200,
     user: `Score this ad creative 0-100. Give a one-sentence summary, 2-3 strengths, and 2-3 concrete improvements.`
       + `\n\n--- BUSINESS BRIEF ---\n${ctx}\n\n--- AD CREATIVE ---\n${ad}`,
   });

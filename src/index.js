@@ -17,7 +17,7 @@ import { getFunnelBySlug, getSlugByHostname, publicFunnel } from './_lib/funnels
 
 // First path segments that are real assets/endpoints, never funnel slugs.
 const RESERVED = new Set([
-  'api', 'admin', 'app', 'home', 'css', 'js', 'images', 'audio', 'assets', 'privacidade',
+  'api', 'admin', 'admin-app', 'app', 'home', 'css', 'js', 'images', 'audio', 'assets', 'privacidade',
   'favicon.ico', 'robots.txt', 'sitemap.xml', 'index.html', '.well-known', 'milestones',
 ]);
 
@@ -66,7 +66,11 @@ export default {
         return serveAsset(env, '/home/index.html', request);
       }
       const seg = path.split('/')[1];
-      if (seg === 'admin' || seg === 'app') return serveAsset(env, '/admin/index.html', request);
+      if (seg === 'admin') return serveAsset(env, '/admin/index.html', request);
+      // New React/Vite builder (public/admin-app/, see admin-src/) — coexists
+      // with the legacy dashboard at /admin during migration. Cutover moves
+      // this to '/admin/index.html' once the new app reaches parity.
+      if (seg === 'app') return serveAsset(env, '/admin-app/index.html', request);
       // Internal milestones tracker/report pages (/milestones or /milestones/<slug>) — SPA shell.
       if (seg === 'milestones') return serveAsset(env, '/milestones/index.html', request);
       // Reserved names and any path with a file extension → static asset.
