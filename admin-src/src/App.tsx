@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import BuilderPage from '@/builder/BuilderPage';
 import DashboardPage from '@/pages/DashboardPage';
 import OffersPage from '@/pages/OffersPage';
+import PipelinePage from '@/pages/PipelinePage';
 
 // Migration in progress: the dashboard/funnels-list (this file's "/" route)
 // and the visual builder have moved to React. AI Ads/swipe-mining still live
@@ -15,6 +16,7 @@ export default function App() {
       <Route path="/" element={<DashboardPage />} />
       <Route path="/builder/:id" element={<BuilderPage />} />
       <Route path="/offers" element={<OffersPage />} />
+      <Route path="/pipeline" element={<PipelinePage />} />
     </Routes>
   );
 }

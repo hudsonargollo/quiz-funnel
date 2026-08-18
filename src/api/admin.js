@@ -10,6 +10,7 @@ import { handleMessaging } from './messaging.js';
 import { handleMilestones } from './milestones.js';
 import { handleMining } from './mining.js';
 import { handleOffers } from './offers.js';
+import { handlePipeline } from './pipeline.js';
 
 export async function handleAdmin(request, env, path, url) {
   const db = env.DB;
@@ -25,8 +26,12 @@ export async function handleAdmin(request, env, path, url) {
   // ── Everything else (funnels, CRM, AI Ads, domains, messaging) is
   // owner-only. Viewer accounts (jorge/pedro/alison) share hudson's tenant
   // for the milestones feature but must not reach any other admin data. ──
-  const me = await db.prepare('SELECT role FROM users WHERE id = ?').bind(s.userId).first();
+  const me = await db.prepare('SELECT role, email FROM users WHERE id = ?').bind(s.userId).first();
   if (!me || me.role !== 'owner') return err('Forbidden', 403);
+
+  // ── Sales Pipeline (/api/pipeline/*) — human-worked overlay, distinct from
+  // the automated funnel_state pipeline and the read-only /api/crm/* routes ──
+  if (path.startsWith('/api/pipeline/')) return handlePipeline(db, env, request, path, url, acc, me.email);
 
   // ── AI Ads add-on (/api/ai/*) — reuses this session + account scope ──
   if (path.startsWith('/api/ai/')) return handleAi(db, env, request, path, url, acc);

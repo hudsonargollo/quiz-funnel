@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { api } from '@/lib/api';
 
 // Funis / Anúncios IA / Mineração haven't been ported off the legacy admin
@@ -14,6 +15,7 @@ const LEGACY_TABS = [
 
 export default function ConsoleNav() {
   const [lang, setLang] = useState<'en' | 'pt'>('pt');
+  const location = useLocation();
 
   return (
     <nav className="sticky top-0 z-40 flex items-center gap-5 border-b border-white/[.08] bg-[color:var(--surface-glass)] px-7 py-3.5 backdrop-blur-md">
@@ -28,12 +30,28 @@ export default function ConsoleNav() {
       </div>
 
       <div className="flex min-w-0 flex-1 items-center gap-0.5">
-        <button
+        <Link
+          to="/"
           className="whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-medium"
-          style={{ background: 'var(--primary-container)', color: 'var(--on-primary-container)' }}
+          style={
+            location.pathname === '/'
+              ? { background: 'var(--primary-container)', color: 'var(--on-primary-container)' }
+              : { color: 'var(--on-surface-faint)' }
+          }
         >
           Painel
-        </button>
+        </Link>
+        <Link
+          to="/pipeline"
+          className="whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-medium transition-colors duration-2 hover:bg-white/[.04] hover:text-foreground"
+          style={
+            location.pathname === '/pipeline'
+              ? { background: 'var(--primary-container)', color: 'var(--on-primary-container)' }
+              : { color: 'var(--on-surface-faint)' }
+          }
+        >
+          Pipeline
+        </Link>
         {LEGACY_TABS.map((tItem) => (
           <a
             key={tItem.label}

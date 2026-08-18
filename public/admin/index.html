@@ -474,6 +474,7 @@ const I18N={
    cv_lead:'Lead rate',cv_offer:'Offer rate',cv_checkout:'Checkout rate',cv_purchase:'Purchase rate',
    d_email:'Email',d_name:'Name',d_state:'State',d_uid:'User ID',d_imc:'BMI',d_goal:'Goal',d_cur:'Current weight',d_target:'Target weight',d_height:'Height',
    d_src:'UTM source',d_med:'UTM medium',d_camp:'UTM campaign',d_country:'Country',d_ref:'Referrer',d_created:'Created',d_lead_at:'Lead at',d_checkout_at:'Checkout at',d_purchase_at:'Purchase at',
+   d_promote:'Move to Sales Pipeline',d_promoted:'Added to the Sales Pipeline',
    nav_ai:'AI Ads',nav_mining:'Mining',nav_milestones:'Milestones',ai_credits:'credits',ai_gate_title:'Unlock AI Ads',ai_gate_text:'Find competitor ads, get an AI ad strategy, and generate ad copy + images — all tied to your funnels.',
    ai_feat_find:'Find live competitor ads (Meta Ad Library + AI analysis)',ai_feat_strategy:'AI ad strategy, personas, funnel & budget',ai_feat_creatives:'Generate ad copy + AI image creatives',
    ai_unlock:'Unlock AI Ads',ai_gate_note:'Billed as an add-on. Credits are consumed per generation.',ai_unlocked:'AI Ads unlocked',ai_unlock_soon:'Checkout coming soon — contact support to enable.',
@@ -541,6 +542,7 @@ const I18N={
    cv_lead:'Taxa de leads',cv_offer:'Taxa de oferta',cv_checkout:'Taxa de checkout',cv_purchase:'Taxa de compra',
    d_email:'Email',d_name:'Nome',d_state:'Estado',d_uid:'User ID',d_imc:'IMC',d_goal:'Objetivo',d_cur:'Peso atual',d_target:'Peso objetivo',d_height:'Altura',
    d_src:'UTM source',d_med:'UTM medium',d_camp:'UTM campaign',d_country:'País',d_ref:'Referrer',d_created:'Criado',d_lead_at:'Lead em',d_checkout_at:'Checkout em',d_purchase_at:'Compra em',
+   d_promote:'Mover para o Pipeline de Vendas',d_promoted:'Adicionado ao Pipeline de Vendas',
    nav_ai:'Anúncios IA',nav_mining:'Mineração',nav_milestones:'Milestones',ai_credits:'créditos',ai_gate_title:'Ative os Anúncios IA',ai_gate_text:'Encontre anúncios de concorrentes, gere uma estratégia de anúncios com IA e crie textos + imagens — ligados aos seus funis.',
    ai_feat_find:'Encontre anúncios de concorrentes (Meta Ad Library + IA)',ai_feat_strategy:'Estratégia de anúncios, personas, funil e orçamento',ai_feat_creatives:'Gere textos + criativos de imagem com IA',
    ai_unlock:'Ativar Anúncios IA',ai_gate_note:'Cobrado como complemento. Créditos são consumidos por geração.',ai_unlocked:'Anúncios IA ativados',ai_unlock_soon:'Checkout em breve — contate o suporte para ativar.',
@@ -1152,11 +1154,16 @@ const App=(()=>{
        ['d_created',fmtDate(l.created_at)],['d_lead_at',fmtDate(l.lead_captured_at)],['d_checkout_at',fmtDate(l.checkout_initiated_at)],['d_purchase_at',fmtDate(l.purchased_at)]
      ].filter(r=>r[1]!=null&&r[1]!==''&&r[1]!=='—');
      const tl=(l.events||[]).map(e=>`<div class="ev"><div>${esc(e.event)}${e.props?' <span class="muted">'+esc(JSON.stringify(e.props))+'</span>':''}</div><div class="t">${fmtDate(e.ts)}</div></div>`).join('');
-     $('drawer').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:start"><div><h3>${esc(l.email||t('anon'))}</h3><div class="muted">${esc(l.nome||'')}</div></div><button class="btn ghost icon" onclick="App.closeDrawer()">✕</button></div><div class="kv">${rows.map(r=>`<div class="k">${t(r[0])}</div><div class="v">${r[1]}</div>`).join('')}</div><h2 style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 10px">${t('timeline')}</h2><div class="tl">${tl||`<div class="muted">${t('no_events')}</div>`}</div>`;
+     $('drawer').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:start"><div><h3>${esc(l.email||t('anon'))}</h3><div class="muted">${esc(l.nome||'')}</div></div><button class="btn ghost icon" onclick="App.closeDrawer()">✕</button></div><button class="btn" style="margin-top:12px;width:100%" onclick="App.promoteLead('${esc(userId)}')">${t('d_promote')}</button><div class="kv">${rows.map(r=>`<div class="k">${t(r[0])}</div><div class="v">${r[1]}</div>`).join('')}</div><h2 style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 10px">${t('timeline')}</h2><div class="tl">${tl||`<div class="muted">${t('no_events')}</div>`}</div>`;
      $('overlay').classList.add('show');$('drawer').classList.add('show');
    }).catch(()=>{});
  }
  function closeDrawer(){$('overlay').classList.remove('show');$('drawer').classList.remove('show');}
+ function promoteLead(userId){
+   api('pipeline/leads',{method:'POST',body:JSON.stringify({leadUserId:userId})})
+     .then(()=>toast(t('d_promoted'),'ok'))
+     .catch(e=>toast(String(e.message||e),'bad'));
+ }
  function exportCsv(){
    let url='/api/crm/leads?format=csv';if(funnelId)url+='&funnelId='+funnelId;
    const st=$('f-state').value,q=$('f-q').value.trim();if(st)url+='&state='+st;if(q)url+='&q='+encodeURIComponent(q);
@@ -1835,7 +1842,7 @@ const App=(()=>{
    }
  })();
 
- return {submitAuth,toggleAuthMode,setAuthMode,logout,showView,refresh,loadStats,loadLeads,page,openLead,closeDrawer,exportCsv,
+ return {submitAuth,toggleAuthMode,setAuthMode,logout,showView,refresh,loadStats,loadLeads,page,openLead,closeDrawer,promoteLead,exportCsv,
    onFunnelChange,scopeFunnel,openFunnelEditor,saveFunnel,deleteFunnel,setLang,copyText,copyEl,pickTemplate,
    openBuilder,closeBuilder,toggleBuilderPreview,builderSelect,builderAdd,builderDelete,bset,boptSet,boptAdd,boptDel,
    bfSet,bfAdd,bfDel,bstepSet,bstepAdd,bstepDel,btestSet,btestAdd,btestDel,bcfg,bdel,testDelivery,saveBuilder,loadDomains,addDomain,delDomain,
